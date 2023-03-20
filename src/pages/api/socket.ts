@@ -16,7 +16,7 @@ export default function SocketHandler(req: any, res: any) {
   const oscClient: OSCClient = new OSCClient('pacamara-1111.local', 8000);
 
   const oscServer: OSCServer = new OSCServer(9000, '0.0.0.0', () => {
-    console.log('OSC Server is listening on port 0.0.0.0:8000');
+    console.log('OSC Server is listening on port 0.0.0.0:9000');
   });
 
   const onConnection = (socket: Socket) => {

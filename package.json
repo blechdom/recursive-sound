@@ -13,14 +13,21 @@
     "@types/node-osc": "^6.0.0",
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
+    "el-vis-audio": "^0.1.86",
     "eslint": "8.36.0",
     "eslint-config-next": "13.2.4",
     "next": "13.2.4",
     "node-osc": "^8.0.10",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-select": "^5.7.0",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
+    "styled-components": "^5.3.9",
     "typescript": "4.9.5"
+  },
+  "devDependencies": {
+    "@types/styled-components": "^5.1.26",
+    "eslint-config-prettier": "^8.7.0"
   }
 }

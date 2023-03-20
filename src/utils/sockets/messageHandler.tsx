@@ -9,20 +9,17 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     //oscServer.close();
   });
 
-  const createdMessage = (msg: string) => {
+  const createdMessage = (msg: { author: string, message: string}) => {
     socket.broadcast.emit("newIncomingMessage", msg);
     console.log("socket received: ", msg);
-    sendOscMessage(oscClient, msg);
+    sendOscMessage(oscClient, parseFloat(msg.message));
   };
 
-  const sendOscMessage = (oscClient: Client, msg: string) => {
+  const sendOscMessage = (oscClient: Client, msg: number) => {
     if(oscClient){
-      console.log('oscClient', oscClient);
-      console.log('msg', msg);
-
+      console.log('/fractal/float', msg);
       // @ts-ignore
-      oscClient.send('/pitft/sine', '123 44', () => {
-        //oscClient.close();
+      oscClient.send('/fractal/float', msg, () => {
       });
     }
   };
