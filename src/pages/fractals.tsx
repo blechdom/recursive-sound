@@ -59,7 +59,10 @@ export default function Home() {
     y_max: 1.5
   })
   const [zoomWindow, setZoomWindow] = useState<[number, number, number, number]>([160, 120, 320, 240]);
-  //const [fractal2DArray, setFractal2DArray] = useState<number[][]>([]);
+  const [mandelbrot2DArray, setMandelbrot2DArray] = useState<string>("");
+  const [julia2DArray, setJulia2DArray] = useState<string>("");
+  const [cx, setCx] = useState<number>(-0.7);
+  const [cy, setCy] = useState<number>(0.27015);
 
   const mandelbrotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -68,13 +71,17 @@ export default function Home() {
     socketInitializer();
   }, []);
 
-  /*const paletteArray: string[] = useMemo(
-    () => {
-    return colourPalettes[parseInt(paletteNumber.value)];
-    }, [paletteNumber]);*/
+  useEffect(() => {
+    console.log('rendering julia')
+    julia();
+  }, [cx, cy, iterations, paletteNumber, threshold, canvasHeight, canvasWidth, juliaCanvasRef.current]);
+
+  useEffect(() => {
+    console.log('rendering mandelbrot', mandelbrotWindow)
+    mandelbrot();
+  }, [iterations, paletteNumber, threshold, canvasHeight, canvasWidth, mandelbrotWindow, mandelbrotCanvasRef.current]);
 
   const socketInitializer = async () => {
-    // We just call it because we don't need anything else out of it
     await fetch("/api/socket");
 
     socket = io();
@@ -83,13 +90,18 @@ export default function Home() {
       console.log(msg);
     });
     mandelbrot();
+    julia();
   };
 
-  const mandelbrot = useCallback(() => {
+  const mandelbrot = () => {
     //drawSet(mandelbrotCanvasRef, mandelbrotDrawingFuncLsm, mandelbrotWindow);
     if (mandelbrotCanvasRef.current) {
-      const ctx = mandelbrotCanvasRef.current.getContext("2d");
+      let ctx = mandelbrotCanvasRef.current.getContext("2d");
+
       if (ctx !== null) {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         // @ts-ignore
         ctx.reset();
         const scalingFactor = getScalingFactors(mandelbrotWindow);
@@ -101,7 +113,6 @@ export default function Home() {
             const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
             const currentPoint = {x: 0.0, y: 0.0}
             const theIterations = computePoint(currentPoint, cx, cy)
-            //console.log('the iterations are ', cx, ',', cy, ' = ', theIterations);
             setColourUsingLevelSetMethod(theIterations, ctx);
             manXArray.push(theIterations);
             ctx.fillRect(ix, iy, 1, 1)
@@ -110,12 +121,12 @@ export default function Home() {
         }
         const stringMan = JSON.stringify(manYArray);
         const mystring = stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
-        console.log("CapyTalk MANDELBROT: ", mystring);
-        sendMessage(mystring);
+        sendMandelbrotMessage(mystring);
+        setMandelbrot2DArray('MANDELBROT: ' + mystring);
       }
         //mandelbrotDrawingFuncLsm(ctx, iterations, setColourUsingLevelSetMethod, mandelbrotWindow);
     }
-  }, [mandelbrotWindow, iterations, paletteNumber, threshold, canvasHeight, canvasWidth, mandelbrotCanvasRef.current]);
+  };
 
   function computePoint(point: {x: number; y: number}, cx: number, cy: number) {
     let x2 = point.x * point.x
@@ -140,38 +151,141 @@ export default function Home() {
         ctx.fillStyle = "#000"
     } else {
       const index = parseInt(paletteNumber.value);
-      //console.log('index is ', index, ' and palette is ', colourPalettes[index][iterations % colourPalettes[index].length]);
         // colour it according to the number of iterations it took to get to infinity
         ctx.fillStyle = colourPalettes[index][theIterations % colourPalettes[index].length]
     }
-}
-  const selectMethod = () => {
-  //console.log('select method:');
-    mandelbrot();
   }
-  const sendMessage = async (fractal2DArray: string) => {
-    socket.emit("fractalString", fractal2DArray );
+  const julia = () => {
+    //drawSet(document.getElementById("jset_canvas"), juliaDrawingFuncLsm, defaultJsetPlane)
+    // drawingFunc(ctx, max_iters, getColouringFunctionForMethod(method), plane)
+    if (juliaCanvasRef.current) {
+      const ctx = juliaCanvasRef.current.getContext("2d");
+      if (ctx !== null) {
+        // @ts-ignore
+        ctx.reset();
+
+        const scalingFactor = getScalingFactors(juliaWindow);
+        const juliaYArray = [];
+        for (let iy = 0; iy < canvasHeight; iy++) {
+          const y = juliaWindow.y_min + iy * scalingFactor.y
+          const juliaXArray = [];
+          for (let ix = 0; ix < canvasWidth; ix++) {
+            //const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
+            const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
+            const theIterations = computePoint(currentPoint, cx, cy)
+            setColourUsingLevelSetMethod(theIterations, ctx);
+            juliaXArray.push(theIterations);
+            ctx.fillRect(ix, iy, 1, 1)
+          }
+          juliaYArray.push(juliaXArray);
+        }
+        const stringMan = JSON.stringify(juliaYArray);
+        const mystring = stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
+        sendJuliaMessage(mystring);
+        setJulia2DArray('JULIA: ' + mystring);
+      }
+    }
   };
+
+  const sendMandelbrotMessage = (fractal2DArray: string) => {
+    socket?.emit("fractalMandelbrotString", fractal2DArray );
+  };
+
+  const sendJuliaMessage = (fractal2DArray: string) => {
+    socket?.emit("fractalJuliaString", fractal2DArray );
+  };
+
+  const setJuliaComplexNumber = useCallback((e: any) => {
+    console.log(e);
+    //let x = event.pageX - elemLeft;
+    //let y = event.pageY - elemTop;
+    if(mandelbrotCanvasRef.current) {
+       const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
+        const pos = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        const scalingFactors = getScalingFactors(mandelbrotWindow);
+        const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
+        const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
+        console.log('new complex cx, cy', newCx, newCy)
+        setCx(newCx);
+        setCy(newCy);
+    }
+  }, [mandelbrotCanvasRef.current]);
+
+  const zoom = (value: number) => () => {
+    if (value === 0) {
+      setMandelbrotWindow({
+        x_min: -2.5,
+        y_min: -1.25,
+        x_max: 0.8,
+        y_max: 1.25
+      });
+    }
+    if (value === 1) {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_max = tempWindow.x_max * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.75;
+      setMandelbrotWindow({...tempWindow});
+    }
+    else if (value === 2) {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.75;
+      setMandelbrotWindow({...tempWindow});
+    }
+    else if (value === 3) {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_max = tempWindow.x_max * 0.75;
+      tempWindow.y_min = tempWindow.y_min * 0.75;
+      setMandelbrotWindow({...tempWindow});
+    }
+    else if (value === 4) {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.75;
+      tempWindow.y_min = tempWindow.y_min * 0.75;
+      setMandelbrotWindow({...tempWindow});
+    }
+  }
 
   return (
     <Page>
-      <Label>Render Algorithm</Label>
-      <Select
+      <Label>Render Algorithm{" "}
+      <FractalSelect
         options={renderOptions}
         value={renderOption}
         onChange={(option) => {
           setRenderOption((option ?? renderOptions[1]) as OptionType);
         }}
-      /><br />
-      <Label>Color Palette</Label>
-      <Select
+      /></Label>
+      <Label>Color Palette{" "}
+      <FractalSelect
         options={palettes}
         value={paletteNumber}
         onChange={(option) => {
           setPaletteNumber((option ?? palettes[0]) as OptionType);
         }}
-      /><br />
-      <Label>Iterations</Label>
+      /></Label>
+      <Label>Height{" "}
+      <Input
+        type="number"
+        min={16}
+        max={1024}
+        value={canvasHeight}
+        step={1}
+        onChange={(value) => setCanvasHeight(value.target.valueAsNumber)}
+      /></Label>
+      <Label>Width{" "}
+      <Input
+        type="number"
+        min={16}
+        max={1024}
+        value={canvasWidth}
+        step={1}
+        onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
+      /></Label>
+      <Label>Iterations{" "}
       <Input
         type="number"
         min={25}
@@ -179,9 +293,9 @@ export default function Home() {
         value={iterations}
         step={25}
         onChange={(value) => setIterations(value.target.valueAsNumber)}
-      /><br />
+      /></Label>
       {renderOption.value && renderOption.value === 'lsm' && (
-        <><Label>Threshold</Label>
+        <Label>Threshold{"   "}
         <Input
           type="number"
           value={threshold}
@@ -189,21 +303,41 @@ export default function Home() {
           min={100}
           max={10000}
           onChange={(value) => setThreshold(value.target.valueAsNumber)}
-        />
-        <br />
-        </>
+        /></Label>
       )}
-
+      <ButtonContainer>
+      <Label>Zoom:</Label>
+        <StyledButton onClick={zoom(1)}>Upper-Left</StyledButton>
+        <StyledButton onClick={zoom(2)}>Upper-Right</StyledButton>
+        <StyledButton onClick={zoom(3)}>Lower-Left</StyledButton>
+        <StyledButton onClick={zoom(4)}>Lower-Right</StyledButton>
+        <StyledButton onClick={zoom(0)}>RESET</StyledButton>
+        </ButtonContainer>
+      <FractalContainer>
       <MandelbrotCanvas
         ref={mandelbrotCanvasRef}
         width={canvasWidth}
         height={canvasHeight}
+        onClick={setJuliaComplexNumber}
       />
+  <Scroller>
+        <ScrollDiv>
+          {mandelbrot2DArray}
+        </ScrollDiv>
+      </Scroller>
+  </FractalContainer>
+      <FractalContainer>
       <JuliaCanvas
         ref={juliaCanvasRef}
         width={canvasWidth}
         height={canvasHeight}
       />
+     <Scroller>
+        <ScrollDiv>
+          {julia2DArray}
+        </ScrollDiv>
+      </Scroller>
+        </FractalContainer>
     </Page>
   );
 }
@@ -211,19 +345,28 @@ export default function Home() {
 const Page = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 0.5rem;
   font-family: "Roboto", sans-serif;
-  font-size: 1rem;
+  font-size: 0.5rem;
 `;
 
+const FractalSelect = styled(Select)`
+  padding-left: 1rem; 
+  font-size: 1rem; 
+  max-width: 512px; 
+  `;
+
 const Label = styled.label`
-  font-size: 1.5rem;
-  padding: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  font-size: 1rem;
+  padding: 1rem;
 `;
 
 const Input = styled.input`
   min-height: 38px;
   padding: 0.6rem;
+  margin-left: 1rem ;
   font-size: 1rem;
   transition: all 100ms;
   background-color: hsl(0, 0%, 100%);
@@ -239,8 +382,36 @@ const Input = styled.input`
   }
 `;
 
+const FractalContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+
 const MandelbrotCanvas = styled.canvas`
-  float: left;
 `;
 const JuliaCanvas = styled.canvas`
+`;
+
+const ScrollDiv = styled.div`   
+    background-color: #F5F5F5;
+    border: 1px solid #DDDDDD;
+    border-radius: 4px 0 4px 0;
+    color: #3B3C3E;
+    font-size: 12px;
+    font-weight: bold;
+    left: -1px;
+    padding: 10px 7px 5px;
+`;
+
+const Scroller = styled.div`
+    height:248px;
+    overflow:scroll;
+    overflow-x:hidden;
+`;
+const ButtonContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+const StyledButton = styled.button`
+  width: 100px;  
 `;
