@@ -1,10 +1,9 @@
 import io, {Socket} from "socket.io-client";
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import Select from "react-select";
 import {
   colourPalettes,
-  mandelbrotDrawingFuncLsm,
 } from "@/utils/fractal";
 
 type OptionType = {
@@ -60,21 +59,19 @@ export default function Home() {
     y_max: 1.5
   })
   const [zoomWindow, setZoomWindow] = useState<[number, number, number, number]>([160, 120, 320, 240]);
+  //const [fractal2DArray, setFractal2DArray] = useState<number[][]>([]);
 
   const mandelbrotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     socketInitializer();
-    //init();
-    mandelbrot();
-    //julia();
   }, []);
 
-  const paletteArray: Array<string> = useMemo(
+  /*const paletteArray: string[] = useMemo(
     () => {
     return colourPalettes[parseInt(paletteNumber.value)];
-    }, [paletteNumber]);
+    }, [paletteNumber]);*/
 
   const socketInitializer = async () => {
     // We just call it because we don't need anything else out of it
@@ -85,95 +82,75 @@ export default function Home() {
     socket.on("newIncomingMessage", (msg) => {
       console.log(msg);
     });
+    mandelbrot();
   };
-  //const init = () => {
-  //  document.getElementById("palette").setAttribute("max", (colourPalettes.length - 1).toString())
-  //  setMsetWindowTo(defaultMsetPlane)
-  //  setZoomWindowTo(160, 120, 320, 240)
-  //}
 
   const mandelbrot = useCallback(() => {
-    console.log('drawing mandelbrot');
     //drawSet(mandelbrotCanvasRef, mandelbrotDrawingFuncLsm, mandelbrotWindow);
     if (mandelbrotCanvasRef.current) {
-      const ctx: CanvasRenderingContext2D | null = mandelbrotCanvasRef.current.getContext("2d");
+      const ctx = mandelbrotCanvasRef.current.getContext("2d");
       if (ctx !== null) {
-      //  ctx.reset();
+        // @ts-ignore
+        ctx.reset();
         const scalingFactor = getScalingFactors(mandelbrotWindow);
-        console.log("scalingFactor: ", scalingFactor);
+        const manYArray = [];
         for (let iy = 0; iy < canvasHeight; iy++) {
           const cy = mandelbrotWindow.y_min + iy * scalingFactor.y
-
+          const manXArray = [];
           for (let ix = 0; ix < canvasWidth; ix++) {
             const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
             const currentPoint = {x: 0.0, y: 0.0}
-            console.log('currentPoint: ', currentPoint)
-            const theIterations = computePoint(currentPoint, cx, cy, iterations)
-
-            setColourUsingLevelSetMethod(theIterations, iterations, ctx)
+            const theIterations = computePoint(currentPoint, cx, cy)
+            //console.log('the iterations are ', cx, ',', cy, ' = ', theIterations);
+            setColourUsingLevelSetMethod(theIterations, ctx);
+            manXArray.push(theIterations);
             ctx.fillRect(ix, iy, 1, 1)
           }
+          manYArray.push(manXArray);
         }
+        const stringMan = JSON.stringify(manYArray);
+        const mystring = stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
+        console.log("CapyTalk MANDELBROT: ", mystring);
+        sendMessage(mystring);
       }
         //mandelbrotDrawingFuncLsm(ctx, iterations, setColourUsingLevelSetMethod, mandelbrotWindow);
     }
-  }, [mandelbrotWindow, iterations, paletteNumber, threshold, canvasHeight, canvasWidth, mandelbrotCanvasRef]);
+  }, [mandelbrotWindow, iterations, paletteNumber, threshold, canvasHeight, canvasWidth, mandelbrotCanvasRef.current]);
 
-  function computePoint(point: {x: number; y: number}, cx: number, cy: number, maxIterations: number) {
-   // const threshold = document.getElementById("lsm-threshold").value
-
+  function computePoint(point: {x: number; y: number}, cx: number, cy: number) {
     let x2 = point.x * point.x
     let y2 = point.y * point.y
-    let theIterations = 0
-    while ((theIterations < maxIterations) && ((x2 + y2) < threshold)) {
+    let i = 0
+    while ((i < iterations) && ((x2 + y2) < threshold)) {
         let temp = x2 - y2 + cx
         point.y = 2 * point.x * point.y + cy
         point.x = temp
         x2 = point.x * point.x
         y2 = point.y * point.y
-        theIterations++
+        i++
     }
-    return theIterations
+    return i
 }
 
   function getScalingFactors(plane: FractalPlane) {
     return {x: (plane.x_max - plane.x_min) / (canvasWidth - 1), y: (plane.y_max - plane.y_min) / (canvasHeight - 1)}
   }
-  function setColourUsingLevelSetMethod(theIterations: number, maxIterations: number, ctx: CanvasRenderingContext2D) {
-    if (theIterations == maxIterations) { // we are in the set
+  function setColourUsingLevelSetMethod(theIterations: number, ctx: any) {
+    if (theIterations == iterations) { // we are in the set
         ctx.fillStyle = "#000"
     } else {
       const index = parseInt(paletteNumber.value);
+      //console.log('index is ', index, ' and palette is ', colourPalettes[index][iterations % colourPalettes[index].length]);
         // colour it according to the number of iterations it took to get to infinity
-        ctx.fillStyle = colourPalettes[index][iterations % colourPalettes[index].length]
+        ctx.fillStyle = colourPalettes[index][theIterations % colourPalettes[index].length]
     }
 }
-
-  const julia = () => {
-   // drawSet(juliaCanvasRef, juliaDrawingFuncLsm, juliaWindow);
-  }
-
-  /*function drawSet(canvasRef: HTMLCanvasElement, drawingFunc, plane) {
-    if (canvasRef.current)
-    const ctx = canvas.getContext("2d")
-    ctx.reset()
-    const method = document.getElementById('method').value
-
-    drawingFunc(ctx, iterations, getColouringFunctionForMethod(method), plane)
-}*/
-
   const selectMethod = () => {
-  console.log('select method:');
+  //console.log('select method:');
     mandelbrot();
-    julia();
   }
-  const sendMessage = async () => {
-    //socket.emit("createdMessage", { author: 'temp', message });
-    //setMessages((currentMsg) => [
-    //  ...currentMsg,
-    //  { author: 'temp', message },
-    //]);
-    //setMessage("");
+  const sendMessage = async (fractal2DArray: string) => {
+    socket.emit("fractalString", fractal2DArray );
   };
 
   return (

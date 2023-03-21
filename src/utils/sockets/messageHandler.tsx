@@ -4,7 +4,7 @@ import {Client, Server} from 'node-osc';
 
 export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) => {
 
-  oscServer.on('/pitft', function (msg) {
+  oscServer.on('/recursive-sound', function (msg) {
     console.log(`OSC message received: ${msg}`);
     //oscServer.close();
   });
@@ -24,6 +24,17 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     }
   };
 
+  const sendFractalToKyma = (fractalString: Array<Array<number>>) => {
+    if(oscClient) {
+      console.log('sending fractal to Kyma', fractalString);
+      // @ts-ignore
+      oscClient.send('/fractal/2DArray', fractalString, () => {
+      });
+    }
+  };
+
+
   socket.on("createdMessage", createdMessage);
+  socket.on("fractalString", sendFractalToKyma)
 
 };
