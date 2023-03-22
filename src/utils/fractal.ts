@@ -32,11 +32,10 @@ export const colourPalettes =
 /*
 export const xResolution = document.getElementById("mset_canvas").clientWidth
 export const yResolution = document.getElementById("mset_canvas").clientHeight
-*/
 
 export const defaultMsetPlane = {x_min: -2.5, y_min: -1.25, x_max: 0.8, y_max: 1.25}
 export const defaultJsetPlane = {x_min: -2.0, y_min: -1.5, x_max: 2.0, y_max: 1.5}
-/*
+
 let paletteNumber = 0
 
 const ZOOM_MODE = 'zoom'
@@ -199,7 +198,7 @@ export function setColourUsingBinaryDecompositionMethod2(iterations, maxIteratio
         }
     }
 }
-*/
+
 export function setColourUsingLevelSetMethod(iterations, maxIterations, ctx) {
     if (iterations == maxIterations) { // we are in the set
         ctx.fillStyle = "#000"
@@ -225,7 +224,7 @@ export function mandelbrotDrawingFuncLsm(ctx, maxIterations, pointColouringFunc,
         }
     }
 }
-/*
+
 export function mandelbrotDrawingFuncDem(ctx, maxIterations, plane) {
     const scalingFactor = getScalingFactors(plane)
     const delta = document.getElementById('dem-threshold').value * scalingFactor.x
@@ -290,13 +289,13 @@ export function computePointDem(point, cx, cy, maxIterations) {
 
     return dist
 }
-*/
+
 export function getScalingFactors(plane) {
     // calculate the proportion in the difference between the points
     // on the mathematical plane and the actual canvas size (screen resolution)
     return {x: (plane.x_max - plane.x_min) / (xResolution - 1), y: (plane.y_max - plane.y_min) / (yResolution - 1)}
 }
-/*
+
 export function juliaDrawingFuncLsm(ctx, maxIterations, pointColouringFunc, plane) {
     const scalingFactor = getScalingFactors(plane)
 
