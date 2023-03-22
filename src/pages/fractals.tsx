@@ -74,7 +74,7 @@ export default function Home() {
   useEffect(() => {
     console.log('rendering julia')
     julia();
-  }, [cx, cy, iterations, paletteNumber, threshold, canvasHeight, canvasWidth, juliaCanvasRef.current]);
+  }, [cx, cy, iterations, paletteNumber, threshold, canvasHeight, canvasWidth, juliaWindow, juliaCanvasRef.current]);
 
   useEffect(() => {
     console.log('rendering mandelbrot', mandelbrotWindow)
@@ -94,7 +94,6 @@ export default function Home() {
   };
 
   const mandelbrot = () => {
-    //drawSet(mandelbrotCanvasRef, mandelbrotDrawingFuncLsm, mandelbrotWindow);
     if (mandelbrotCanvasRef.current) {
       let ctx = mandelbrotCanvasRef.current.getContext("2d");
 
@@ -124,7 +123,6 @@ export default function Home() {
         sendMandelbrotMessage(mystring);
         setMandelbrot2DArray('MANDELBROT: ' + mystring);
       }
-        //mandelbrotDrawingFuncLsm(ctx, iterations, setColourUsingLevelSetMethod, mandelbrotWindow);
     }
   };
 
@@ -151,13 +149,10 @@ export default function Home() {
         ctx.fillStyle = "#000"
     } else {
       const index = parseInt(paletteNumber.value);
-        // colour it according to the number of iterations it took to get to infinity
         ctx.fillStyle = colourPalettes[index][theIterations % colourPalettes[index].length]
     }
   }
   const julia = () => {
-    //drawSet(document.getElementById("jset_canvas"), juliaDrawingFuncLsm, defaultJsetPlane)
-    // drawingFunc(ctx, max_iters, getColouringFunctionForMethod(method), plane)
     if (juliaCanvasRef.current) {
       const ctx = juliaCanvasRef.current.getContext("2d");
       if (ctx !== null) {
@@ -170,7 +165,6 @@ export default function Home() {
           const y = juliaWindow.y_min + iy * scalingFactor.y
           const juliaXArray = [];
           for (let ix = 0; ix < canvasWidth; ix++) {
-            //const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
             const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
             const theIterations = computePoint(currentPoint, cx, cy)
             setColourUsingLevelSetMethod(theIterations, ctx);
@@ -197,8 +191,6 @@ export default function Home() {
 
   const setJuliaComplexNumber = useCallback((e: any) => {
     console.log(e);
-    //let x = event.pageX - elemLeft;
-    //let y = event.pageY - elemTop;
     if(mandelbrotCanvasRef.current) {
        const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
         const pos = {
@@ -214,7 +206,7 @@ export default function Home() {
     }
   }, [mandelbrotCanvasRef.current]);
 
-  const zoom = (value: number) => () => {
+  const zoomMandelbrot = (value: number) => () => {
     if (value === 0) {
       setMandelbrotWindow({
         x_min: -2.5,
@@ -249,8 +241,44 @@ export default function Home() {
     }
   }
 
+  const zoomJulia = (value: string) => () => {
+    if (value === 'reset') {
+      setJuliaWindow({
+        x_min: -2.0,
+        y_min: -1.5,
+        x_max: 2.0,
+        y_max: 1.5
+      });
+    }
+    if (value === 'ul') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_max = tempWindow.x_max * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.75;
+      setJuliaWindow({...tempWindow});
+    }
+    else if (value === 'ur') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.75;
+      setJuliaWindow({...tempWindow});
+    }
+    else if (value === 'll') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_max = tempWindow.x_max * 0.75;
+      tempWindow.y_min = tempWindow.y_min * 0.75;
+      setJuliaWindow({...tempWindow});
+    }
+    else if (value === 'lr') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.75;
+      tempWindow.y_min = tempWindow.y_min * 0.75;
+      setJuliaWindow({...tempWindow});
+    }
+  }
+
   return (
     <Page>
+      <ButtonContainer>
       <Label>Render Algorithm{" "}
       <FractalSelect
         options={renderOptions}
@@ -267,6 +295,8 @@ export default function Home() {
           setPaletteNumber((option ?? palettes[0]) as OptionType);
         }}
       /></Label>
+      </ButtonContainer>
+      <ButtonContainer>
       <Label>Height{" "}
       <Input
         type="number"
@@ -284,7 +314,8 @@ export default function Home() {
         value={canvasWidth}
         step={1}
         onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
-      /></Label>
+      /></Label></ButtonContainer>
+      <ButtonContainer>
       <Label>Iterations{" "}
       <Input
         type="number"
@@ -304,40 +335,83 @@ export default function Home() {
           max={10000}
           onChange={(value) => setThreshold(value.target.valueAsNumber)}
         /></Label>
-      )}
+      )}</ButtonContainer>
       <ButtonContainer>
-      <Label>Zoom:</Label>
-        <StyledButton onClick={zoom(1)}>Upper-Left</StyledButton>
-        <StyledButton onClick={zoom(2)}>Upper-Right</StyledButton>
-        <StyledButton onClick={zoom(3)}>Lower-Left</StyledButton>
-        <StyledButton onClick={zoom(4)}>Lower-Right</StyledButton>
-        <StyledButton onClick={zoom(0)}>RESET</StyledButton>
-        </ButtonContainer>
+        <Label>Zoom Mandelbrot</Label>
+        <StyledButton onClick={zoomMandelbrot(1)}>Upper-Left</StyledButton>
+        <StyledButton onClick={zoomMandelbrot(2)}>Upper-Right</StyledButton>
+        <StyledButton onClick={zoomMandelbrot(3)}>Lower-Left</StyledButton>
+        <StyledButton onClick={zoomMandelbrot(4)}>Lower-Right</StyledButton>
+        <StyledButton onClick={zoomMandelbrot(0)}>RESET</StyledButton>
+      </ButtonContainer>
+      <ButtonContainer>
+        <ButtonColumn>
+        <Label>Zoom Julia</Label>
+         <StyledButton onClick={zoomJulia('reset')}>RESET</StyledButton>
+          </ButtonColumn>
+        <ButtonColumn>
+          <ButtonRow>
+            <StyledButton onClick={zoomJulia('ul')}>Upper-Left</StyledButton>
+            <StyledButton onClick={zoomJulia('up')}>Up</StyledButton>
+          <StyledButton onClick={zoomJulia('ur')}>Upper-Right</StyledButton>
+          </ButtonRow>
+          <ButtonRow>
+            <StyledButton onClick={zoomJulia('l')}>Left</StyledButton>
+            <StyledButton onClick={zoomJulia('in')}>In</StyledButton>
+            <StyledButton onClick={zoomJulia('r')}>Right</StyledButton>
+          </ButtonRow>
+          <ButtonRow>
+            <StyledButton onClick={zoomJulia('ll')}>Lower-Left</StyledButton>
+            <StyledButton onClick={zoomJulia('d')}>Down</StyledButton>
+            <StyledButton onClick={zoomJulia('lr')}>Lower-Right</StyledButton>
+          </ButtonRow>
+        </ButtonColumn>
+      </ButtonContainer>
+      <ButtonContainer>
+        <Label>Julia Complex Number (click on Mandelbrot)</Label>
+        <Label>cx
+        <ComplexInput
+          type="number"
+          value={cx}
+          min={-2.0}
+          max={2.0}
+          onChange={(value) => setCx(value.target.valueAsNumber)}
+        /></Label>
+        <Label>cy
+        <ComplexInput
+          type="number"
+          value={cy}
+          min={-2.0}
+          max={2.0}
+          onChange={(value) => setCy(value.target.valueAsNumber)}
+        /></Label>
+      </ButtonContainer>
       <FractalContainer>
-      <MandelbrotCanvas
-        ref={mandelbrotCanvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        onClick={setJuliaComplexNumber}
-      />
-  <Scroller>
-        <ScrollDiv>
-          {mandelbrot2DArray}
-        </ScrollDiv>
-      </Scroller>
-  </FractalContainer>
+        <MandelbrotCanvas
+          ref={mandelbrotCanvasRef}
+          width={canvasWidth}
+          height={canvasHeight}
+          onClick={setJuliaComplexNumber}
+        />
+        <Scroller>
+          <ScrollDiv>
+            {mandelbrot2DArray}
+          </ScrollDiv>
+        </Scroller>
+      </FractalContainer>
+      <br />
       <FractalContainer>
-      <JuliaCanvas
-        ref={juliaCanvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-      />
-     <Scroller>
-        <ScrollDiv>
-          {julia2DArray}
-        </ScrollDiv>
-      </Scroller>
-        </FractalContainer>
+        <JuliaCanvas
+          ref={juliaCanvasRef}
+          width={canvasWidth}
+          height={canvasHeight}
+        />
+        <Scroller>
+          <ScrollDiv>
+            {julia2DArray}
+          </ScrollDiv>
+        </Scroller>
+      </FractalContainer>
     </Page>
   );
 }
@@ -361,6 +435,8 @@ const Label = styled.label`
   flex-direction: row;
   font-size: 1rem;
   padding: 1rem;
+  height: 100%;
+  align-items: center;
 `;
 
 const Input = styled.input`
@@ -380,6 +456,10 @@ const Input = styled.input`
     transition: border-color 0.3s ease-in-out;
     outline: 0;
   }
+`;
+
+const ComplexInput = styled(Input)`
+  width: 200px;
 `;
 
 const FractalContainer = styled.div`
@@ -404,14 +484,29 @@ const ScrollDiv = styled.div`
 `;
 
 const Scroller = styled.div`
-    height:248px;
+  height: 256px;
     overflow:scroll;
     overflow-x:hidden;
 `;
 const ButtonContainer = styled.div`
   display: flex;
   flex-direction: row;
+  align-items: center;
 `;
+
+const ButtonRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const ButtonColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
 const StyledButton = styled.button`
-  width: 100px;  
+  width: 80px;  
+  min-height: 28px;  
 `;
