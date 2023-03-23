@@ -85,7 +85,7 @@ export function getScalingFactors(plane: FractalPlane, xResolution: number, yRes
     return {x: (plane.x_max - plane.x_min) / (xResolution - 1), y: (plane.y_max - plane.y_min) / (yResolution - 1)}
 }
 
-export function computePoint(point: Point, cx: number, cy: number, maxIterations: number, threshold: number): number {
+function computePoint(point: Point, cx: number, cy: number, maxIterations: number, threshold: number): number {
     let x2 = point.x * point.x
     let y2 = point.y * point.y
     let iterations = 0

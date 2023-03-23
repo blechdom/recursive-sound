@@ -2,10 +2,10 @@ import io, {Socket} from "socket.io-client";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import Select from "react-select";
-import XY from "../components/XY";
+import { useGesture } from '@use-gesture/react';
+
 import {
   colourPalettes,
-  computePoint,
   defaultJuliaPlane,
   defaultMandelbrotPlane,
   generateJulia,
@@ -35,6 +35,7 @@ export default function Home() {
   const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
   const [mandelbrot2DArray, setMandelbrot2DArray] = useState<string>("");
   const [julia2DArray, setJulia2DArray] = useState<string>("");
+  const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
   const [cx, setCx] = useState<number>(-0.7);
   const [cy, setCy] = useState<number>(0.27015);
 
@@ -46,12 +47,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    console.log('rendering julia')
+    console.log("julia window ", juliaWindow);
     julia();
   }, [cx, cy, maxIterations, paletteNumber, threshold, canvasHeight, canvasWidth, juliaWindow]);
 
   useEffect(() => {
-    console.log('rendering mandelbrot', mandelbrotWindow)
     mandelbrot();
   }, [maxIterations, paletteNumber, threshold, canvasHeight, canvasWidth, mandelbrotWindow]);
 
@@ -126,8 +126,7 @@ export default function Home() {
     socket?.emit("fractalJuliaString", fractal2DArray );
   };
 
-  const setJuliaComplexNumber = useCallback((e: any) => {
-    console.log(e);
+  const setJuliaComplexNumberByClick = useCallback((e: any) => {
     if(mandelbrotCanvasRef.current) {
        const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
         const pos = {
@@ -137,50 +136,133 @@ export default function Home() {
         const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
         const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
         const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
-        console.log('new complex cx, cy', newCx, newCy)
         setCx(newCx);
         setCy(newCy);
     }
   }, [canvasHeight, canvasWidth, mandelbrotWindow]);
 
-  const zoomMandelbrot = (value: number) => () => {
-    if (value === 0) {
-      setMandelbrotWindow(defaultMandelbrotPlane);
+  const setJuliaComplexNumber = useCallback((e: any) => {
+    if(mandelbrotCanvasRef.current && mandelbrotMouseDown) {
+       const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
+        const pos = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
+        const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
+        const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
+        setCx(newCx);
+        setCy(newCy);
     }
-    if (value === 1) {
+  }, [canvasHeight, canvasWidth, mandelbrotWindow, mandelbrotMouseDown]);
+
+  function setDownForMandelbrotMouseDown() {
+    setMandelbrotMouseDown(true);
+  }
+  function setUpForMandelbrotMouseDown() {
+    setMandelbrotMouseDown(false);
+  }
+
+  const zoomMandelbrot = (value: string) => () => {
+    if (value === 'reset') {
+      console.log('reset to ', defaultMandelbrotPlane);
+      setMandelbrotWindow({
+        x_min: -2.5,
+        y_min: -1.25,
+        x_max: 0.8,
+        y_max: 1.25
+      });
+    }
+    if (value === 'ul') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_max = tempWindow.x_max * 0.75;
       tempWindow.y_max = tempWindow.y_max * 0.75;
       setMandelbrotWindow({...tempWindow});
     }
-    else if (value === 2) {
+    if (value === 'l') {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_max = tempWindow.x_max * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.885;
+      tempWindow.y_min = tempWindow.y_min * 0.885;
+      setMandelbrotWindow({...tempWindow});
+    }
+    if (value === 'r') {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.885;
+      tempWindow.y_min = tempWindow.y_min * 0.885;
+      setMandelbrotWindow({...tempWindow});
+    }
+    else if (value === 'ur') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_max = tempWindow.y_max * 0.75;
       setMandelbrotWindow({...tempWindow});
     }
-    else if (value === 3) {
+    else if (value === 'll') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_max = tempWindow.x_max * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
       setMandelbrotWindow({...tempWindow});
     }
-    else if (value === 4) {
+    else if (value === 'lr') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
+      setMandelbrotWindow({...tempWindow});
+    }
+    if (value === 'up') {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.y_max = tempWindow.y_max * 0.75;
+      tempWindow.x_max = tempWindow.x_max * 0.885;
+      tempWindow.x_min = tempWindow.x_min * 0.885;
+      setMandelbrotWindow({...tempWindow});
+    }
+    if (value === 'd') {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.y_min = tempWindow.y_min * 0.75;
+      tempWindow.x_max = tempWindow.x_max * 0.885;
+      tempWindow.x_min = tempWindow.x_min * 0.885;
+      setMandelbrotWindow({...tempWindow});
+    }
+    else if (value === 'in') {
+      const tempWindow = mandelbrotWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.92;
+      tempWindow.y_min = tempWindow.y_min * 0.92;
+      tempWindow.x_max = tempWindow.x_max * 0.92;
+      tempWindow.y_max = tempWindow.y_max * 0.92;
       setMandelbrotWindow({...tempWindow});
     }
   }
 
   const zoomJulia = (value: string) => () => {
     if (value === 'reset') {
-      setJuliaWindow(defaultJuliaPlane);
+      console.log('reset to ', defaultJuliaPlane);
+      setJuliaWindow({
+        x_min: -2.0,
+        y_min: -1.5,
+        x_max: 2.0,
+        y_max: 1.5
+      });
     }
     if (value === 'ul') {
       const tempWindow = juliaWindow;
       tempWindow.x_max = tempWindow.x_max * 0.75;
       tempWindow.y_max = tempWindow.y_max * 0.75;
+      setJuliaWindow({...tempWindow});
+    }
+    if (value === 'l') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_max = tempWindow.x_max * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.885;
+      tempWindow.y_min = tempWindow.y_min * 0.885;
+      setJuliaWindow({...tempWindow});
+    }
+    if (value === 'r') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.75;
+      tempWindow.y_max = tempWindow.y_max * 0.885;
+      tempWindow.y_min = tempWindow.y_min * 0.885;
       setJuliaWindow({...tempWindow});
     }
     else if (value === 'ur') {
@@ -199,6 +281,28 @@ export default function Home() {
       const tempWindow = juliaWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
+      setJuliaWindow({...tempWindow});
+    }
+    if (value === 'up') {
+      const tempWindow = juliaWindow;
+      tempWindow.y_max = tempWindow.y_max * 0.75;
+      tempWindow.x_max = tempWindow.x_max * 0.885;
+      tempWindow.x_min = tempWindow.x_min * 0.885;
+      setJuliaWindow({...tempWindow});
+    }
+    if (value === 'd') {
+      const tempWindow = juliaWindow;
+      tempWindow.y_min = tempWindow.y_min * 0.75;
+      tempWindow.x_max = tempWindow.x_max * 0.885;
+      tempWindow.x_min = tempWindow.x_min * 0.885;
+      setJuliaWindow({...tempWindow});
+    }
+    else if (value === 'in') {
+      const tempWindow = juliaWindow;
+      tempWindow.x_min = tempWindow.x_min * 0.92;
+      tempWindow.y_min = tempWindow.y_min * 0.92;
+      tempWindow.x_max = tempWindow.x_max * 0.92;
+      tempWindow.y_max = tempWindow.y_max * 0.92;
       setJuliaWindow({...tempWindow});
     }
   }
@@ -264,12 +368,27 @@ export default function Home() {
         /></Label>
       )}</ButtonContainer>
       <ButtonContainer>
+        <ButtonColumn>
         <Label>Zoom Mandelbrot</Label>
-        <StyledButton onClick={zoomMandelbrot(1)}>Upper-Left</StyledButton>
-        <StyledButton onClick={zoomMandelbrot(2)}>Upper-Right</StyledButton>
-        <StyledButton onClick={zoomMandelbrot(3)}>Lower-Left</StyledButton>
-        <StyledButton onClick={zoomMandelbrot(4)}>Lower-Right</StyledButton>
-        <StyledButton onClick={zoomMandelbrot(0)}>RESET</StyledButton>
+         <StyledButton onClick={zoomMandelbrot('reset')}>RESET</StyledButton>
+          </ButtonColumn>
+        <ButtonColumn>
+          <ButtonRow>
+            <StyledButton onClick={zoomMandelbrot('ul')}>Upper-Left</StyledButton>
+            <StyledButton onClick={zoomMandelbrot('up')}>Up</StyledButton>
+          <StyledButton onClick={zoomMandelbrot('ur')}>Upper-Right</StyledButton>
+          </ButtonRow>
+          <ButtonRow>
+            <StyledButton onClick={zoomMandelbrot('l')}>Left</StyledButton>
+            <StyledButton onClick={zoomMandelbrot('in')}>In</StyledButton>
+            <StyledButton onClick={zoomMandelbrot('r')}>Right</StyledButton>
+          </ButtonRow>
+          <ButtonRow>
+            <StyledButton onClick={zoomMandelbrot('ll')}>Lower-Left</StyledButton>
+            <StyledButton onClick={zoomMandelbrot('d')}>Down</StyledButton>
+            <StyledButton onClick={zoomMandelbrot('lr')}>Lower-Right</StyledButton>
+          </ButtonRow>
+        </ButtonColumn>
       </ButtonContainer>
       <ButtonContainer>
         <ButtonColumn>
@@ -312,14 +431,16 @@ export default function Home() {
           max={2.0}
           onChange={(value) => setCy(value.target.valueAsNumber)}
         /></Label>
-        <XY currentX={scaleCx} currentY={scaleCy}/>
       </ButtonContainer>
       <FractalContainer>
         <MandelbrotCanvas
           ref={mandelbrotCanvasRef}
           width={canvasWidth}
           height={canvasHeight}
-          onClick={setJuliaComplexNumber}
+          onMouseDown={setDownForMandelbrotMouseDown}
+          onMouseUp={setUpForMandelbrotMouseDown}
+          onMouseMove={setJuliaComplexNumber}
+          onClick={setJuliaComplexNumberByClick}
         />
         <Scroller>
           <ScrollDiv>
@@ -435,6 +556,6 @@ const ButtonColumn = styled.div`
 `;
 
 const StyledButton = styled.button`
-  width: 80px;  
-  min-height: 28px;  
+  width: 100px;  
+  min-height: 32px;  
 `;
