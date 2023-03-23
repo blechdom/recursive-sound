@@ -8,7 +8,44 @@
 //
 
 // set up colour palettes for colouring the levels outside the set itself
-export const colourPalettes =
+
+export type FractalPlane = {
+  x_min: number;
+  y_min: number;
+  x_max: number;
+  y_max: number;
+};
+
+export const defaultMandelbrotPlane: FractalPlane = {
+    x_min: -2.5,
+    y_min: -1.25,
+    x_max: 0.8,
+    y_max: 1.25
+  };
+
+  export const defaultJuliaPlane: FractalPlane = {
+    x_min: -2.0,
+    y_min: -1.5,
+    x_max: 2.0,
+    y_max: 1.5
+  };
+
+export type Point = { x: number; y: number };
+
+export type OptionType = {
+  value: string;
+  label: string;
+};
+
+export const renderOptions: OptionType[] = [
+  { value: "lsm", label: "Level Set Method (LSM)" },
+  { value: "dem", label: "Distance Estimator Method (DEM)" },
+  { value: "bdm", label: "Binary Decomposition Method (BDM)" },
+  { value: "tdm", label: "Trinary Decomposition Method (TDM)" },
+  { value: "bdm2", label: "Binary Decomposition Method II (BDM2)" },
+];
+
+export const colourPalettes: string[][] =
     [
         ['#00429d', '#1448a0', '#204fa3', '#2955a6', '#315ca9', '#3862ac', '#3f69af', '#466fb2', '#4c76b5', '#527db7', '#5884ba', '#5e8abd', '#6491c0', '#6a98c2', '#709fc5', '#76a6c8', '#7cadca', '#83b4cd', '#89bbcf', '#90c2d2', '#97c9d4', '#9fd0d6', '#a7d6d8', '#afddda', '#b8e4dc', '#c2eade', '#ccf1e0', '#d9f7e1', '#e8fce1', '#ffffe0'],
         ['#94003a', '#98163e', '#9c2341', '#a12e45', '#a53849', '#a9414d', '#ae4951', '#b25155', '#b65959', '#ba615e', '#be6962', '#c27167', '#c6796b', '#ca8070', '#cd8874', '#d19079', '#d5977e', '#d99f83', '#dca689', '#e0ae8e', '#e3b694', '#e7bd9a', '#eac5a0', '#edcda6', '#f1d4ad', '#f4dcb4', '#f7e4bc', '#faebc5', '#fdf3cf', '#fffadf'],
@@ -28,8 +65,152 @@ export const colourPalettes =
         ['#94003a', '#95053b', '#960a3c', '#970f3e', '#98133f', '#991640', '#9a1941', '#9a1c42', '#9b1f44', '#9c2145', '#9d2446', '#9e2647', '#9f2949', '#a02b4a', '#a12d4b', '#a22f4c', '#a3314e', '#a3334f', '#a43550', '#a53751', '#a63953', '#a73b54', '#a83d55', '#a93f57', '#a94058', '#aa4259', '#ab445a', '#ac465c', '#ad485d', '#ae495e', '#af4b60', '#af4d61', '#b04e62', '#b15064', '#b25265', '#b35466', '#b45568', '#b45769', '#b5596a', '#b65a6c', '#b75c6d', '#b85e6e', '#b85f70', '#b96171', '#ba6273', '#bb6474', '#bc6675', '#bc6777', '#bd6978', '#be6b7a', '#bf6c7b', '#c06e7c', '#c06f7e', '#c1717f', '#c27381', '#c37482', '#c37683', '#c47785', '#c57986', '#c67b88', '#c67c89', '#c77e8b', '#c87f8c', '#c9818e', '#c9838f', '#ca8491', '#cb8692', '#cc8793', '#cc8995', '#cd8b96', '#ce8c98', '#cf8e99', '#cf8f9b', '#d0919c', '#d1929e', '#d2949f', '#d296a1', '#d397a3', '#d499a4', '#d49aa6', '#d59ca7', '#d69ea9', '#d79faa', '#d7a1ac', '#d8a2ad', '#d9a4af', '#d9a5b1', '#daa7b2', '#dba9b4', '#dcaab5', '#dcacb7', '#ddadb8', '#deafba', '#deb0bc', '#dfb2bd', '#e0b4bf', '#e1b5c1', '#e1b7c2', '#e2b8c4', '#e3bac6', '#e4bbc7', '#e4bdc9', '#e5bfcb', '#e6c0cc', '#e6c2ce', '#e7c3d0', '#e8c5d2', '#e9c6d3', '#e9c8d5', '#eac9d7', '#ebcbd9', '#ecccda', '#edcedc', '#edd0de', '#eed1e0', '#efd3e2', '#f0d4e4', '#f1d6e6', '#f2d7e7', '#f3d9ea', '#f4daec', '#f5dbee', '#f6ddf0', '#f7def2', '#f8e0f4', '#f9e1f7', '#fbe2fa', '#ffe2ff'],
         ['#FFFFFF', '#000000', '#FFFFFF', '#000000', '#FFFFFF', '#000000', '#FFFFFF', '#000000', '#FFFFFF', '#000000', '#FFFFFF', '#000000', '#FFFFFF', '#000000', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF',],
         ['#FFFFFF']
-    ]
-/*
+    ];
+
+export function setColourUsingLevelSetMethod(
+  iterations: number,
+  maxIterations: number,
+  ctx: CanvasRenderingContext2D,
+  palette: number) {
+    if (iterations == maxIterations) { // we are in the set
+        ctx.fillStyle = "#000"
+    } else {
+        // colour it according to the number of iterations it took to get to infinity
+      //console.log('palette: ', palette);
+        ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
+    }
+}
+
+export function getScalingFactors(plane: FractalPlane, xResolution: number, yResolution: number) {
+    return {x: (plane.x_max - plane.x_min) / (xResolution - 1), y: (plane.y_max - plane.y_min) / (yResolution - 1)}
+}
+
+export function computePoint(point: Point, cx: number, cy: number, maxIterations: number, threshold: number): number {
+    let x2 = point.x * point.x
+    let y2 = point.y * point.y
+    let iterations = 0
+    while ((iterations < maxIterations) && ((x2 + y2) < threshold)) {
+        let temp = x2 - y2 + cx
+        point.y = 2 * point.x * point.y + cy
+        point.x = temp
+        x2 = point.x * point.x
+        y2 = point.y * point.y
+        iterations++
+    }
+    return iterations
+}
+export function generateMandelbrot(
+  canvas: HTMLCanvasElement,
+  mandelbrotWindow: FractalPlane,
+  canvasWidth: number,
+  canvasHeight: number,
+  maxIterations : number,
+  threshold: number,
+  palette: number
+): string {
+  const ctx = canvas.getContext("2d");
+  if (ctx !== null) {
+    // @ts-ignore
+    ctx.reset();
+    const scalingFactor = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
+    const manYArray = [];
+    for (let iy = 0; iy < canvasHeight; iy++) {
+      const cy = mandelbrotWindow.y_min + iy * scalingFactor.y
+      const manXArray = [];
+      for (let ix = 0; ix < canvasWidth; ix++) {
+        const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
+        const currentPoint = {x: 0.0, y: 0.0}
+        const i = computePoint(currentPoint, cx, cy, maxIterations , threshold);
+        setColourUsingLevelSetMethod(i, maxIterations , ctx, palette);
+        manXArray.push(i);
+        ctx.fillRect(ix, iy, 1, 1)
+      }
+      manYArray.push(manXArray);
+    }
+    const stringMan = JSON.stringify(manYArray);
+    return stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g, ' ');
+  }
+  return "";
+}
+
+  export function generateJulia (
+    canvas: HTMLCanvasElement,
+    juliaWindow: FractalPlane,
+    canvasWidth: number,
+    canvasHeight: number,
+    maxIterations : number,
+    threshold: number,
+    cx: number,
+    cy: number,
+    palette: number
+  ): string {
+    const ctx = canvas.getContext("2d");
+    if (ctx !== null) {
+      // @ts-ignore
+      ctx.reset();
+      const scalingFactor = getScalingFactors(juliaWindow, canvasWidth, canvasHeight);
+      const juliaYArray = [];
+      for (let iy = 0; iy < canvasHeight; iy++) {
+        const y = juliaWindow.y_min + iy * scalingFactor.y
+        const juliaXArray = [];
+        for (let ix = 0; ix < canvasWidth; ix++) {
+          const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
+          const i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+          setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
+          juliaXArray.push(i);
+          ctx.fillRect(ix, iy, 1, 1)
+        }
+        juliaYArray.push(juliaXArray);
+      }
+      const stringJulia = JSON.stringify(juliaYArray);
+      return stringJulia.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
+    }
+    return "";
+  }
+
+/*export function mandelbrot(
+  canvas: HTMLCanvasElement,
+  canvasWidth: number,
+  canvasHeight: number,
+  mandelbrotWindow:
+    FractalPlane,
+  iterations: number,
+  threshold: number
+): string {
+    if (canvas) {
+      let ctx = canvas.current.getContext("2d");
+
+      if (ctx !== null) {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        // @ts-ignore
+        ctx.reset();
+        const scalingFactor = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
+        const manYArray = [];
+        for (let iy = 0; iy < canvasHeight; iy++) {
+          const cy = mandelbrotWindow.y_min + iy * scalingFactor.y
+          const manXArray = [];
+          for (let ix = 0; ix < canvasWidth; ix++) {
+            const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
+            const currentPoint = {x: 0.0, y: 0.0}
+            const theIterations = computePoint(currentPoint, cx, cy, iterations, threshold);
+            //setColourUsingLevelSetMethod(theIterations, ctx);
+            manXArray.push(theIterations);
+            ctx.fillRect(ix, iy, 1, 1)
+          }
+          manYArray.push(manXArray);
+        }
+        const stringMan = JSON.stringify(manYArray);
+        const mystring = stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
+        //sendMandelbrotMessage(mystring);
+        return mystring;
+      }
+      else return "";
+    }
+    else return "";
+  }
+
 export const xResolution = document.getElementById("mset_canvas").clientWidth
 export const yResolution = document.getElementById("mset_canvas").clientHeight
 
@@ -53,6 +234,8 @@ class CanvasRectangleSnapshot {
 }
 
 let canvasBeforeZoomBox = null
+
+
 
 export function init() {
     document.getElementById("palette").setAttribute("max", (colourPalettes.length - 1).toString())
@@ -290,12 +473,6 @@ export function computePointDem(point, cx, cy, maxIterations) {
     return dist
 }
 
-export function getScalingFactors(plane) {
-    // calculate the proportion in the difference between the points
-    // on the mathematical plane and the actual canvas size (screen resolution)
-    return {x: (plane.x_max - plane.x_min) / (xResolution - 1), y: (plane.y_max - plane.y_min) / (yResolution - 1)}
-}
-
 export function juliaDrawingFuncLsm(ctx, maxIterations, pointColouringFunc, plane) {
     const scalingFactor = getScalingFactors(plane)
 
@@ -322,23 +499,6 @@ export function juliaDrawingFuncLsm(ctx, maxIterations, pointColouringFunc, plan
     const stringJulia = JSON.stringify(yArray);
     const mystring = stringJulia.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
     console.log("CapyTalk JULIA: ", mystring);
-}
-
-export function computePoint(point, cx, cy, maxIterations) {
-    const threshold = document.getElementById("lsm-threshold").value
-
-    let x2 = point.x * point.x
-    let y2 = point.y * point.y
-    let iterations = 0
-    while ((iterations < maxIterations) && ((x2 + y2) < threshold)) {
-        let temp = x2 - y2 + cx
-        point.y = 2 * point.x * point.y + cy
-        point.x = temp
-        x2 = point.x * point.x
-        y2 = point.y * point.y
-        iterations++
-    }
-    return iterations
 }
 
 export function getMousePos(evt, canvas) {
