@@ -8,29 +8,30 @@
 //
 
 // set up colour palettes for colouring the levels outside the set itself
+import BigNumber from "bignumber.js";
 
 export type FractalPlane = {
-  x_min: number;
-  y_min: number;
-  x_max: number;
-  y_max: number;
+  x_min: BigNumber;
+  y_min: BigNumber;
+  x_max: BigNumber;
+  y_max: BigNumber;
 };
 
 export const defaultMandelbrotPlane: FractalPlane = {
-    x_min: -2.5,
-    y_min: -1.25,
-    x_max: 0.8,
-    y_max: 1.25
+    x_min: new BigNumber(-2.5),
+    y_min: new BigNumber(-1.25),
+    x_max: new BigNumber(0.8),
+    y_max: new BigNumber(1.25)
   };
 
   export const defaultJuliaPlane: FractalPlane = {
-    x_min: -2.0,
-    y_min: -1.5,
-    x_max: 2.0,
-    y_max: 1.5
+    x_min: new BigNumber(-2.0),
+    y_min: new BigNumber(-1.5),
+    x_max: new BigNumber(2.0),
+    y_max: new BigNumber(1.5)
   };
 
-export type Point = { x: number; y: number };
+export type Point = { x: BigNumber; y: BigNumber };
 
 export type OptionType = {
   value: string;
@@ -82,96 +83,52 @@ export function setColourUsingLevelSetMethod(
 }
 
 export function getScalingFactors(plane: FractalPlane, xResolution: number, yResolution: number) {
-    return {x: (plane.x_max - plane.x_min) / (xResolution - 1), y: (plane.y_max - plane.y_min) / (yResolution - 1)}
+    return {x: ((plane.x_max).minus(plane.x_min)).dividedBy(new BigNumber(xResolution - 1)), y: ((plane.y_max).minus(plane.y_min)).dividedBy(new BigNumber(yResolution - 1))}
 }
 
-function computePoint(point: Point, cx: number, cy: number, maxIterations: number, threshold: number): number {
-    let x2 = point.x * point.x
-    let y2 = point.y * point.y
+function computePoint(point: Point, cx: BigNumber, cy: BigNumber, maxIterations: number, threshold: number): number {
+  let bigPointX = new BigNumber(point.x);
+  let bigPointY = new BigNumber(point.y);
+  let x2 = bigPointX.multipliedBy(bigPointX);
+  let y2 = bigPointY.multipliedBy(bigPointY);
     let iterations = 0
-    while ((iterations < maxIterations) && ((x2 + y2) < threshold)) {
-        let temp = x2 - y2 + cx
-        point.y = 2 * point.x * point.y + cy
-        point.x = temp
-        x2 = point.x * point.x
-        y2 = point.y * point.y
+    while ((iterations < maxIterations) && (x2.plus(y2)).isLessThan(threshold)) {
+        let temp = cx.plus(x2.minus(y2));
+        //point.y = cy.plus(2 * point.x * point.y);
+        //point.x = temp
+        //x2 = point.x * point.x
+        //y2 = point.y * point.y
+        bigPointY = cy.plus(bigPointX.multipliedBy(bigPointY).multipliedBy(2));
+        bigPointX = temp;
+        x2 = bigPointX.multipliedBy(bigPointX);
+        y2 = bigPointY.multipliedBy(bigPointY);
         iterations++
     }
     return iterations
-}
-
-function computePointDem(point: Point, cx: number, cy: number, maxIterations: number, overflow: number) {
-    const huge = 100000.0
-    let x = point.x, y = point.y, x2 = 0.0, y2 = 0.0, dist = 0.0, xorbit = [], yorbit = []
-    xorbit[0] = 0.0
-    yorbit[0] = 0.0
-
-    let iterations = 0
-    while ((iterations < maxIterations) && ((x2 + y2) < huge)) {
-        let temp = x2 - y2 + cx
-        y = 2 * x * y + cy
-        x = temp
-        x2 = x * x
-        y2 = y * y
-        iterations++
-        xorbit[iterations] = x
-        yorbit[iterations] = y
-    }
-    if ((x2 + y2) > huge) {
-        let xder = 0.0, yder = 0.0
-        let i = 0
-        let flag = false
-        while ((i < iterations) && !flag) {
-            let temp = 2 * (xorbit[i] * xder - yorbit[i] * yder) + 1
-            yder = 2 * (yorbit[i] * xder + xorbit[i] * yder)
-            xder = temp
-            flag = Math.max(Math.abs(xder), Math.abs(yder)) > overflow
-            i++
-        }
-        if (!flag) {
-            dist = (Math.log(x2 + y2) * Math.sqrt(x2 + y2)) / Math.sqrt(xder * xder + yder * yder)
-        }
-    }
-    return dist
 }
 export function generateMandelbrot(
   canvas: HTMLCanvasElement,
   mandelbrotWindow: FractalPlane,
   canvasWidth: number,
   canvasHeight: number,
-  renderMethod: string,
   maxIterations : number,
   threshold: number,
-  overflow: number,
   palette: number
 ): string {
   const ctx = canvas.getContext("2d");
   if (ctx !== null) {
     // @ts-ignore
     ctx.reset();
-    const scalingFactor = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
-    const delta = threshold * scalingFactor.x;
-    console.log("delta: ", delta);
+    const scalingFactor: {x: BigNumber, y: BigNumber} = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
     const manYArray = [];
     for (let iy = 0; iy < canvasHeight; iy++) {
-      const cy = mandelbrotWindow.y_min + iy * scalingFactor.y
+      const cy: BigNumber = (mandelbrotWindow.y_min).plus(new BigNumber(iy)).multipliedBy(scalingFactor.y)
       const manXArray = [];
       for (let ix = 0; ix < canvasWidth; ix++) {
-        const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
-        const currentPoint = {x: 0.0, y: 0.0}
-        let i;
-        if (renderMethod === 'lsm') {
-          i = computePoint(currentPoint, cx, cy, maxIterations , threshold);
-          setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
-        }
-        else if (renderMethod === 'dem') {
-          i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
-          if (i < delta) {
-            ctx.fillStyle = "#000000"
-          } else {
-            ctx.fillStyle = colourPalettes[palette][parseInt((i * 100 % colourPalettes[palette].length).toString())];
-          }
-        }
+        const cx: BigNumber = (mandelbrotWindow.x_min).plus(new BigNumber(ix)).multipliedBy(scalingFactor.x)
+        const currentPoint = {x: BigNumber(0.0), y: BigNumber(0.0)}
+        const i = computePoint(currentPoint, cx, cy, maxIterations , threshold);
+        setColourUsingLevelSetMethod(i, maxIterations , ctx, palette);
         manXArray.push(i);
         ctx.fillRect(ix, iy, 1, 1)
       }
@@ -188,12 +145,10 @@ export function generateMandelbrot(
     juliaWindow: FractalPlane,
     canvasWidth: number,
     canvasHeight: number,
-    renderMethod: string,
     maxIterations : number,
     threshold: number,
-    cx: number,
-    cy: number,
-    overflow: number,
+    cx: BigNumber,
+    cy: BigNumber,
     palette: number
   ): string {
     const ctx = canvas.getContext("2d");
@@ -203,10 +158,10 @@ export function generateMandelbrot(
       const scalingFactor = getScalingFactors(juliaWindow, canvasWidth, canvasHeight);
       const juliaYArray = [];
       for (let iy = 0; iy < canvasHeight; iy++) {
-        const y = juliaWindow.y_min + iy * scalingFactor.y
+        const y: BigNumber = juliaWindow.y_min.plus((scalingFactor.y).multipliedBy(iy));
         const juliaXArray = [];
         for (let ix = 0; ix < canvasWidth; ix++) {
-          const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
+          const currentPoint = {x: juliaWindow.x_min.plus((scalingFactor.x).multipliedBy(ix)), y: y}
           const i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
           setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
           juliaXArray.push(i);

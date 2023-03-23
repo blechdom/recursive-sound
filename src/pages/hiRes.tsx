@@ -2,6 +2,7 @@ import io, {Socket} from "socket.io-client";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import Select from "react-select";
+import BigNumber from "bignumber.js";
 
 import {
   colourPalettes,
@@ -13,7 +14,7 @@ import {
   getScalingFactors,
   OptionType,
   renderOptions,
-} from "@/utils/fractal";
+} from "@/utils/fractalBigNumber";
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
   return { value: index.toString(), label: index.toString() };
@@ -21,24 +22,22 @@ const palettes: OptionType[] = colourPalettes.map((color, index) => {
 
 let socket: Socket;
 
-export default function Home() {
+export default function HiRes() {
   const [renderOption, setRenderOption] = useState<OptionType>(
     renderOptions[renderOptions?.findIndex((o: OptionType) => o?.value === 'lsm')]
   );
   const [paletteNumber, setPaletteNumber] = useState<OptionType>(palettes[16]);
-  const [maxIterations, setMaxIterations] = useState<number>(100);
-  const [lsmThreshold, setLsmThreshold] = useState<number>(100);
-  const [demThreshold, setDemThreshold] = useState<number>(0.2);
-  const [overflow, setOverflow] = useState<number>(100000000000)
-  const [canvasHeight, setCanvasHeight] = useState<number>(256);
-  const [canvasWidth, setCanvasWidth] = useState<number>(256);
+  const [maxIterations, setMaxIterations] = useState<number>(10);
+  const [threshold, setThreshold] = useState<number>(10);
+  const [canvasHeight, setCanvasHeight] = useState<number>(16);
+  const [canvasWidth, setCanvasWidth] = useState<number>(16);
   const [mandelbrotWindow, setMandelbrotWindow] = useState<FractalPlane>(defaultMandelbrotPlane)
   const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
   const [mandelbrot2DArray, setMandelbrot2DArray] = useState<string>("");
   const [julia2DArray, setJulia2DArray] = useState<string>("");
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
-  const [cx, setCx] = useState<number>(-0.7);
-  const [cy, setCy] = useState<number>(0.27015);
+  const [cx, setCx] = useState<BigNumber>(BigNumber(-0.7));
+  const [cy, setCy] = useState<BigNumber>(BigNumber(0.27015));
 
   const mandelbrotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -48,12 +47,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    console.log("julia window ", juliaWindow);
     julia();
-  }, [cx, cy, maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, juliaWindow, renderOption]);
+  }, [cx, cy, maxIterations, paletteNumber, threshold, canvasHeight, canvasWidth, juliaWindow]);
 
   useEffect(() => {
     mandelbrot();
-  }, [maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
+  }, [maxIterations, paletteNumber, threshold, canvasHeight, canvasWidth, mandelbrotWindow]);
 
   useEffect(() => {
     sendMandelbrotMessage(mandelbrot2DArray)
@@ -76,17 +76,14 @@ export default function Home() {
   };
 
   const mandelbrot = () => {
-    const threshold = renderOption.value === 'lsm' ? lsmThreshold : demThreshold;
     if (mandelbrotCanvasRef.current) {
       const mandelbrotString = generateMandelbrot(
         mandelbrotCanvasRef.current,
         mandelbrotWindow,
         canvasWidth,
         canvasHeight,
-        renderOption.value,
         maxIterations,
         threshold,
-        overflow,
         parseInt(paletteNumber.value)
       );
       setMandelbrot2DArray(mandelbrotString);
@@ -100,12 +97,10 @@ export default function Home() {
         juliaWindow,
         canvasWidth,
         canvasHeight,
-        renderOption.value,
         maxIterations,
-        lsmThreshold,
+        threshold,
         cx,
         cy,
-        overflow,
         parseInt(paletteNumber.value)
       );
       setJulia2DArray(juliaString);
@@ -128,8 +123,8 @@ export default function Home() {
           y: e.clientY - rect.top
         };
         const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
-        const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
-        const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
+        const newCx = mandelbrotWindow.x_min.plus((scalingFactors.x).multipliedBy(pos.x));
+        const newCy = mandelbrotWindow.y_min.plus((scalingFactors.y).multipliedBy(pos.y));
         setCx(newCx);
         setCy(newCy);
     }
@@ -143,8 +138,8 @@ export default function Home() {
           y: e.clientY - rect.top
         };
         const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
-        const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
-        const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
+        const newCx = mandelbrotWindow.x_min.plus((scalingFactors.x).multipliedBy(pos.x));
+        const newCy = mandelbrotWindow.y_min.plus((scalingFactors.y).multipliedBy(pos.y));
         setCx(newCx);
         setCy(newCy);
     }
@@ -160,70 +155,53 @@ export default function Home() {
   const zoomMandelbrot = (value: string) => () => {
     if (value === 'reset') {
       setMandelbrotWindow({
-        x_min: -2.5,
-        y_min: -1.25,
-        x_max: 0.8,
-        y_max: 1.25
+        x_min: BigNumber(-2.5),
+        y_min: BigNumber(-1.25),
+        x_max: BigNumber(0.8),
+        y_max: BigNumber(1.25)
       });
     }
-    if (value === 'ul') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_max = tempWindow.x_max * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.75;
-      setMandelbrotWindow({...tempWindow});
-    }
-    if (value === 'l') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_max = tempWindow.x_max * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.885;
-      tempWindow.y_min = tempWindow.y_min * 0.885;
-      setMandelbrotWindow({...tempWindow});
-    }
-    if (value === 'r') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.885;
-      tempWindow.y_min = tempWindow.y_min * 0.885;
-      setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'ur') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.75;
-      setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'll') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_max = tempWindow.x_max * 0.75;
-      tempWindow.y_min = tempWindow.y_min * 0.75;
-      setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'lr') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.75;
-      tempWindow.y_min = tempWindow.y_min * 0.75;
-      setMandelbrotWindow({...tempWindow});
-    }
-    if (value === 'up') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.y_max = tempWindow.y_max * 0.75;
-      tempWindow.x_max = tempWindow.x_max * 0.885;
-      tempWindow.x_min = tempWindow.x_min * 0.885;
-      setMandelbrotWindow({...tempWindow});
-    }
-    if (value === 'd') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.y_min = tempWindow.y_min * 0.75;
-      tempWindow.x_max = tempWindow.x_max * 0.885;
-      tempWindow.x_min = tempWindow.x_min * 0.885;
-      setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'in') {
-      const tempWindow = mandelbrotWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.92;
-      tempWindow.y_min = tempWindow.y_min * 0.92;
-      tempWindow.x_max = tempWindow.x_max * 0.92;
-      tempWindow.y_max = tempWindow.y_max * 0.92;
+    else {
+      const tempWindow: FractalPlane = mandelbrotWindow;
+      if (value === 'ul') {
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.75);
+      }
+      if (value === 'l') {
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.885);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.885);
+      }
+      if (value === 'r') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.885);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.885);
+      } else if (value === 'ur') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.75);
+      } else if (value === 'll') {
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.75);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.75);
+      } else if (value === 'lr') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.75);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.75);
+      }
+      if (value === 'up') {
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.75);
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.885);
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.885);
+      }
+      if (value === 'd') {
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.75);
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.885);
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.885);
+      } else if (value === 'in') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.92);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.92);
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.92);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.92);
+
+      }
       setMandelbrotWindow({...tempWindow});
     }
   }
@@ -231,70 +209,53 @@ export default function Home() {
   const zoomJulia = (value: string) => () => {
     if (value === 'reset') {
       setJuliaWindow({
-        x_min: -2.0,
-        y_min: -1.5,
-        x_max: 2.0,
-        y_max: 1.5
+        x_min: BigNumber(-2.0),
+        y_min: BigNumber(-1.5),
+        x_max: BigNumber(2.0),
+        y_max: BigNumber(1.5)
       });
     }
-    if (value === 'ul') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_max = tempWindow.x_max * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.75;
-      setJuliaWindow({...tempWindow});
-    }
-    if (value === 'l') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_max = tempWindow.x_max * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.885;
-      tempWindow.y_min = tempWindow.y_min * 0.885;
-      setJuliaWindow({...tempWindow});
-    }
-    if (value === 'r') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.885;
-      tempWindow.y_min = tempWindow.y_min * 0.885;
-      setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'ur') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.75;
-      tempWindow.y_max = tempWindow.y_max * 0.75;
-      setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'll') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_max = tempWindow.x_max * 0.75;
-      tempWindow.y_min = tempWindow.y_min * 0.75;
-      setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'lr') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.75;
-      tempWindow.y_min = tempWindow.y_min * 0.75;
-      setJuliaWindow({...tempWindow});
-    }
-    if (value === 'up') {
-      const tempWindow = juliaWindow;
-      tempWindow.y_max = tempWindow.y_max * 0.75;
-      tempWindow.x_max = tempWindow.x_max * 0.885;
-      tempWindow.x_min = tempWindow.x_min * 0.885;
-      setJuliaWindow({...tempWindow});
-    }
-    if (value === 'd') {
-      const tempWindow = juliaWindow;
-      tempWindow.y_min = tempWindow.y_min * 0.75;
-      tempWindow.x_max = tempWindow.x_max * 0.885;
-      tempWindow.x_min = tempWindow.x_min * 0.885;
-      setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'in') {
-      const tempWindow = juliaWindow;
-      tempWindow.x_min = tempWindow.x_min * 0.92;
-      tempWindow.y_min = tempWindow.y_min * 0.92;
-      tempWindow.x_max = tempWindow.x_max * 0.92;
-      tempWindow.y_max = tempWindow.y_max * 0.92;
+    else {
+      const tempWindow: FractalPlane = juliaWindow;
+      if (value === 'ul') {
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.75);
+      }
+      if (value === 'l') {
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.885);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.885);
+      }
+      if (value === 'r') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.885);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.885);
+      } else if (value === 'ur') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.75);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.75);
+      } else if (value === 'll') {
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.75);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.75);
+      } else if (value === 'lr') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.75);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.75);
+      }
+      if (value === 'up') {
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.75);
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.885);
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.885);
+      }
+      if (value === 'd') {
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.75);
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.885);
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.885);
+      } else if (value === 'in') {
+        tempWindow.x_min = tempWindow.x_min.multipliedBy(0.92);
+        tempWindow.y_min = tempWindow.y_min.multipliedBy(0.92);
+        tempWindow.x_max = tempWindow.x_max.multipliedBy(0.92);
+        tempWindow.y_max = tempWindow.y_max.multipliedBy(0.92);
+
+      }
       setJuliaWindow({...tempWindow});
     }
   }
@@ -302,14 +263,14 @@ export default function Home() {
   return (
     <Page>
       <ButtonContainer>
-        <Label>Render Algorithm{" "}
+        {/*<Label>Render Algorithm{" "}
       <FractalSelect
         options={renderOptions}
         value={renderOption}
         onChange={(option) => {
           setRenderOption((option ?? renderOptions[1]) as OptionType);
         }}
-      /></Label>
+      /></Label>*/}
       <Label>Color Palette{" "}
       <FractalSelect
         options={palettes}
@@ -318,7 +279,8 @@ export default function Home() {
           setPaletteNumber((option ?? palettes[0]) as OptionType);
         }}
       /></Label>
-        <ButtonRow>
+        {/*}  </ButtonContainer>
+      <ButtonContainer>*/}
       <Label>Height{" "}
       <Input
         type="number"
@@ -336,7 +298,8 @@ export default function Home() {
         value={canvasWidth}
         step={1}
         onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
-      /></Label></ButtonRow>
+      /></Label></ButtonContainer>
+      <ButtonContainer>
       <Label>Iterations{" "}
       <Input
         type="number"
@@ -350,36 +313,13 @@ export default function Home() {
         <Label>Threshold{"   "}
         <Input
           type="number"
-          value={lsmThreshold}
+          value={threshold}
           step={100}
           min={100}
           max={10000}
-          onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
+          onChange={(value) => setThreshold(value.target.valueAsNumber)}
         /></Label>
-      )}
-        {renderOption.value && renderOption.value === 'dem' && (
-          <>
-        <Label>Threshold{"   "}
-        <Input
-          type="number"
-          value={demThreshold}
-          step={0.01}
-          min={0}
-          max={3}
-          onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
-        /></Label>
-            <Label>Threshold{"   "}
-        <Input
-          type="number"
-          value={overflow}
-          step={100000000000}
-          min={0}
-          max={100000000000000}
-          onChange={(value) => setOverflow(value.target.valueAsNumber)}
-        /></Label>
-            </>
-      )}
-      </ButtonContainer>
+      )}</ButtonContainer>
       <ButtonContainer>
         <ButtonColumn>
         <Label>Zoom Mandelbrot</Label>
@@ -402,6 +342,8 @@ export default function Home() {
             <StyledButton onClick={zoomMandelbrot('lr')}>Lower-Right</StyledButton>
           </ButtonRow>
         </ButtonColumn>
+      </ButtonContainer>
+      <ButtonContainer>
         <ButtonColumn>
         <Label>Zoom Julia</Label>
          <StyledButton onClick={zoomJulia('reset')}>RESET</StyledButton>
@@ -429,18 +371,18 @@ export default function Home() {
         <Label>cx
         <ComplexInput
           type="number"
-          value={cx}
+          value={cx.toNumber()}
           min={-2.0}
           max={2.0}
-          onChange={(value) => setCx(value.target.valueAsNumber)}
+          onChange={(value) => setCx(BigNumber(value.target.valueAsNumber))}
         /></Label>
         <Label>cy
         <ComplexInput
           type="number"
-          value={cy}
+          value={cy.toNumber()}
           min={-2.0}
           max={2.0}
-          onChange={(value) => setCy(value.target.valueAsNumber)}
+          onChange={(value) => setCy(BigNumber(value.target.valueAsNumber))}
         /></Label>
       </ButtonContainer>
       <FractalContainer>
@@ -485,25 +427,25 @@ const Page = styled.div`
 `;
 
 const FractalSelect = styled(Select)`
-  padding-left: .5rem;
-  font-size: 0.85rem; 
+  padding-left: 1rem; 
+  font-size: 1rem; 
   max-width: 512px; 
   `;
 
 const Label = styled.label`
   display: flex;
   flex-direction: row;
-  font-size: .85rem;
-  padding: .5rem;
+  font-size: 1rem;
+  padding: 1rem;
   height: 100%;
   align-items: center;
 `;
 
 const Input = styled.input`
-  min-height: 30px;
-  padding: 0.5rem;
-  margin-left: .5rem ;
-  font-size: 0.85rem;
+  min-height: 38px;
+  padding: 0.6rem;
+  margin-left: 1rem ;
+  font-size: 1rem;
   transition: all 100ms;
   background-color: hsl(0, 0%, 100%);
   border-color: hsl(0, 0%, 80%);
@@ -550,25 +492,23 @@ const Scroller = styled.div`
 `;
 const ButtonContainer = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   align-items: center;
 `;
 
 const ButtonRow = styled.div`
-  display: flex; 
+  display: flex;
   flex-direction: row;
   align-items: center;
 `;
 
 const ButtonColumn = styled.div`
-  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 `;
 
 const StyledButton = styled.button`
-  font-size: 0.7rem;
-  width: 80px;  
-  min-height: 22px;  
+  width: 100px;  
+  min-height: 32px;  
 `;
