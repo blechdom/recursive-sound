@@ -26,7 +26,7 @@ export default function Home() {
   const [renderOption, setRenderOption] = useState<OptionType>(
     renderOptions[renderOptions?.findIndex((o: OptionType) => o?.value === 'lsm')]
   );
-  const [paletteNumber, setPaletteNumber] = useState<OptionType>(palettes[0]);
+  const [paletteNumber, setPaletteNumber] = useState<OptionType>(palettes[16]);
   const [maxIterations, setMaxIterations] = useState<number>(100);
   const [threshold, setThreshold] = useState<number>(100);
   const [canvasHeight, setCanvasHeight] = useState<number>(256);
@@ -165,7 +165,6 @@ export default function Home() {
 
   const zoomMandelbrot = (value: string) => () => {
     if (value === 'reset') {
-      console.log('reset to ', defaultMandelbrotPlane);
       setMandelbrotWindow({
         x_min: -2.5,
         y_min: -1.25,
@@ -237,7 +236,6 @@ export default function Home() {
 
   const zoomJulia = (value: string) => () => {
     if (value === 'reset') {
-      console.log('reset to ', defaultJuliaPlane);
       setJuliaWindow({
         x_min: -2.0,
         y_min: -1.5,
@@ -310,14 +308,14 @@ export default function Home() {
   return (
     <Page>
       <ButtonContainer>
-      <Label>Render Algorithm{" "}
+        {/*<Label>Render Algorithm{" "}
       <FractalSelect
         options={renderOptions}
         value={renderOption}
         onChange={(option) => {
           setRenderOption((option ?? renderOptions[1]) as OptionType);
         }}
-      /></Label>
+      /></Label>*/}
       <Label>Color Palette{" "}
       <FractalSelect
         options={palettes}
@@ -326,8 +324,8 @@ export default function Home() {
           setPaletteNumber((option ?? palettes[0]) as OptionType);
         }}
       /></Label>
-      </ButtonContainer>
-      <ButtonContainer>
+        {/*}  </ButtonContainer>
+      <ButtonContainer>*/}
       <Label>Height{" "}
       <Input
         type="number"
@@ -414,7 +412,7 @@ export default function Home() {
         </ButtonColumn>
       </ButtonContainer>
       <ButtonContainer>
-        <Label>Julia Complex Number (click on Mandelbrot)</Label>
+        <Label>Julia Complex Number (click and Drag over Mandelbrot)</Label>
         <Label>cx
         <ComplexInput
           type="number"
