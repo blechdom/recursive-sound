@@ -144,14 +144,13 @@ export function generateMandelbrot(
   threshold: number,
   overflow: number,
   palette: number
-): string {
+): number[][] {
   const ctx = canvas.getContext("2d");
   if (ctx !== null) {
     // @ts-ignore
     ctx.reset();
     const scalingFactor = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
     const delta = threshold * scalingFactor.x;
-    console.log("delta: ", delta);
     const manYArray = [];
     for (let iy = 0; iy < canvasHeight; iy++) {
       const cy = mandelbrotWindow.y_min + iy * scalingFactor.y
@@ -159,7 +158,7 @@ export function generateMandelbrot(
       for (let ix = 0; ix < canvasWidth; ix++) {
         const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
         const currentPoint = {x: 0.0, y: 0.0}
-        let i;
+        let i = 0;
         if (renderMethod === 'lsm') {
           i = computePoint(currentPoint, cx, cy, maxIterations , threshold);
           setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
@@ -172,15 +171,16 @@ export function generateMandelbrot(
             ctx.fillStyle = colourPalettes[palette][parseInt((i * 100 % colourPalettes[palette].length).toString())];
           }
         }
-        manXArray.push(i);
+        manXArray.push(i/maxIterations);
         ctx.fillRect(ix, iy, 1, 1)
       }
       manYArray.push(manXArray);
     }
-    const stringMan = JSON.stringify(manYArray);
-    return stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g, ' ');
+    return manYArray;
+    //const stringMan = JSON.stringify(manYArray);
+    //return stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g, ' ');
   }
-  return "";
+  return [];
 }
 
   export function generateJulia (

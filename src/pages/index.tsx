@@ -34,9 +34,10 @@ export default function Home() {
   const [canvasWidth, setCanvasWidth] = useState<number>(256);
   const [mandelbrotWindow, setMandelbrotWindow] = useState<FractalPlane>(defaultMandelbrotPlane)
   const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
-  const [mandelbrot2DArray, setMandelbrot2DArray] = useState<string>("");
+  const [mandelbrot2DArray, setMandelbrot2DArray] = useState<number[][]>([]);
   const [julia2DArray, setJulia2DArray] = useState<string>("");
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
+  const [msBetweenRows, setMsBetweenRows] = useState<number>(100);
   const [cx, setCx] = useState<number>(-0.7);
   const [cy, setCy] = useState<number>(0.27015);
 
@@ -78,7 +79,7 @@ export default function Home() {
   const mandelbrot = () => {
     const threshold = renderOption.value === 'lsm' ? lsmThreshold : demThreshold;
     if (mandelbrotCanvasRef.current) {
-      const mandelbrotString = generateMandelbrot(
+      const mandelbrotArray: number[][] = generateMandelbrot(
         mandelbrotCanvasRef.current,
         mandelbrotWindow,
         canvasWidth,
@@ -89,7 +90,7 @@ export default function Home() {
         overflow,
         parseInt(paletteNumber.value)
       );
-      setMandelbrot2DArray(mandelbrotString);
+      setMandelbrot2DArray(mandelbrotArray);
     }
   };
 
@@ -112,9 +113,14 @@ export default function Home() {
     }
   };
 
-  const sendMandelbrotMessage = (fractal2DArray: string) => {
-    socket?.emit("fractalMandelbrotString", fractal2DArray );
-  };
+  const sendMandelbrotMessage = useCallback((fractal2DArray: number[][]) => {
+    fractal2DArray.forEach((row: number[], index: number) => {
+      setTimeout(function() {
+         socket?.emit("fractalMandelbrotString", row);
+      }, msBetweenRows * index);
+    });
+    //socket?.emit("fractalMandelbrotString", fractal2DArray );
+  }, [msBetweenRows]);
 
   const sendJuliaMessage = (fractal2DArray: string) => {
     socket?.emit("fractalJuliaString", fractal2DArray );
@@ -379,6 +385,15 @@ export default function Home() {
         /></Label>
             </>
       )}
+        <Label>ms speed{"   "}
+        <Input
+          type="number"
+          value={msBetweenRows}
+          step={0.01}
+          min={5}
+          max={1000}
+          onChange={(value) => setMsBetweenRows(value.target.valueAsNumber)}
+        /></Label>
       </ButtonContainer>
       <ButtonContainer>
         <ButtonColumn>
