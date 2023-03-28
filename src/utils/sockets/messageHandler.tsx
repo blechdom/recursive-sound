@@ -24,11 +24,12 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     }
   };
 
-  const sendMandelbrotToKyma = (fractalString: number[][]) => {
+  const sendMandelbrotToKyma = (fractalString: number[]) => {
     if(oscClient) {
-      console.log('sending mandelbrot to Kyma', fractalString);
+     // console.log('sending mandelbrot to Kyma', fractalString);
       // @ts-ignore
-      const sliced = fractalString.slice(0, 255);
+      console.log("sending fractal/mandelbrot");
+      const sliced: number[] = fractalString.slice(0, 255);
       oscClient.send('/fractal/mandelbrot', sliced, () => {
       });
     }
@@ -42,9 +43,18 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     }
   };
 
+  const sendVolume = (volumeAmount: number) => {
+    if(oscClient) {
+      console.log("sending volumme ", volumeAmount);
+      oscClient.send('/fractal/volume', volumeAmount, () => {
+      });
+    }
+  };
+
 
   socket.on("createdMessage", createdMessage);
   socket.on("fractalMandelbrotString", sendMandelbrotToKyma)
   socket.on("fractalJuliaString", sendJuliaToKyma)
+  socket.on("volume", sendVolume);
 
 };

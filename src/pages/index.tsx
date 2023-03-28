@@ -2,7 +2,7 @@ import io, {Socket} from "socket.io-client";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import Select from "react-select";
-
+import dynamic from 'next/dynamic'
 import {
   colourPalettes,
   defaultJuliaPlane,
@@ -14,6 +14,10 @@ import {
   OptionType,
   renderOptions,
 } from "@/utils/fractal";
+
+const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
+  { ssr: false }
+)
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
   return { value: index.toString(), label: index.toString() };
@@ -40,6 +44,7 @@ export default function Home() {
   const [msBetweenRows, setMsBetweenRows] = useState<number>(100);
   const [cx, setCx] = useState<number>(-0.7);
   const [cy, setCy] = useState<number>(0.27015);
+  const [volume, setVolume] = useState<number>(0);
 
   const mandelbrotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -47,6 +52,11 @@ export default function Home() {
   useEffect(() => {
     socketInitializer();
   }, []);
+
+  useEffect(() => {
+    console.log("volume", volume);
+    socket?.emit("volume", volume );
+  }, [volume]);
 
   useEffect(() => {
     julia();
@@ -393,7 +403,26 @@ export default function Home() {
           min={5}
           max={1000}
           onChange={(value) => setMsBetweenRows(value.target.valueAsNumber)}
-        /></Label>
+        />
+        </Label>
+        <Knob
+          id={"speed"}
+          label={"Speed (ms)"}
+          knobValue={msBetweenRows}
+          step={0.01}
+          min={5}
+          max={1000}
+          onKnobInput={setMsBetweenRows}
+        />
+        <Knob
+          id={"volume"}
+          label={"Volume (OSC)"}
+          knobValue={volume}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setVolume}
+        />
       </ButtonContainer>
       <ButtonContainer>
         <ButtonColumn>
