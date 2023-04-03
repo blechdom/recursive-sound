@@ -41,7 +41,8 @@ export default function Home() {
   const [mandelbrot2DArray, setMandelbrot2DArray] = useState<number[][]>([]);
   const [julia2DArray, setJulia2DArray] = useState<number[][]>([]);
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
-  const [msBetweenRows, setMsBetweenRows] = useState<number>(100);
+  const [msBetweenRows, setMsBetweenRows] = useState<number>(50);
+  const [demColorModulo, setDemColorModulo] = useState<number>(100);
   const [cx, setCx] = useState<number>(-0.7);
   const [cy, setCy] = useState<number>(0.27015);
   const [volume, setVolume] = useState<number>(0);
@@ -60,11 +61,11 @@ export default function Home() {
 
   useEffect(() => {
     julia();
-  }, [cx, cy, maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, juliaWindow, renderOption]);
+  }, [cx, cy, demColorModulo, maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, juliaWindow, renderOption]);
 
   useEffect(() => {
     mandelbrot();
-  }, [maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
+  }, [maxIterations, demColorModulo, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
 
   useEffect(() => {
     sendMandelbrot(mandelbrot2DArray)
@@ -98,6 +99,7 @@ export default function Home() {
         maxIterations,
         threshold,
         overflow,
+        demColorModulo,
         parseInt(paletteNumber.value)
       );
       setMandelbrot2DArray(mandelbrotArray);
@@ -117,6 +119,7 @@ export default function Home() {
         cx,
         cy,
         overflow,
+        demColorModulo,
         parseInt(paletteNumber.value)
       );
       setJulia2DArray(juliaArray);
@@ -378,33 +381,45 @@ export default function Home() {
       )}
         {renderOption.value && renderOption.value === 'dem' && (
           <>
-        <Label>Threshold{"   "}
-        <Input
-          type="number"
-          value={demThreshold}
-          step={0.01}
-          min={0}
-          max={3}
-          onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
-        /></Label>
             <Label>Threshold{"   "}
-        <Input
-          type="number"
-          value={overflow}
-          step={100000000000}
-          min={0}
-          max={100000000000000}
-          onChange={(value) => setOverflow(value.target.valueAsNumber)}
-        /></Label>
-            </>
+              <Input
+                type="number"
+                value={demThreshold}
+                step={0.01}
+                min={0}
+                max={3}
+                onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
+              />
+            </Label>
+            <Label>Threshold{"   "}
+              <Input
+                type="number"
+                value={overflow}
+                step={100000000000}
+                min={0}
+                max={100000000000000}
+                onChange={(value) => setOverflow(value.target.valueAsNumber)}
+              />
+            </Label>
+            <Label>Color Mod{"   "}
+              <Input
+                type="number"
+                value={demColorModulo}
+                step={1}
+                min={1}
+                max={10000}
+                onChange={(value) => setDemColorModulo(value.target.valueAsNumber)}
+              />
+            </Label>
+          </>
       )}
         <Label>ms speed{"   "}
         <Input
           type="number"
           value={msBetweenRows}
           step={0.01}
-          min={5}
-          max={1000}
+          min={1}
+          max={250}
           onChange={(value) => setMsBetweenRows(value.target.valueAsNumber)}
         />
         </Label>
@@ -413,8 +428,8 @@ export default function Home() {
           label={"Speed (ms)"}
           knobValue={msBetweenRows}
           step={0.01}
-          min={5}
-          max={1000}
+          min={1}
+          max={250}
           onKnobInput={setMsBetweenRows}
         />
         <Knob
