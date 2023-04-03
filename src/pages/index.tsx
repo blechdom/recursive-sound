@@ -39,7 +39,7 @@ export default function Home() {
   const [mandelbrotWindow, setMandelbrotWindow] = useState<FractalPlane>(defaultMandelbrotPlane)
   const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
   const [mandelbrot2DArray, setMandelbrot2DArray] = useState<number[][]>([]);
-  const [julia2DArray, setJulia2DArray] = useState<string>("");
+  const [julia2DArray, setJulia2DArray] = useState<number[][]>([]);
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
   const [msBetweenRows, setMsBetweenRows] = useState<number>(100);
   const [cx, setCx] = useState<number>(-0.7);
@@ -67,11 +67,11 @@ export default function Home() {
   }, [maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
 
   useEffect(() => {
-    sendMandelbrotMessage(mandelbrot2DArray)
+    sendMandelbrot(mandelbrot2DArray)
   }, [mandelbrot2DArray]);
 
   useEffect(() => {
-    sendJuliaMessage(julia2DArray)
+    sendJulia(julia2DArray)
   }, [julia2DArray]);
 
   const socketInitializer = async () => {
@@ -87,7 +87,7 @@ export default function Home() {
   };
 
   const mandelbrot = () => {
-    const threshold = renderOption.value === 'lsm' ? lsmThreshold : demThreshold;
+    const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
     if (mandelbrotCanvasRef.current) {
       const mandelbrotArray: number[][] = generateMandelbrot(
         mandelbrotCanvasRef.current,
@@ -106,7 +106,7 @@ export default function Home() {
 
   const julia = () => {
     if (juliaCanvasRef.current) {
-      const juliaString: string = generateJulia(
+      const juliaArray: number[][] = generateJulia(
         juliaCanvasRef.current,
         juliaWindow,
         canvasWidth,
@@ -119,22 +119,25 @@ export default function Home() {
         overflow,
         parseInt(paletteNumber.value)
       );
-      setJulia2DArray(juliaString);
+      setJulia2DArray(juliaArray);
     }
   };
 
-  const sendMandelbrotMessage = useCallback((fractal2DArray: number[][]) => {
+  const sendMandelbrot = useCallback((fractal2DArray: number[][]) => {
     fractal2DArray.forEach((row: number[], index: number) => {
       setTimeout(function() {
-         socket?.emit("fractalMandelbrotString", row);
+         socket?.emit("fractalMandelbrotRow", row);
       }, msBetweenRows * index);
     });
-    //socket?.emit("fractalMandelbrotString", fractal2DArray );
   }, [msBetweenRows]);
 
-  const sendJuliaMessage = (fractal2DArray: string) => {
-    socket?.emit("fractalJuliaString", fractal2DArray );
-  };
+  const sendJulia = useCallback((fractal2DArray: number[][]) => {
+    fractal2DArray.forEach((row: number[], index: number) => {
+      setTimeout(function() {
+         socket?.emit("fractalJuliaRow", row);
+      }, msBetweenRows * index);
+    });
+  }, [msBetweenRows]);
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
     if(mandelbrotCanvasRef.current) {
@@ -362,7 +365,7 @@ export default function Home() {
         step={25}
         onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
       /></Label>
-      {renderOption.value && renderOption.value === 'lsm' && (
+      {renderOption.value && renderOption.value !== 'dem' && (
         <Label>Threshold{"   "}
         <Input
           type="number"
@@ -499,7 +502,14 @@ export default function Home() {
         />
         <Scroller>
           <ScrollDiv>
-            {mandelbrot2DArray}
+            {JSON.stringify(
+              mandelbrot2DArray.map(
+                function(subArray: number[]){
+                  return subArray.map(function(elem: number) {
+                    return Number(elem.toFixed(2));
+                  });
+                }))
+            }
           </ScrollDiv>
         </Scroller>
       </FractalContainer>
@@ -512,7 +522,14 @@ export default function Home() {
         />
         <Scroller>
           <ScrollDiv>
-            {julia2DArray}
+            {JSON.stringify(
+              julia2DArray.map(
+                function(subArray: number[]){
+                  return subArray.map(function(elem: number) {
+                    return Number(elem.toFixed(2));
+                  });
+                }))
+            }
           </ScrollDiv>
         </Scroller>
       </FractalContainer>
@@ -576,21 +593,21 @@ const MandelbrotCanvas = styled.canvas`
 const JuliaCanvas = styled.canvas`
 `;
 
-const ScrollDiv = styled.div`   
-    background-color: #F5F5F5;
+const ScrollDiv = styled.div` 
+    font-family: monospace;
     border: 1px solid #DDDDDD;
     border-radius: 4px 0 4px 0;
     color: #3B3C3E;
-    font-size: 12px;
+    font-size: 7px;
     font-weight: bold;
     left: -1px;
     padding: 10px 7px 5px;
 `;
 
 const Scroller = styled.div`
+  background-color: #F5F5F5;
   height: 256px;
     overflow:scroll;
-    overflow-x:hidden;
 `;
 const ButtonContainer = styled.div`
   display: flex;

@@ -1,7 +1,6 @@
 import {Socket} from "socket.io";
 import {Client, Server} from 'node-osc';
 
-
 export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) => {
 
   oscServer.on('/recursive-sound', function (msg) {
@@ -9,52 +8,33 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     //oscServer.close();
   });
 
-  const createdMessage = (msg: { author: string, message: string}) => {
-    socket.broadcast.emit("newIncomingMessage", msg);
-    console.log("socket received: ", msg);
-    sendOscMessage(oscClient, parseFloat(msg.message));
-  };
-
-  const sendOscMessage = (oscClient: Client, msg: number) => {
-    if(oscClient){
-      console.log('/fractal/float', msg);
+  const sendMandelbrotToKyma = (fractalRow: number[]) => {
+    if(oscClient) {
+      console.log("sending fractal/mandelbrot row");
+      const sliced: number[] = fractalRow.slice(0, 255);
       // @ts-ignore
-      oscClient.send('/fractal/float', msg, () => {
-      });
+      //oscClient.send('/fractal/mandelbrot', sliced);
     }
   };
-
-  const sendMandelbrotToKyma = (fractalString: number[]) => {
+  const sendJuliaToKyma = (fractalRow: number[]) => {
     if(oscClient) {
-     // console.log('sending mandelbrot to Kyma', fractalString);
+      console.log("sending fractal/julia row");
+      const sliced: number[] = fractalRow.slice(0, 255);
       // @ts-ignore
-      console.log("sending fractal/mandelbrot");
-      const sliced: number[] = fractalString.slice(0, 255);
-      oscClient.send('/fractal/mandelbrot', sliced, () => {
-      });
-    }
-  };
-  const sendJuliaToKyma = (fractalString: number[][]) => {
-    if(oscClient) {
-      console.log('sending julia to Kyma', fractalString);
-      // @ts-ignore
-      oscClient.send('/fractal/julia', fractalString, () => {
-      });
+      //oscClient.send('/fractal/julia', sliced);
     }
   };
 
   const sendVolume = (volumeAmount: number) => {
     if(oscClient) {
-      console.log("sending volumme ", volumeAmount);
-      oscClient.send('/fractal/volume', volumeAmount, () => {
-      });
+      console.log("/fractal/volume", volumeAmount);
+      // @ts-ignore
+      //oscClient.send("/fractal/volume", volumeAmount);
     }
   };
 
-
-  socket.on("createdMessage", createdMessage);
-  socket.on("fractalMandelbrotString", sendMandelbrotToKyma)
-  socket.on("fractalJuliaString", sendJuliaToKyma)
+  socket.on("fractalMandelbrotRow", sendMandelbrotToKyma)
+  socket.on("fractalJuliaRow", sendJuliaToKyma)
   socket.on("volume", sendVolume);
 
 };

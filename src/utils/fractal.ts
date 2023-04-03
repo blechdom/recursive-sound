@@ -71,12 +71,11 @@ export function setColourUsingLevelSetMethod(
   iterations: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
-  palette: number) {
+  palette: number
+) {
     if (iterations == maxIterations) { // we are in the set
         ctx.fillStyle = "#000"
     } else {
-        // colour it according to the number of iterations it took to get to infinity
-      //console.log('palette: ', palette);
         ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
     }
 }
@@ -134,6 +133,36 @@ function computePointDem(point: Point, cx: number, cy: number, maxIterations: nu
     }
     return dist
 }
+function computePointJuliaDem(point: Point, cx: number, cy: number, maxIterations: number) {
+    let x = point.x,
+      y = point.y,
+      xp = 1.0,
+      yp = 0.0,
+      nz,
+      nzp,
+      a;
+
+      for(let i = 1; i <= maxIterations; i++) {
+        nz = 2 * (x*xp - y*yp);
+        yp = 2 * (x*yp + y*xp);
+        xp = nz;
+        nz = x*x - y*y + cx;
+        y = 2*x*y + cy;
+        x = nz;
+        nz = x*x + y*y;
+        nzp = xp*xp + yp*yp;
+        if (nzp > 1e60 || nz > 1e60) {
+          break;
+        }
+      }
+      if(nz) {
+        a = Math.sqrt(nz);
+      }
+      if(a && nzp){
+        return 2*a*Math.log(a)/Math.sqrt(nzp);
+      }
+      return 0;
+}
 export function generateMandelbrot(
   canvas: HTMLCanvasElement,
   mandelbrotWindow: FractalPlane,
@@ -146,6 +175,8 @@ export function generateMandelbrot(
   palette: number
 ): number[][] {
   const ctx = canvas.getContext("2d");
+  let min = 0;
+  let max = 0;
   if (ctx !== null) {
     // @ts-ignore
     ctx.reset();
@@ -159,11 +190,7 @@ export function generateMandelbrot(
         const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
         const currentPoint = {x: 0.0, y: 0.0}
         let i = 0;
-        if (renderMethod === 'lsm') {
-          i = computePoint(currentPoint, cx, cy, maxIterations , threshold);
-          setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
-        }
-        else if (renderMethod === 'dem') {
+        if (renderMethod === 'dem') {
           i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
           if (i < delta) {
             ctx.fillStyle = "#000000"
@@ -171,14 +198,36 @@ export function generateMandelbrot(
             ctx.fillStyle = colourPalettes[palette][parseInt((i * 100 % colourPalettes[palette].length).toString())];
           }
         }
-        manXArray.push(i/maxIterations);
+        else {
+          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+          switch (renderMethod) {
+            case 'bdm':
+                setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
+                break;
+            case 'bdm2':
+                setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
+                break;
+            case 'tdm':
+                setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
+                break;
+            default:
+                setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
+                break;
+          }
+        }
+        if (i > max) max = i;
+        if (i < min) min = i;
+        manXArray.push(i);
         ctx.fillRect(ix, iy, 1, 1)
       }
       manYArray.push(manXArray);
     }
-    return manYArray;
-    //const stringMan = JSON.stringify(manYArray);
-    //return stringMan.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g, ' ');
+    const scaledArray = manYArray.map((row) => {
+      return row.map((value) => {
+        return (value - min) / (max - min);
+      })
+    });
+    return scaledArray;
   }
   return [];
 }
@@ -195,30 +244,123 @@ export function generateMandelbrot(
     cy: number,
     overflow: number,
     palette: number
-  ): string {
+  ): number[][] {
     const ctx = canvas.getContext("2d");
+    let min = 0;
+    let max = 0;
     if (ctx !== null) {
       // @ts-ignore
       ctx.reset();
       const scalingFactor = getScalingFactors(juliaWindow, canvasWidth, canvasHeight);
+      const delta =  computePointJuliaDem({x: 0, y: 0}, cx, cy, maxIterations);
       const juliaYArray = [];
       for (let iy = 0; iy < canvasHeight; iy++) {
         const y = juliaWindow.y_min + iy * scalingFactor.y
         const juliaXArray = [];
         for (let ix = 0; ix < canvasWidth; ix++) {
           const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
-          const i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-          setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
+          let i = 0;
+          if (renderMethod === 'dem') {
+            i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+            if (i < delta) {
+              ctx.fillStyle = "#000000"
+            } else {
+              ctx.fillStyle = colourPalettes[palette][parseInt((i * 100 % colourPalettes[palette].length).toString())];
+            }
+          }
+          else {
+            i = computePoint(currentPoint, cx, cy, maxIterations , threshold);
+            switch (renderMethod) {
+              case 'bdm':
+                  setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
+                  break;
+              case 'bdm2':
+                  setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
+                  break;
+              case 'tdm':
+                  setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
+                  break;
+              default:
+                  setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
+                  break;
+            }
+          }
+          if (i > max) max = i;
+          if (i < min) min = i;
           juliaXArray.push(i);
           ctx.fillRect(ix, iy, 1, 1)
         }
         juliaYArray.push(juliaXArray);
       }
-      const stringJulia = JSON.stringify(juliaYArray);
-      return stringJulia.replace(/\[/g, '(').replace(/]/g, ')').replace(/,/g,' ');
+      const scaledArray = juliaYArray.map((row) => {
+        return row.map((value) => {
+          return (value - min) / (max - min);
+        })
+      });
+      return scaledArray;
     }
-    return "";
+    return [];
   }
+
+function setColourUsingBinaryDecompositionMethod(
+  iterations: number,
+  maxIterations: number,
+  ctx: CanvasRenderingContext2D,
+  point: Point,
+) {
+    if (iterations == maxIterations) { // we are in the set
+        ctx.fillStyle = "#000"
+    } else {
+        // color it depending on the angle of alpha
+        const alpha = Math.atan2(point.y, point.x)
+        if ((alpha >= 0) && (alpha < 2 * Math.PI)) {
+            ctx.fillStyle = "#000"
+        } else {
+            ctx.fillStyle = "#fff"
+        }
+    }
+}
+
+function setColourUsingTrinaryDecompositionMethod(
+  iterations: number,
+  maxIterations: number,
+  ctx: CanvasRenderingContext2D,
+  point: Point,
+  palette: number
+) {
+    if (iterations == maxIterations) { // we are in the set
+        ctx.fillStyle = "#000"
+    } else {
+        // color it depending on the angle of alpha
+        const alpha = Math.atan2(point.y, point.x) * 180 / Math.PI
+        if ((alpha > 0) && (alpha <= 90)) {
+            ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length % 3]
+        } else if ((alpha >= 90) && (alpha < 180)) {
+            ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length % 2]
+        } else {
+            ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
+        }
+    }
+}
+
+function setColourUsingBinaryDecompositionMethod2(
+  iterations: number,
+  maxIterations: number,
+  ctx: CanvasRenderingContext2D,
+  point: Point,
+  palette: number
+) {
+    if (iterations == maxIterations) { // we are in the set
+        ctx.fillStyle = "#000"
+    } else {
+        const alpha = Math.atan(Math.abs(point.y))
+        if ((alpha > 0) && (alpha <= 1.5)) {
+            ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length % 2]
+        } else {
+            ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
+        }
+    }
+}
 
 /*export function mandelbrot(
   canvas: HTMLCanvasElement,
