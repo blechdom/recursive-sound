@@ -37,11 +37,15 @@ export type OptionType = {
 
 export const renderOptions: OptionType[] = [
   { value: "lsm", label: "Level Set Method (LSM)" },
+  { value: "lsm-raw", label: "Level Set Method (LSM) - Greyscale" },
   { value: "dem", label: "Distance Estimator Method (DEM)" },
+  { value: "dem-raw", label: "Distance Estimator Method (DEM) - Greyscale" },
   { value: "bdm", label: "Binary Decomposition Method (BDM)" },
   { value: "tdm", label: "Trinary Decomposition Method (TDM)" },
   { value: "bdm2", label: "Binary Decomposition Method II (BDM2)" },
 ];
+
+
 
 export const colourPalettes: string[][] =
   [
@@ -176,12 +180,14 @@ export function generateMandelbrot(
         const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
         const currentPoint = {x: 0.0, y: 0.0}
         let i = 0;
-        if (renderMethod === 'dem') {
+        if (renderMethod === 'dem' || renderMethod === 'dem-raw') {
           i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
-          if (i < delta) {
-            ctx.fillStyle = "#000000"
-          } else {
-            ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
+          if(renderMethod === 'dem') {
+            if (i < delta) {
+              ctx.fillStyle = "#000000"
+            } else {
+              ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
+            }
           }
         }
         else {
@@ -197,14 +203,14 @@ export function generateMandelbrot(
                 setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
                 break;
             default:
-                setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
+                setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
                 break;
           }
         }
         if (i > max) max = i;
         if (i < min) min = i;
         manXArray.push(i);
-        ctx.fillRect(ix, iy, 1, 1)
+        if (renderMethod !== "dem-raw") ctx.fillRect(ix, iy, 1, 1);
       }
       manYArray.push(manXArray);
     }
@@ -213,6 +219,15 @@ export function generateMandelbrot(
         return (value - min) / (max - min);
       })
     });
+    if(renderMethod === 'dem-raw') {
+      scaledArray.map((row, j) => {
+        row.map((value, index) => {
+          let shade = (1-value)*255;
+          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+          ctx.fillRect(index, j, 1, 1);
+        })
+      })
+    }
     return scaledArray;
   }
   return [];
@@ -247,12 +262,14 @@ export function generateJulia (
       for (let ix = 0; ix < canvasWidth; ix++) {
         const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
         let i = 0;
-        if (renderMethod === 'dem') {
+        if (renderMethod === 'dem' || renderMethod === 'dem-raw') {
           i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
-          if (i < delta) {
-            ctx.fillStyle = "#000000"
-          } else {
-            ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
+          if (renderMethod === 'dem') {
+            if (i < delta) {
+              ctx.fillStyle = "#000000"
+            } else {
+              ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
+            }
           }
         }
         else {
@@ -268,14 +285,14 @@ export function generateJulia (
                 setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
                 break;
             default:
-                setColourUsingLevelSetMethod(i, maxIterations, ctx, palette);
+                setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
                 break;
           }
         }
         if (i > max) max = i;
         if (i < min) min = i;
         juliaXArray.push(i);
-        ctx.fillRect(ix, iy, 1, 1)
+        if (renderMethod !== "dem-raw") ctx.fillRect(ix, iy, 1, 1);
       }
       juliaYArray.push(juliaXArray);
     }
@@ -284,6 +301,15 @@ export function generateJulia (
         return (value - min) / (max - min);
       })
     });
+    if(renderMethod === 'dem-raw') {
+      scaledArray.map((row, j) => {
+        row.map((value, index) => {
+          let shade = (1-value)*255;
+          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+          ctx.fillRect(index, j, 1, 1);
+        })
+      })
+    }
     return scaledArray;
   }
   return [];
@@ -293,13 +319,19 @@ function setColourUsingLevelSetMethod(
   iterations: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
-  palette: number
+  palette: number,
+  renderMethod: string,
 ) {
+  if(renderMethod === 'lsm') {
     if (iterations == maxIterations) { // we are in the set
         ctx.fillStyle = "#000"
     } else {
         ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
     }
+  } else {
+    let shade = (iterations / maxIterations) * 255;
+    ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  }
 }
 
 function setColourUsingBinaryDecompositionMethod(
