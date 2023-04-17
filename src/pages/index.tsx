@@ -14,7 +14,7 @@ export default function Home() {
       <ul>
         <li>
           <Link href={"./fractals"}>Fractals</Link>
-          <p>WIP: Mandelbrot + Julia set -> OSC controllers.
+          <p>WIP: Mandelbrot + Julia set: OSC controllers.
             Generate OSC messages from 256x256 fractal matrices.
             Data is sent row-by-row at a rate in ms.
             The 256-size arrays consist of numbers between 0 and 1.
@@ -22,13 +22,12 @@ export default function Home() {
             to a Kyma Pacamara. In Kyma, the 256 size arrays are interpreted as amplitudes in a 256 size oscillator bank.
             The frequencies and amplitudes are scalable. There is a threshold to mute oscillators below a certain amplitude.
             Click and drag on the mandelbrot to generate new versions of the Julia Fractal.
-            Interface heavily borrows from <Link href={"https://github.com/mikebharris/javascript_mandelbrot_set_and_julia_set_explorer"}>Mike Harris' work</Link>
-
+            Interface heavily borrows from <Link href={"https://github.com/mikebharris/javascript_mandelbrot_set_and_julia_set_explorer"}>Mike Harris&apos work</Link>
           </p>
         </li>
         <li><Link href={"./tesselation.html"}>Tesselations</Link>
-        <p>WIP: Currently just a copy of Craig S. Kaplan tactile-js demo. Planning to add webaudio and OSC implementation.</p></li>
-        <li><Link href={"./spirals.html"}>Spiral Tesselations</Link> <p>WIP: Currently just a copy of Craig S. Kaplan tactile-js demo. Planning to add webaudio and OSC implementation.</p></li>
+        <p>WIP: Currently just a copy of Craig S. Kaplan&aposs tactile-js demo, with some console.log data for interesting parameters. Planning to add webaudio and OSC implementation.</p></li>
+        <li><Link href={"./spirals.html"}>Spiral Tesselations</Link> <p>WIP: Currently just a copy of Craig S. Kaplan&aposs tactile-js demo. Planning to add webaudio and OSC implementation.</p></li>
         <li><Link href={"https://blechdom.github.io/el-vis-audio"}>El-Vis-Audio</Link> - A collection of Audio experiments and UI elements using <Link href={"https://elementary.audio"}>Elementary Audio</Link> and Storybook:
           <p>Here are the recursive and more complex-function oriented demos: </p>
           <ul>
