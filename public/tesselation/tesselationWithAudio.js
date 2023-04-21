@@ -9,10 +9,14 @@
 import { mul, matchSeg, EdgeShape, numTypes, tilingTypes, IsohedralTiling } from './tactile.js';
 import { drawInterface } from "./interface.js";
 import { saveSVG } from './svg.js';
-import { playAudio, updateAudioVolume, updateAudioPitchRange } from "./audio.js";
+import AudioTesselator from "./audio.mjs";
+
+const audioTesselator = new AudioTesselator();
+//audioTesselator.init();
 
 let sktch = function( p5c )
 {
+
 	let the_type = null;
 	let bxMinX = -2;
 	let bxMaxX = 3;
@@ -510,7 +514,7 @@ let sktch = function( p5c )
 				}];
 
 		});
-		playAudio(scaledAudioLines);
+		audioTesselator.setLines(scaledAudioLines);
 	}
 
 	function calcEditorTransform()
@@ -848,10 +852,10 @@ let sktch = function( p5c )
 
 	function sendAudioParams(params, idx) {
 		if(idx === 0) { // volume
-			updateAudioVolume(params[0]);
+			audioTesselator.setVolume(params[0]);
 		}
 		else if(idx === 1) { // pitch range
-			updateAudioPitchRange(params[1]);
+			audioTesselator.setPitchRange(params[1]);
 		}
 	}
 
