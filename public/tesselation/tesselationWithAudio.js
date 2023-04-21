@@ -9,6 +9,7 @@
 import { mul, matchSeg, EdgeShape, numTypes, tilingTypes, IsohedralTiling } from './tactile.js';
 import { drawInterface } from "./interface.js";
 import { saveSVG } from './svg.js';
+import { playAudio, updateAudioVolume, updateAudioPitchRange } from "./audio.js";
 
 let sktch = function( p5c )
 {
@@ -18,6 +19,7 @@ let sktch = function( p5c )
 	let bxMinY = -2;
 	let bxMaxY = 3;
 	let params = null;
+	let aParams = [0, 0, 0, 0]; // volume [volume] for now
 	let tiling = null;
 	let edges = null;
 	let tile_shape = null;
@@ -44,12 +46,16 @@ let sktch = function( p5c )
 	let slide_w = null;
 	let slide_h = null;
 
+	let audioSliderBox1 = null;
+	let volume = 0;
+
 	const Mode = {
 		NONE : 0,
 		MOVE_VERTEX : 1,
 		ADJ_TILE : 2,
 		ADJ_TV : 3,
-		ADJ_TILING : 4
+		ADJ_TILING : 4,
+		AUDIO: 5,
 	};
 
 	let tiling_T = null;
@@ -60,6 +66,9 @@ let sktch = function( p5c )
 	let mode = Mode.NONE;
 	let drag_tv = null;
 	let drag_tv_offs = null;
+
+	let drag_audio = null;
+	let drag_audio_offs = null;
 
 	let editor_T;
 	let editor_T_down;
@@ -203,109 +212,124 @@ let sktch = function( p5c )
 	};
 
 	function drawEditor()
-{
-	let pg = editor_pane;
-	pg.clear();
+	{
+		let pg = editor_pane;
+		pg.clear();
 
-	pg.fill( 252, 255, 254, 220 );
-	pg.noStroke();
-	pg.rect( 0, 0, edit_box.w, edit_box.h );
+		pg.fill( 252, 255, 254, 120 );
+		//pg.noStroke();
 
-	pg.strokeWeight( 2.0 );
-	pg.fill( COLS[3][0], COLS[3][1], COLS[3][2] );
+		pg.strokeWeight( 2.0 );
+		pg.fill( COLS[3][1], COLS[3][2], COLS[3][0] );
 
-	pg.beginShape();
-	for( let v of tile_shape ) {
-		const P = mul( editor_T, v );
-		pg.vertex( P.x, P.y );
-	}
-	pg.endShape( p5c.CLOSE );
-
-	pg.noFill();
-
-	// Draw edges
-	for( let i of tiling.parts() ) {
-		if( i.shape === EdgeShape.I ) {
-			pg.stroke( 158 );
-		} else {
-			pg.stroke( 0 );
-		}
-
-		const M = mul( editor_T, i.T );
 		pg.beginShape();
-		for( let v of edges[i.id] ) {
-			const P = mul( M, v );
+		for( let v of tile_shape ) {
+			const P = mul( editor_T, v );
 			pg.vertex( P.x, P.y );
 		}
-		pg.endShape();
-	}
+		pg.endShape( p5c.CLOSE );
 
-	// Draw tiling vertices
-	pg.noStroke();
-	pg.fill( 158 );
-	for( let v of tiling.vertices() ) {
-		const pt = mul( editor_T, v );
-		pg.ellipse( pt.x, pt.y, 10.0, 10.0 );
-	}
+		pg.noFill();
 
-	// Draw editable vertices
-	for( let i of tiling.parts() ) {
-		const shp = i.shape;
-		const id = i.id;
-		const ej = edges[id];
-		const T = mul( editor_T, i.T );
-
-		for( let idx = 1; idx < ej.length - 1; ++idx ) {
-			pg.fill( 0 );
-			const pt = mul( T, ej[idx] );
-			pg.ellipse( pt.x, pt.y, 10.0, 10.0 );
-		}
-
-		if( shp === EdgeShape.I || shp === EdgeShape.J ) {
-			continue;
-		}
-
-		// Draw symmetry points for U and S edges.
-		if( !i.second ) {
-			if( shp === EdgeShape.U ) {
-				pg.fill( COLS[2][0], COLS[2][1], COLS[2][2] );
+		// Draw edges
+		for( let i of tiling.parts() ) {
+			if( i.shape === EdgeShape.I ) {
+				pg.stroke( 158 );
 			} else {
-				pg.fill( COLS[5][0], COLS[5][1], COLS[5][2] );
+				pg.stroke( 0 );
 			}
-			const pt = mul( T, ej[ej.length-1] );
+
+			const M = mul( editor_T, i.T );
+			pg.beginShape();
+			for( let v of edges[i.id] ) {
+				const P = mul( M, v );
+				pg.vertex( P.x, P.y );
+			}
+			pg.endShape();
+		}
+
+		// Draw tiling vertices
+		pg.noStroke();
+		pg.fill( 158 );
+		for( let v of tiling.vertices() ) {
+			const pt = mul( editor_T, v );
 			pg.ellipse( pt.x, pt.y, 10.0, 10.0 );
 		}
+
+		// Draw editable vertices
+		for( let i of tiling.parts() ) {
+			const shp = i.shape;
+			const id = i.id;
+			const ej = edges[id];
+			const T = mul( editor_T, i.T );
+
+			for( let idx = 1; idx < ej.length - 1; ++idx ) {
+				pg.fill( 0 );
+				const pt = mul( T, ej[idx] );
+				pg.ellipse( pt.x, pt.y, 10.0, 10.0 );
+			}
+
+			if( shp === EdgeShape.I || shp === EdgeShape.J ) {
+				continue;
+			}
+
+			// Draw symmetry points for U and S edges.
+			if( !i.second ) {
+				if( shp === EdgeShape.U ) {
+					pg.fill( COLS[2][0], COLS[2][1], COLS[2][2] );
+				} else {
+					pg.fill( COLS[5][0], COLS[5][1], COLS[5][2] );
+				}
+				const pt = mul( T, ej[ej.length-1] );
+				pg.ellipse( pt.x, pt.y, 10.0, 10.0 );
+			}
+		}
+
+		// Draw sliders
+		const params = tiling.getParameters();
+		let yy = 25;
+		const xx = edit_box.w - 25 - slide_w;
+		pg.textSize( slide_h * 0.75 );
+
+		for( let i = 0; i < params.length; ++i ) {
+			pg.fill( 200 );
+			pg.stroke( 60 );
+			pg.strokeWeight( 0.5 );
+			pg.rect( xx, yy, slide_w, slide_h );
+
+			pg.fill( 60 );
+			pg.noStroke();
+			pg.rect( p5c.map( params[i],
+				0, 2, xx, xx+slide_w-slide_h ), yy, slide_h, slide_h );
+
+			pg.text( "v" + i, xx - slide_h, yy + slide_h * 0.75 );
+
+			yy += slide_h + 10;
+		}
+
+		for( let i = 0; i < aParams.length; ++i ) {
+			pg.fill( 200 );
+			pg.stroke( 60 );
+			pg.strokeWeight( 0.5 );
+			pg.rect( xx, yy, slide_w, slide_h );
+
+			pg.fill( 60 );
+			pg.noStroke();
+			pg.rect( p5c.map( aParams[i],
+				0, 1, xx, xx+slide_w-slide_h ), yy, slide_h, slide_h );
+
+			pg.text( "a" + i, xx - slide_h, yy + slide_h * 0.75 );
+
+			yy += slide_h + 10;
+		}
+
+		p5c.image( pg, edit_box.x, edit_box.y );
+
+		p5c.strokeWeight( 2.0 );
+		p5c.stroke( 25, 52, 65, 220 );
+		p5c.noFill();
+		p5c.rect( edit_box.x, edit_box.y, edit_box.w, edit_box.h );
 	}
-
-	// Draw sliders
-	const params = tiling.getParameters();
-	let yy = 25;
-	const xx = edit_box.w - 25 - slide_w;
-	pg.textSize( slide_h * 0.75 );
-
-	for( let i = 0; i < params.length; ++i ) {
-		pg.fill( 200 );
-		pg.stroke( 60 );
-		pg.strokeWeight( 0.5 );
-		pg.rect( xx, yy, slide_w, slide_h );
-
-		pg.fill( 60 );
-		pg.noStroke();
-		pg.rect( p5c.map( params[i],
-			0, 2, xx, xx+slide_w-slide_h ), yy, slide_h, slide_h );
-
-		pg.text( "v" + i, xx - slide_h, yy + slide_h * 0.75 );
-
-		yy += slide_h + 10;
-	}
-
-	p5c.image( pg, edit_box.x, edit_box.y );
-
-	p5c.strokeWeight( 2.0 );
-	p5c.stroke( 25, 52, 65, 220 );
-	p5c.noFill();
-	p5c.rect( edit_box.x, edit_box.y, edit_box.w, edit_box.h );
-}
 
 	function cacheTileShape()
 	{
@@ -325,7 +349,6 @@ let sktch = function( p5c )
 
 	function setTilingType()
 	{
-		console.log('set tiling type', tilingTypes[ the_type ]);
 		const tp = tilingTypes[ the_type ];
 		tiling.reset( tp );
 		params = tiling.getParameters();
@@ -342,7 +365,6 @@ let sktch = function( p5c )
 
 	function nextTilingType()
 	{
-		console.log("next tiling type")
 		if( the_type < (numTypes-1) ) {
 			the_type++;
 			setTilingType();
@@ -365,7 +387,6 @@ let sktch = function( p5c )
 			{x: bxMaxX, y: bxMaxY},
 			{x: bxMinX, y: bxMaxY},
 		];
-		console.log("bx", JSON.stringify(bx));
 	}
 
 	function setupInterface()
@@ -420,6 +441,9 @@ let sktch = function( p5c )
 			0.25*phys_unit, 1.5*phys_unit,
 			Math.min( 800, 0.8*w ), Math.min( 600, 0.8*h ) );
 
+		audioSliderBox1 = makeBox(
+			w - 5.25 * phys_unit, maxY_nav_box.y + phys_unit, 5 * phys_unit, phys_unit/2 );
+
 		slide_w = 5 * phys_unit;
 		slide_h = 0.7 * phys_unit;
 
@@ -431,6 +455,7 @@ let sktch = function( p5c )
 	}
 
 	function drawTiling() {
+		console.log("drawTiling");
 		p5c.stroke(COLS[0][0], COLS[0][1], COLS[0][2]);
 		p5c.strokeWeight(1.0);
 
@@ -465,13 +490,12 @@ let sktch = function( p5c )
 		}
 		// remove duplicates
 		const uniqueAudioLines = audioLines.filter((value, index, self) =>
-				index === self.findIndex((t) => (
-					t[0].x === value[0].x && t[0].y === value[0].y && t[1].x === value[1].x && t[1].y === value[1].y
-				))
+			index === self.findIndex((t) => (
+				t[0].x === value[0].x && t[0].y === value[0].y && t[1].x === value[1].x && t[1].y === value[1].y
+			))
 		)
 		//sort audioShapes according to first x value
 		uniqueAudioLines.sort((a, b) => a[0].x - b[0].x);
-		//console.log("uniqueAudioLines ", JSON.stringify(uoniqueAudioLines));
 
 		const xOffset = uniqueAudioLines[0][0].x;
 		const scaledAudioLines = uniqueAudioLines.map(line => {
@@ -486,10 +510,7 @@ let sktch = function( p5c )
 				}];
 
 		});
-		//console.log("xOffset ", xOffset);
-		//console.log("y min ", audioPYMin);
-		//console.log("y max ", audioPYMax);
-		console.log(JSON.stringify(scaledAudioLines));
+		playAudio(scaledAudioLines);
 	}
 
 	function calcEditorTransform()
@@ -630,15 +651,14 @@ let sktch = function( p5c )
 				return false;
 			}
 
-			// Check for a sliding gesture on one of the tiling vertex
-			// parameter sliders.
+			// Check for a sliding gesture on one of the tiling vertex parameter sliders.
 			const params = tiling.getParameters();
+
 			let yy = 25;
 			const xx = edit_box.w - 25 - slide_w;
 
 			for( let i = 0; i < params.length; ++i ) {
 				const x = p5c.map( params[i], 0, 2, xx, xx+slide_w-slide_h );
-
 				if( hitBox( pt.x, pt.y, makeBox( x, yy, slide_h, slide_h ) ) ) {
 					mode = Mode.ADJ_TV;
 					max_touches = 1;
@@ -646,7 +666,17 @@ let sktch = function( p5c )
 					drag_tv_offs = pt.x - x;
 					return false;
 				}
-
+				yy += slide_h + 10;
+			}
+			for (let i = 0; i < aParams.length; i++) {
+				const x = p5c.map( aParams[i], 0, 1, xx, xx + slide_w - slide_h);
+				if (hitBox(pt.x, pt.y, makeBox(x, yy, slide_h, slide_h))) {
+					mode = Mode.AUDIO;
+					max_touches = 1;
+					drag_audio = i;
+					drag_audio_offs = pt.x - x;
+					return false;
+				}
 				yy += slide_h + 10;
 			}
 
@@ -768,16 +798,29 @@ let sktch = function( p5c )
 			return false;
 		} else if( mode == Mode.ADJ_TV ) {
 			const params = tiling.getParameters();
-			let yy = 25 + 30*drag_tv;
 			const xx = edit_box.w - 25 - 5*phys_unit;
-
-			const t = p5c.map(
+			let t = p5c.map(
 				p5c.mouseX-edit_box.x-drag_tv_offs, xx,
 				xx+5*phys_unit-20, 0, 2 );
+			if(t < 0) { t = 0;}
+			if (t > 2) { t = 2;}
 			params[drag_tv] = t;
-			tiling.setParameters( params );
+			tiling.setParameters(params);
 			cacheTileShape();
 			p5c.loop();
+		} else if( mode == Mode.AUDIO ) {
+			const xx = edit_box.w - 25 - 5*phys_unit;
+			let t = p5c.map(
+				p5c.mouseX-edit_box.x-drag_audio_offs, xx,
+				xx+5*phys_unit-20, 0, 1 );
+			if(t < 0) { t = 0;}
+			if (t > 1) { t = 1;}
+			aParams[drag_audio] = t;
+			sendAudioParams(aParams, drag_audio);
+			if( show_controls ) {
+				drawEditor();
+				p5c.noLoop();
+			}
 		} else if( mode == Mode.MOVE_VERTEX ) {
 			const pt =
 				{ x: p5c.mouseX - edit_box.x, y: p5c.mouseY - edit_box.y };
@@ -801,6 +844,15 @@ let sktch = function( p5c )
 		}
 
 		return false;
+	}
+
+	function sendAudioParams(params, idx) {
+		if(idx === 0) { // volume
+			updateAudioVolume(params[0]);
+		}
+		else if(idx === 1) { // pitch range
+			updateAudioPitchRange(params[1]);
+		}
 	}
 
 	function doTouchEnded( id )
@@ -828,9 +880,7 @@ let sktch = function( p5c )
 		tiling_T = mul(
 			[1, 0, p5c.width/2.0, 0, 1, p5c.height/2.0],
 			[sc, 0, 0, 0, -sc, 0] );
-		console.log("tiling_T = " + tiling_T);
 		tiling_iT = inv( tiling_T );
-		console.log("tiling_iT = " + tiling_iT);
 
 		setupInterface();
 
@@ -865,7 +915,6 @@ let sktch = function( p5c )
 		p5c.background( 255 );
 
 		drawTiling();
-
 		drawInterface(
 			p5c,
 			tilingTypes,
@@ -891,24 +940,13 @@ let sktch = function( p5c )
 			bxMinX,
 			bxMaxX,
 			bxMinY,
-			bxMaxY
+			bxMaxY,
+			audioSliderBox1,
+			volume,
 		);
-
 		if( show_controls ) {
     	drawEditor();
   	}
-		// don't know what this does
-		p5c.fill( 255 );
-		p5c.noStroke();
-		p5c.textSize( 24 );
-		p5c.textAlign( p5c.LEFT );
-		let c = 0;
-		c += 32;
-		for( let i = Math.max( 0, msgs.length - 10 ); i < msgs.length; ++i ) {
-			p5c.text( msgs[i], 25, 200+c );
-			c = c + 32;
-		}
-
 		p5c.noLoop();
 	}
 };
