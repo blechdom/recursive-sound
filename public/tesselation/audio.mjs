@@ -46,18 +46,22 @@ export default class AudioTesselator {
   }
 
   setVolume(value) {
-    console.log('volume received: ', value);
     this.volume = value;
 
     this.render();
   }
   setPitchRange(value) {
-    console.log('pitch range received: ', value);
     this.pitchRange = value;
     this.render();
   }
   setLines(lines) {
     console.log('new lines received', lines);
     this.lines = lines;
+    lines.forEach((row, index) => {
+      console.log('index: ', index, ' row', row);
+      //setTimeout(function() {
+      //   socket?.emit("fractalMandelbrotRow", row);
+      //}, msBetweenRows * index);
+    });
   }
 }
