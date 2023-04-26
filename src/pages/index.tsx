@@ -25,7 +25,7 @@ export default function Home() {
             Interface heavily borrows from <Link href={"https://github.com/mikebharris/javascript_mandelbrot_set_and_julia_set_explorer"}>Mike Harris&apos; work</Link>
           </p>
         </li>
-        <li><Link href={"./tesselation.html"}>Tesselations</Link>
+        <li><Link href={"./tesselation-with-audio.html"}>Tesselations (with webAudio controls coming soon)</Link>
         <p>WIP: Currently just a copy of Craig S. Kaplan&apos;s tactile-js demo, with some console.log data for interesting parameters. Planning to add webaudio and OSC implementation.</p></li>
         <li><Link href={"./spirals.html"}>Spiral Tesselations</Link> <p>WIP: Currently just a copy of Craig S. Kaplan&apos;s tactile-js demo. Planning to add webaudio and OSC implementation.</p></li>
         <li><Link href={"https://blechdom.github.io/el-vis-audio"}>El-Vis-Audio</Link> - A collection of Audio experiments and UI elements using <Link href={"https://elementary.audio"}>Elementary Audio</Link> and Storybook:
