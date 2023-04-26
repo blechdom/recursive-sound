@@ -1,5 +1,8 @@
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { AppProps } from "next/app";
+import { Varela_Round } from "next/font/google";
+
+const varelaRound = Varela_Round({ subsets: ['latin'], weight: '400', style: 'normal' });
 
 const GlobalStyle = createGlobalStyle`
 html{
@@ -17,7 +20,7 @@ body{
   min-height:100vh;
   padding: 1rem;
   margin-top:0;
-  font-family:"Roboto Light", sans-serif;
+  font-family: ${varelaRound.style.fontFamily}, sans-serif;
 }
 `;
 

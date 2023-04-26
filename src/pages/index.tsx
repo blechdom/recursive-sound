@@ -5,12 +5,11 @@ export default function Home() {
   return (
     <div>
       <Head>
-        <title>Recursive Sound</title>
+        <title>Morphisma</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <h1> Recursive Sounds, </h1>
-      <h2> Audio Experiments, </h2>
-      <h3> and other Works-In-Progress...</h3>
+      <h1>Morphisma</h1>
+      <h2>Recursive Sounds, Audio Experiments, and other Works-In-Progress...</h2>
       <ul>
         <li>
           <Link href={"./fractals"}>Fractals</Link>
