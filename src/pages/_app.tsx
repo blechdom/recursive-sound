@@ -1,9 +1,10 @@
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { AppProps } from "next/app";
-import { Goldman, Varela_Round } from "next/font/google";
+import { Goldman, Itim, Varela_Round } from "next/font/google";
 
 const varelaRound = Varela_Round({ subsets: ['latin'], weight: '400', style: 'normal' });
 const goldman = Goldman({ subsets: ['latin'], weight: '400', style: 'normal' });
+const itim = Itim({ subsets: ['latin'], weight: '400', style: 'normal' });
 
 const GlobalStyle = createGlobalStyle`
 html{
@@ -24,8 +25,12 @@ body{
   font-family: ${varelaRound.style.fontFamily}, sans-serif;
 }
 
-h1, h2{
+h1{
   font-family: ${goldman.style.fontFamily}, sans-serif;
+}
+
+h2{
+  font-family: ${itim.style.fontFamily}, sans-serif;
 }
 `;
 

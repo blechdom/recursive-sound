@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div>
       <Head>
-        <title>Morphisma</title>
+        <title>MORPHISMA</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1>MORPHISMA</h1>
