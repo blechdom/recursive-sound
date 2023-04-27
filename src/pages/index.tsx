@@ -9,7 +9,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1>MORPHISMA</h1>
-      <h2>Recursive Sounds, Audio Experiments, and other Works-In-Progress...</h2>
+      <h2>Recursive Sounds, WebAudio Experiments, and other Works-In-Progress...</h2>
       <ul>
         <li>
           <Link href={"./fractals"}>Fractals</Link>
