@@ -8,7 +8,7 @@ export default function Home() {
         <title>Morphisma</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <h1>Morphisma</h1>
+      <h1>MORPHISMA</h1>
       <h2>Recursive Sounds, Audio Experiments, and other Works-In-Progress...</h2>
       <ul>
         <li>
