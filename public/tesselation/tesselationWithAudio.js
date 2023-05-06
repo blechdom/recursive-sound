@@ -12,7 +12,6 @@ import { saveSVG } from './svg.js';
 import AudioTesselator from "./audio.mjs";
 
 const audioTesselator = new AudioTesselator();
-//audioTesselator.init();
 
 let sktch = function( p5c )
 {
@@ -23,7 +22,7 @@ let sktch = function( p5c )
 	let bxMinY = -2;
 	let bxMaxY = 3;
 	let params = null;
-	let aParams = [0, 0, 0, 0]; // volume [volume] for now
+	let aParams = [0.25, 0, 0.1, 0]; // volume, pitchScale, msScale
 	let tiling = null;
 	let edges = null;
 	let tile_shape = null;
@@ -459,7 +458,6 @@ let sktch = function( p5c )
 	}
 
 	function drawTiling() {
-		console.log("drawTiling");
 		p5c.stroke(COLS[0][0], COLS[0][1], COLS[0][2]);
 		p5c.strokeWeight(1.0);
 
@@ -502,17 +500,20 @@ let sktch = function( p5c )
 		uniqueAudioLines.sort((a, b) => a[0].x - b[0].x);
 
 		const xOffset = uniqueAudioLines[0][0].x;
-		const scaledAudioLines = uniqueAudioLines.map(line => {
+		const scaledAudioLines = uniqueAudioLines.map((line, index) => {
 
-				return [{
+			return {
+				start: {
 					x: line[0].x - xOffset,
 					y: (line[0].y - audioPYMin) / (audioPYMax - audioPYMin)
 				},
-				{
+				end: {
 					x: line[1].x - xOffset,
 					y: (line[1].y - audioPYMin) / (audioPYMax - audioPYMin)
-				}];
-
+				},
+				key: `voice-${index}`,
+				status: "before"
+			};
 		});
 		audioTesselator.setLines(scaledAudioLines);
 	}
@@ -856,6 +857,12 @@ let sktch = function( p5c )
 		}
 		else if(idx === 1) { // pitch range
 			audioTesselator.setPitchRange(params[1]);
+		}
+		else if(idx === 2) { // ms scale factor, default 10
+			audioTesselator.setMsScale(params[2]);
+		}
+		else if(idx === 3) {
+			//audioTesselator.setAudioVariable(params[3]);
 		}
 	}
 
