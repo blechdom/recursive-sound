@@ -1,6 +1,9 @@
-import { ElementaryWebAudioRenderer as core, el } from 'https://cdn.skypack.dev/@nick-thompson/elementary';
+import { el } from 'https://cdn.skypack.dev/@elemaudio/core';
+import WebRenderer from 'https://cdn.skypack.dev/@elemaudio/web-renderer';
 const audioContext = new window.AudioContext();
 let coreLoaded = false;
+
+const core = new WebRenderer();
 
 function sineTone(t) {
   return el.sin(el.mul(2 * Math.PI, t));
@@ -32,6 +35,7 @@ export default class AudioTesselator {
     this.voice = null;
     this.render = this.render.bind(this);
     this.updateVoices = this.updateVoices.bind(this);
+    this.sineTone = this.sineTone.bind(this);
     this.addMany = this.addMany.bind(this);
   }
 
@@ -54,16 +58,31 @@ export default class AudioTesselator {
 
   updateVoices(lines) {
     const activeVoices = lines.filter(note => note.status === "starting");
+    if(this.pitchRange !== undefined){
+      this.pitchRange = 200;
+    }
     if (activeVoices.length > 0) {
-      const allVoices = activeVoices.map(note => {
-        const rampLengthHz = (1 / ((note.end.x - note.start.x) * 100)) * 1000;
-        const freqDistance = (note.end.y - note.start.y) * 1000;
+      const allVoices = activeVoices.map((note, i) => {
+        const rampLengthHz = el.const({ key: `rampLengthHz-${i}`, value: (1 / ((note.end.x - note.start.x) * 100)) * 1000 });
+        const freqDistance = el.const({ key: `freqDistance-${i}`, value: (note.end.y - note.start.y) * 1000 });
         const freq = el.sm(el.const({key: note.key, value: note.start.y * 1000}));
+
         return el.mul(
-          sineTone(el.phasor(el.add(freq, el.mul(freqDistance, el.phasor(rampLengthHz))))),
-          el.sm(el.const({key: `scale-amp-by-numVoices`, value: 0.125}))
+          this.sineTone(
+            el.phasor(
+              el.add(
+                freq,
+                el.mul(
+                  freqDistance,
+                  el.phasor(rampLengthHz, 0)
+                )
+              ),
+              0
+            )
+          ),
+          el.sm(el.const({key: `scale-amp-by-numVoices`, value: 0.1 }))
         );
-      }).filter((voice, i) => i < 9);
+      });
 
       const addedVoices = this.addMany(allVoices);
       this.voice = addedVoices;
@@ -72,7 +91,6 @@ export default class AudioTesselator {
   }
 
   addMany(ins) {
-    //console.log("ins length ", ins.length);
     if (ins.length < 9) {
       return el.add(...ins);
     }
