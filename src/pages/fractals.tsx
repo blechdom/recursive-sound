@@ -76,7 +76,7 @@ export default function Home() {
   }, [julia2DArray]);
 
   const socketInitializer = async () => {
-    await fetch("/api/socket");
+    await fetch("/recursive-sound/api/socket");
 
     socket = io();
 

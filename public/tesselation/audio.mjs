@@ -57,6 +57,7 @@ export default class AudioTesselator {
   }
 
   updateVoices(lines) {
+    console.log('lines: ', JSON.stringify(lines, null, 4));
     const activeVoices = lines.filter(note => note.status === "starting");
     if(this.pitchRange !== undefined){
       this.pitchRange = 200;
