@@ -1,29 +1,27 @@
 import { DataOptionType } from "@/utils/matrixGenerator";
 
-export interface TransformMatrix {
+export interface InterpretationMatrix {
   matrix: number[][];
-  transform: string;
+  interpretation: string;
   options?: {
 
   }
 }
 
-export const transforms: DataOptionType[] = [
-  { value: "none", label: "None" },
-  { value: "invert", label: "Invert" },
-  { value: "scale", label: "Scale" },
-  { value: "rotate", label: "Rotate" },
-  { value: "flipX", label: "Flip X" },
-  { value: "flipY", label: "Flip Y" },
-  { value: "rotate180", label: "Rotate 180" },
-  { value: "translate", label: "Translate" },
-  { value: "compose", label: "Compose" },
-  { value: "applyToPoint", label: "Apply to Point" },
+export const interpretations: DataOptionType[] = [
+  { value: "1:1", label: "1:1" },
+  { value: "expand", label: "Expand" },
+  { value: "interpolate", label: "Interpolate" },
+  { value: "truncate", label: "Truncate" },
+  { value: "squish", label: "Squish" },
+  { value: "log", label: "Log" },
+  { value: "convert", label: "Convert" },
+  { value: "addBoundaries", label: "Add Boundaries" },
 ];
 
-export const transformMatrix = ({ transform, matrix, options }: TransformMatrix): number[][] => {
-  switch (transform) {
-    case 'none':
+export const interpretMatrix = ({ interpretation, matrix, options }: InterpretationMatrix): number[][] => {
+  switch (interpretation) {
+    case '1:1':
       return matrix;
     case 'invert':
       return invert(matrix);

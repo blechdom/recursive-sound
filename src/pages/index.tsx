@@ -12,6 +12,23 @@ export default function Home() {
       <h2>Recursive Sounds, WebAudio Experiments, and other Works-In-Progress...</h2>
       <ul>
         <li>
+          <Link href={"./dataTuner"}>Data Tuner 2D</Link>
+          <p>WIP: Preview 2D Data Sets and experiment with a range of transformations, interpretations, and sonification possibilities.
+            Generate OSC, WebMIDI, and WebAudio from matrices.
+            Decide how you want to read through the data.
+            Massage the data into the values you need.
+            Data can be sent row-by-row or column-by-column at a rate in ms.
+            Data can be converted between cartesian and polar coordinates.
+            Data can be scaled exponentially or logarithmically.
+            This is an opportunity to tune your instrument with standard patterns before feeding it live or chaotic data.
+            Can you hear the important contours?
+            Would it sound better if your data knew about its neighboring data and could change its quality accordingly?
+            Maybe you need to set thresholds to focus on particular ranges of data.
+            Maybe boundaries need to be drawn so different data can be interpreted in different time-scales?
+            Where does time exist in a 2D Matrix?
+          </p>
+        </li>
+        <li>
           <Link href={"./fractals"}>Fractals</Link>
           <p>WIP: Mandelbrot + Julia set: OSC controllers.
             Generate OSC messages from 256x256 fractal matrices.

@@ -1,28 +1,27 @@
 import { DataOptionType } from "@/utils/matrixGenerator";
 
-export interface TransformMatrix {
+export interface PerformMatrix {
   matrix: number[][];
-  transform: string;
-  options?: {
-
+  performanceType: string;
+  uiOptions?: {
   }
 }
 
-export const transforms: DataOptionType[] = [
-  { value: "none", label: "None" },
-  { value: "invert", label: "Invert" },
-  { value: "scale", label: "Scale" },
-  { value: "rotate", label: "Rotate" },
-  { value: "flipX", label: "Flip X" },
-  { value: "flipY", label: "Flip Y" },
-  { value: "rotate180", label: "Rotate 180" },
-  { value: "translate", label: "Translate" },
-  { value: "compose", label: "Compose" },
-  { value: "applyToPoint", label: "Apply to Point" },
+export const performanceTypes: DataOptionType[] = [
+  { value: "OSC", label: "OSC" },
+  { value: "WebMIDI", label: "WebMIDI" },
+  { value: "WebAudio", label: "WebAudio" },
 ];
 
-export const transformMatrix = ({ transform, matrix, options }: TransformMatrix): number[][] => {
-  switch (transform) {
+export const playMethods: DataOptionType[] = [
+  { value: "rows", label: "Play By Row" },
+  { value: "columns", label: "Play By Column" },
+  { value: "insideOut", label: "Play from Inside Out" },
+  { value: "outsideIn", label: "Play from Outside In" },
+];
+
+export const performMatrix = ({ performanceType, matrix, uiOptions }: PerformMatrix): number[][] => {
+  switch (performanceType) {
     case 'none':
       return matrix;
     case 'invert':

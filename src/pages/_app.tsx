@@ -1,6 +1,9 @@
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 import { AppProps } from "next/app";
 import { Goldman, Itim, Varela_Round } from "next/font/google";
+import { config } from '@fortawesome/fontawesome-svg-core'
+import '@fortawesome/fontawesome-svg-core/styles.css'
+config.autoAddCss = false
 
 const varelaRound = Varela_Round({ subsets: ['latin'], weight: '400', style: 'normal' });
 const goldman = Goldman({ subsets: ['latin'], weight: '400', style: 'normal' });
@@ -30,9 +33,15 @@ h1{
 }
 
 h2{
-  font-family: ${itim.style.fontFamily}, sans-serif;
+   font-family: ${goldman.style.fontFamily}, sans-serif;
+}
+
+h3{
+   font-family: ${goldman.style.fontFamily}, sans-serif;
 }
 `;
+
+
 
 const theme = {
   colors: {
