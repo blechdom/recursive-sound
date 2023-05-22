@@ -1,20 +1,17 @@
 import io, {Socket} from "socket.io-client";
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Select from "react-select";
 import dynamic from 'next/dynamic'
 import {
-  OptionType
-} from "@/utils/fractal";
-
+  DataOptionType,
+  generatePattern,
+  patterns
+} from "@/utils/matrixPatternGenerator";
 import {
-  ascendingLine,
-  descendingLine,
-  defaultMatrix,
-  firstHalfOn,
-  firstHalfOff,
-  testOptions
-} from "@/utils/testMatrices";
+  transformMatrix,
+  transforms,
+} from "@/utils/matrixTransformer";
 
 const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
   { ssr: false }
@@ -23,51 +20,46 @@ const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLab
 let socket: Socket;
 
 export default function DataTuner() {
-  const [testOption, setTestOption] = useState<OptionType>(testOptions[0]);
+  const [pattern, setPattern] = useState<DataOptionType>(patterns[0]);
+  const [transform, setTransform] = useState<DataOptionType>(transforms[0]);
   const [canvasHeight, setCanvasHeight] = useState<number>(256);
   const [canvasWidth, setCanvasWidth] = useState<number>(256);
   const [matrixData, setMatrixData] = useState<number[][]>([]);
   const [msBetweenRows, setMsBetweenRows] = useState<number>(50);
   const [volume, setVolume] = useState<number>(0);
+  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+  const [mouseDown, setMouseDown] = useState<boolean>(false);
+
 
   const dataCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     socketInitializer().then(() => console.log('socket initialized'));
+    if (dataCanvasRef.current) {
+      setCtx(dataCanvasRef.current.getContext("2d"));
+    }
   }, []);
 
   useEffect(() => {
     socket?.emit("volume", volume );
   }, [volume]);
 
-  useEffect(() => {
-    generateMatrix();
-  }, [canvasHeight, canvasWidth, matrixData, testOption]);
+ useEffect(() => {
 
-  useEffect(() => {
-    console.log('matrixData', JSON.stringify(matrixData));
-    sendMandelbrot(matrixData)
+    if(matrixData.length > 0 && matrixData[0].length > 0) {
+      drawMatrix(matrixData);
+    }
+   // sendMandelbrot(matrixData)
   }, [matrixData]);
 
   useEffect(() => {
-    switch (testOption.value) {
-      case 'ascendingLine':
-        setMatrixData(ascendingLine({ height: canvasHeight, width: canvasWidth }));
-        break;
-      case 'descendingLine':
-        setMatrixData(descendingLine({ height: canvasHeight, width: canvasWidth }));
-        break;
-      case 'firstHalfOn':
-        setMatrixData(firstHalfOn({ height: canvasHeight, width: canvasWidth }));
-        break;
-      case 'firstHalfOff':
-        setMatrixData(firstHalfOff({ height: canvasHeight, width: canvasWidth }));
-        break;
-      default:
-        setMatrixData(defaultMatrix({ height: canvasHeight, width: canvasWidth }));
-        break;
-    }
-  }, [testOption])
+    const newPattern = generatePattern({ height: canvasHeight, width: canvasWidth, pattern: pattern.value });
+    setMatrixData(newPattern);
+  }, [pattern.value, canvasHeight, canvasWidth])
+
+  function doTransform() {
+    setMatrixData(transformMatrix({ matrix: matrixData, transform: transform.value }));
+  }
 
   const socketInitializer = async () => {
     await fetch("/recursive-sound/api/socket");
@@ -75,19 +67,15 @@ export default function DataTuner() {
     socket = io();
 
     socket.on("newIncomingMessage", (msg) => {
-      console.log(msg);
     });
-    generateMatrix();
   };
 
-  const generateMatrix = () => {
-    //const threshold = testOption.value === 'dem' ? demThreshold : lsmThreshold;
-    if (dataCanvasRef.current) {
-      const ctx = dataCanvasRef.current.getContext("2d");
-      if(ctx) {
-        for (let y = 0; y < matrixData.length; y++) {
-          for (let x = 0; x < matrixData[0].length; x++) {
-            const colorValue = (1-matrixData[x][y]) * 255;
+  const drawMatrix = (newMatrixData: number[][]) => {
+    if (newMatrixData.length > 0 && newMatrixData[0].length > 0) {
+      if (ctx) {
+        for (let y = 0; y < newMatrixData.length; y++) {
+          for (let x = 0; x < newMatrixData[0].length; x++) {
+            const colorValue = (1 - newMatrixData[y][x]) * 255;
             ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
             ctx.fillRect(x, y, 1, 1)
           }
@@ -96,22 +84,22 @@ export default function DataTuner() {
     }
   };
 
-  const sendMandelbrot = useCallback((fractal2DArray: number[][]) => {
+  /*const sendMandelbrot = useCallback((fractal2DArray: number[][]) => {
     fractal2DArray.forEach((row: number[], index: number) => {
       setTimeout(function() {
          socket?.emit("fractalMandelbrotRow", row);
       }, msBetweenRows * index);
     });
-  }, [msBetweenRows]);
+  }, [msBetweenRows]);*/
 
-  function setDownForMandelbrotMouseDown() {
-    setMandelbrotMouseDown(true);
+  function setMouseDownTrue() {
+    setMouseDown(true);
   }
-  function setUpForMandelbrotMouseDown() {
-    setMandelbrotMouseDown(false);
+  function setMouseDownFalse() {
+    setMouseDown(false);
   }
 
-  const zoomMandelbrot = (value: string) => () => {
+  /*const zoomMandelbrot = (value: string) => () => {
     if (value === 'reset') {
       setMatrixData({
         x_min: -2.5,
@@ -180,19 +168,19 @@ export default function DataTuner() {
       tempWindow.y_max = tempWindow.y_max * 0.92;
       setMatrixData({...tempWindow});
     }
-  }
+  }*/
 
   return (
     <Page>
       <h1>Data Tuner (Matrices)</h1>
       <ButtonContainer>
         <ButtonRow>
-          <Label>Test Matrices{" "}
+          <Label>Patterns{" "}
             <DataSelect
-              options={testOptions}
-              value={testOption}
+              options={patterns}
+              value={pattern}
               onChange={(option) => {
-                setTestOption((option ?? testOptions[1]) as OptionType);
+                setPattern((option ?? patterns[1]) as DataOptionType);
               }}
             />
           </Label>
@@ -218,6 +206,18 @@ export default function DataTuner() {
               onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
             />
           </Label>
+        </ButtonRow>
+        <ButtonRow>
+          <Label>Transforms{" "}
+            <DataSelect
+              options={transforms}
+              value={transform}
+              onChange={(option) => {
+                setTransform((option ?? transforms[0]) as DataOptionType);
+              }}
+            />
+          </Label>
+          <button onClick={doTransform}>TRANSFORM</button>
         </ButtonRow>
         <Label>ms speed{"   "}
           <Input
@@ -248,9 +248,9 @@ export default function DataTuner() {
           onKnobInput={setVolume}
         />
       </ButtonContainer>
-      <ButtonContainer>
+      {/*<ButtonContainer>
         <ButtonColumn>
-        <Label>Zoom</Label>
+          <Label>Zoom</Label>
          <StyledButton onClick={zoomMandelbrot('reset')}>RESET</StyledButton>
           </ButtonColumn>
         <ButtonColumn>
@@ -270,15 +270,15 @@ export default function DataTuner() {
             <StyledButton onClick={zoomMandelbrot('lr')}>Lower-Right</StyledButton>
           </ButtonRow>
         </ButtonColumn>
-      </ButtonContainer>
+      </ButtonContainer>*/}
 
       <DataContainer>
         <DataCanvas
           ref={dataCanvasRef}
           width={canvasWidth}
           height={canvasHeight}
-          onMouseDown={setDownForMandelbrotMouseDown}
-          onMouseUp={setUpForMandelbrotMouseDown}
+          onMouseDown={setMouseDownTrue}
+          onMouseUp={setMouseDownFalse}
         />
         <Scroller height={canvasHeight}>
           <ScrollDiv>
