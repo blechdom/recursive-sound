@@ -8,6 +8,8 @@ import {
   transformMatrix,
   transforms,
 } from "@/utils/matrixTransformer";
+import { draw2DMatrix } from "@/utils/dataDrawing";
+
 
 type TransformProps = {
   generatedMatrixData: number[][];
@@ -34,16 +36,10 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
   }, []);
 
   useEffect(() => {
-    if(matrixData.length > 0 && matrixData[0].length > 0) {
-      if (ctx) {
-        for (let y = 0; y < matrixData.length; y++) {
-          for (let x = 0; x < matrixData[0].length; x++) {
-            const colorValue = (1 - matrixData[y][x]) * 255;
-            ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
-            ctx.fillRect(x, y, 1, 1)
-          }
-        }
-      }
+    if(matrixData.length > 0 && matrixData[0].length > 0 && ctx) {
+        setCanvasHeight(matrixData.length);
+        setCanvasWidth(matrixData[0].length);
+        draw2DMatrix(matrixData, ctx);
     }
     else {
       setMatrixData(generatedMatrixData);
@@ -53,8 +49,6 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
 
   useEffect(() => {
     if(dataToTransform.length > 0 && dataToTransform[0].length > 0) {
-      setCanvasHeight(dataToTransform.length);
-      setCanvasWidth(dataToTransform[0].length);
       setMatrixData(transformMatrix({matrix: dataToTransform, transform: transformType}));
     }
   }, [dataToTransform, transformType]);

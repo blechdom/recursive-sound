@@ -20,13 +20,13 @@ const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLab
 let socket: Socket;
 
 type PerformProps = {
-  interpretedMatrixData: number[][];
+  interpretedMatrixData: number[] | number[][];
 }
 
 const Perform: React.FC<PerformProps> = ({ interpretedMatrixData }) => {
   const [performanceType, setPerformanceType] = useState<DataOptionType>(performanceTypes[0]);
   const [playMethod, setPlayMethod] = useState<DataOptionType>(playMethods[0]);
-  const [matrixData, setMatrixData] = useState<number[][]>([]);
+  const [matrixData, setMatrixData] = useState<number[] | number[][]>([]);
   const [msBetweenRows, setMsBetweenRows] = useState<number>(50);
   const [volume, setVolume] = useState<number>(0);
 

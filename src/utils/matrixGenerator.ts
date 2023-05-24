@@ -30,6 +30,7 @@ export const patterns: DataOptionType[] = [
   { value: "horizontalStripes", label: "Horizontal Stripes" },
   { value: "verticalStripes", label: "Vertical Stripes" },
   { value: "checkerboard", label: "Checkerboard" },
+  { value: "horizontalGradient", label: "Horizontal Gradient" },
   { value: "horizonDrawingMode", label: "Horizon Drawing Mode" },
 ];
 
@@ -65,14 +66,15 @@ export const generatePattern = ({ pattern, height, width }: GeneratePattern): nu
       return randomX({ height, width });
     case 'randomY':
       return randomY({ height, width });
+    case 'horizontalGradient':
+      return horizontalGradient({ height, width });
     default:
       return defaultMatrix({ height, width });
   }
 }
 
 const defaultMatrix = ({ height, width }: TwoDimensions): number[][] => {
-  const matrix = [...Array(height)].map(() => Array(width).fill(0));
-  return matrix;
+  return [...Array(height)].map(() => Array(width).fill(0));
 }
 
 const ascendingLine = ({ height, width }: TwoDimensions): number[][] => {
@@ -80,7 +82,7 @@ const ascendingLine = ({ height, width }: TwoDimensions): number[][] => {
   for (let i = 0; i < height; i++) {
     matrix[i] = [];
     for (let j = 0; j < width; j++) {
-      matrix[i][j] = (width-i) === j ? 1 : 0;
+      matrix[i][j] = (width - i - 1) === j ? 1 : 0;
     }
   }
   return matrix;
@@ -237,4 +239,19 @@ const randomY = ({ height, width }: TwoDimensions): number[][] => {
     matrix[i][point] = 1;
   }
   return matrix;
+}
+
+const horizontalGradient = ({ height, width }: TwoDimensions): number[][] => {
+  const matrix: number[][] = [];
+  for (let i = 0; i < height; i++) {
+    matrix[i] = [];
+    for (let j = 0; j < width; j++) {
+      matrix[i][j] = j/width;
+    }
+  }
+  return matrix;
+}
+
+const verticalGradient = ({ height, width }: TwoDimensions): number[][] => {
+  return [...Array(height)].map((_, index) => Array(width).fill(index/height));
 }

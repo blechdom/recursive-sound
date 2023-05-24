@@ -1,7 +1,7 @@
 import { DataOptionType } from "@/utils/matrixGenerator";
 
 export interface PerformMatrix {
-  matrix: number[][];
+  matrix: number[] | number[][];
   performanceType: string;
   uiOptions?: {
   }
@@ -20,7 +20,7 @@ export const playMethods: DataOptionType[] = [
   { value: "outsideIn", label: "Play from Outside In" },
 ];
 
-export const performMatrix = ({ performanceType, matrix, uiOptions }: PerformMatrix): number[][] => {
+export const performMatrix = ({ performanceType, matrix, uiOptions }: PerformMatrix): any => {
   switch (performanceType) {
     case 'none':
       return matrix;
@@ -30,29 +30,11 @@ export const performMatrix = ({ performanceType, matrix, uiOptions }: PerformMat
       return invert(matrix);
     case 'rotate':
       return invert(matrix);
-    case 'flipX':
-      return flipX(matrix);
-    case 'flipY':
-      return flipY(matrix);
-    case 'rotate180':
-      return rotate180(matrix);
     default:
       return matrix;
   }
 }
 
-const invert = (matrix: number[][]): number[][] => {
-  return matrix.map((row) => row.map((point) => 1 - point));
-}
-
-const flipX = (matrix: number[][]): number[][] => {
-  return matrix.map((row) => row.reverse());
-}
-
-const flipY = (matrix: number[][]): number[][] => {
- return  matrix.map(row=>row).reverse()
-}
-
-const rotate180 = (matrix: number[][]): number[][] => {
-  return flipX(flipY(matrix));
+const invert = (matrix: number[] | number[][]): number[] | number[][] => {
+  return matrix;
 }

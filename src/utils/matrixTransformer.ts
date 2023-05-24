@@ -11,14 +11,13 @@ export interface TransformMatrix {
 export const transforms: DataOptionType[] = [
   { value: "none", label: "None" },
   { value: "invert", label: "Invert" },
-  { value: "scale", label: "Scale" },
-  { value: "rotate", label: "Rotate" },
   { value: "flipX", label: "Flip X" },
   { value: "flipY", label: "Flip Y" },
   { value: "rotate180", label: "Rotate 180" },
-  { value: "translate", label: "Translate" },
-  { value: "compose", label: "Compose" },
-  { value: "applyToPoint", label: "Apply to Point" },
+  { value: "rotateCw90", label: "Rotate CW 90" },
+  { value: "log", label: "Log" },
+  { value: "exponent", label: "Exponent" },
+  { value: "modulo", label: "Modulo(%) 0.25" },
 ];
 
 export const transformMatrix = ({ transform, matrix, options }: TransformMatrix): number[][] => {
@@ -37,6 +36,14 @@ export const transformMatrix = ({ transform, matrix, options }: TransformMatrix)
       return flipY(matrix);
     case 'rotate180':
       return rotate180(matrix);
+    case 'rotateCw90':
+      return rotateCw90(matrix);
+    case 'log':
+      return log(matrix);
+    case 'exponent':
+      return exponent(matrix);
+    case 'modulo':
+      return modulo(matrix, 0.25);
     default:
       return matrix;
   }
@@ -56,4 +63,29 @@ const flipY = (matrix: number[][]): number[][] => {
 
 const rotate180 = (matrix: number[][]): number[][] => {
   return flipX(flipY(matrix));
+}
+
+const modulo = (matrix: number[][], modNum: number): number[][] => {
+  return matrix.map((row) => row.map((point) => point%modNum));
+}
+
+const log = (matrix: number[][]): number[][] => {
+  return matrix.map((row) => row.map((point) => point !== 0 ? Math.log(point) : 0));
+}
+
+const exponent = (matrix: number[][]): number[][] => {
+  return matrix.map((row) => row.map((point) => (point * point)));
+}
+
+export const rotateCw90 = (matrix: number[][]): number[][] => {
+  const width = matrix.length;
+	const height = matrix[0].length;
+	let temp = new Array(height);
+	for (let y=0; y<height; y++) {
+		temp[y] = new Array(width);
+		for (let x=0; x<width; x++) {
+			temp[y][x] = matrix[width-1-x][y];
+		}
+	}
+	return temp;
 }

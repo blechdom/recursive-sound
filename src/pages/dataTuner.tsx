@@ -17,7 +17,7 @@ const ArrowIcon = () => {
 export default function DataTuner() {
   const [generatedMatrixData, setGeneratedMatrixData] = useState<number[][]>([]);
   const [transformedMatrixData, setTransformedMatrixData] = useState<number[][]>([]);
-  const [interpretedMatrixData, setInterpretedMatrixData] = useState<number[][]>([]);
+  const [interpretedMatrixData, setInterpretedMatrixData] = useState<number[] | number[][]>([]);
 
   return (
     <Page>

@@ -6,6 +6,7 @@ import {
   generatePattern,
   patterns
 } from "@/utils/matrixGenerator";
+import { draw2DMatrix } from "@/utils/dataDrawing";
 
 type GenerateProps = {
   setGeneratedMatrixData: (matrixData: number[][]) => void;
@@ -30,13 +31,7 @@ const Generate: React.FC<GenerateProps> = ({ setGeneratedMatrixData }) => {
  useEffect(() => {
   if(matrixData.length > 0 && matrixData[0].length > 0) {
     if (ctx) {
-      for (let y = 0; y < matrixData.length; y++) {
-        for (let x = 0; x < matrixData[0].length; x++) {
-          const colorValue = (1 - matrixData[y][x]) * 255;
-          ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
-          ctx.fillRect(x, y, 1, 1)
-        }
-      }
+      draw2DMatrix(matrixData, ctx);
     }
   }
   setGeneratedMatrixData(matrixData);

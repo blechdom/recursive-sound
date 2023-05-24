@@ -1,4 +1,5 @@
 import { DataOptionType } from "@/utils/matrixGenerator";
+import { rotateCw90 } from "./matrixTransformer";
 
 export interface InterpretationMatrix {
   matrix: number[][];
@@ -9,49 +10,31 @@ export interface InterpretationMatrix {
 }
 
 export const interpretations: DataOptionType[] = [
-  { value: "1:1", label: "1:1" },
-  { value: "expand", label: "Expand" },
-  { value: "interpolate", label: "Interpolate" },
-  { value: "truncate", label: "Truncate" },
-  { value: "squish", label: "Squish" },
-  { value: "log", label: "Log" },
-  { value: "convert", label: "Convert" },
-  { value: "addBoundaries", label: "Add Boundaries" },
+  { value: "none", label: "none" },
+  { value: "averageRows", label: "1D: Average Rows" },
+  { value: "averageColumns", label: "1D: Average Columns" },
+  { value: "twoDimensions", label: "2D to 2D" },
+  { value: "otherDimensions", label: "2D to ND" },
 ];
 
-export const interpretMatrix = ({ interpretation, matrix, options }: InterpretationMatrix): number[][] => {
+export const interpretMatrix = ({ interpretation, matrix, options }: InterpretationMatrix): number[] | number[][] => {
   switch (interpretation) {
-    case '1:1':
+    case 'none':
       return matrix;
-    case 'invert':
-      return invert(matrix);
-    case 'scale':
-      return invert(matrix);
-    case 'rotate':
-      return invert(matrix);
-    case 'flipX':
-      return flipX(matrix);
-    case 'flipY':
-      return flipY(matrix);
-    case 'rotate180':
-      return rotate180(matrix);
+    case 'averageRows':
+      return averageRows(matrix);
+    case 'averageColumns':
+      return averageColumns(matrix);
     default:
       return matrix;
   }
 }
 
-const invert = (matrix: number[][]): number[][] => {
-  return matrix.map((row) => row.map((point) => 1 - point));
+const averageRows = (matrix: number[][]): number[] => {
+  return matrix.map((row) => row.reduce((a, b) => a + b, 0) / row.length);
 }
 
-const flipX = (matrix: number[][]): number[][] => {
-  return matrix.map((row) => row.reverse());
-}
-
-const flipY = (matrix: number[][]): number[][] => {
- return  matrix.map(row=>row).reverse()
-}
-
-const rotate180 = (matrix: number[][]): number[][] => {
-  return flipX(flipY(matrix));
+const averageColumns = (matrix: number[][]): number[] => {
+  const rotatedMatrix = rotateCw90(matrix);
+  return rotatedMatrix.map((row) => row.reduce((a, b) => a + b, 0) / row.length);
 }

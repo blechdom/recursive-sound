@@ -1,4 +1,5 @@
 import Transform from "@/components/Transform";
+import {draw2DMatrix, drawArrayAs2DMatrix} from "@/utils/dataDrawing";
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Select from "react-select";
@@ -12,48 +13,56 @@ import {
 
 type InterpretProps = {
   transformedMatrixData: number[][];
-  setInterpretedMatrixData: (matrixData: number[][]) => void;
+  setInterpretedMatrixData: (matrixData: number[] | number[][]) => void;
 }
 
 const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpretedMatrixData }) => {
   const [interpretation, setInterpretation] = useState<DataOptionType>(interpretations[0]);
-  const [interpretationType, setInterpretationType] = useState<string>("1:1");
+  const [interpretationType, setInterpretationType] = useState<string>("averageRows");
   const [dataToInterpret, setDataToInterpret] = useState<number[][]>(transformedMatrixData);
   const [canvasHeight, setCanvasHeight] = useState<number>(256);
   const [canvasWidth, setCanvasWidth] = useState<number>(256);
-  const [matrixData, setMatrixData] = useState<number[][]>([]);
+  const [dataHeight, setDataHeight] = useState<number>(256);
+  const [dataWidth, setDataWidth] = useState<number>(256);
+  const [matrixData, setMatrixData] = useState<number[] | number[][]>([]);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
 
   const dataCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-    useEffect(() => {
+  useEffect(() => {
     if (dataCanvasRef.current) {
       setCtx(dataCanvasRef.current.getContext("2d"));
     }
   }, []);
 
   useEffect(() => {
-    if(matrixData.length > 0 && matrixData[0].length > 0) {
-      if (ctx) {
-        for (let y = 0; y < matrixData.length; y++) {
-          for (let x = 0; x < matrixData[0].length; x++) {
-            const colorValue = (1 - matrixData[y][x]) * 255;
-            ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
-            ctx.fillRect(x, y, 1, 1)
-          }
-        }
+    if (Array.isArray(matrixData[0])) {
+      if (matrixData.length > 0 && matrixData[0].length > 0 && ctx) {
+        setCanvasHeight(matrixData[0].length);
+        setCanvasWidth(matrixData.length);
+        draw2DMatrix(matrixData as number[][], ctx);
+      } else {
+        setMatrixData(transformedMatrixData);
       }
     }
     else {
-      setMatrixData(transformedMatrixData);
+      if (matrixData.length > 0) {
+        setCanvasHeight(matrixData.length);
+        setCanvasWidth(matrixData.length);
+        setDataHeight(1);
+        setDataWidth(matrixData.length);
+        if (ctx) {
+          drawArrayAs2DMatrix(matrixData as number[], ctx);
+        }
+      } else {
+        setMatrixData(transformedMatrixData);
+      }
     }
     setInterpretedMatrixData(matrixData);
   }, [matrixData, ctx, setInterpretedMatrixData, transformedMatrixData]);
 
   useEffect(() => {
     if(dataToInterpret.length > 0 && dataToInterpret[0].length > 0) {
-      setCanvasHeight(dataToInterpret.length);
-      setCanvasWidth(dataToInterpret[0].length);
       setMatrixData(interpretMatrix({matrix: dataToInterpret, interpretation: interpretationType}));
     }
   }, [dataToInterpret, interpretationType]);
@@ -80,8 +89,8 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
         <StyledButton onClick={doInterpretation}>Interpret</StyledButton>
         </ButtonRow>
          <ButtonRow>
-          <Label>Height: {canvasHeight}</Label>
-          <Label>Width: {canvasWidth}</Label>
+          <Label>Height: {dataHeight}</Label>
+          <Label>Width: {dataWidth}</Label>
         </ButtonRow>
       </ButtonContainer>
 
@@ -93,13 +102,20 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
         />
         <Scroller height={canvasHeight}>
           <ScrollDiv>
-            {JSON.stringify(
-              matrixData.map(
-                function(subArray: number[]){
-                  return subArray.map(function(elem: number) {
+            {Array.isArray(matrixData[0]) ?
+              JSON.stringify(
+                matrixData.map(
+                  function(subArray: number[]){
+                    return subArray.map(function(elem: number) {
+                      return Number(elem.toFixed(2));
+                    });
+                  })
+              ) :
+                JSON.stringify(
+                  matrixData.map(function(elem: number) {
                     return Number(elem.toFixed(2));
-                  });
-                }))
+                  })
+                )
             }
           </ScrollDiv>
         </Scroller>
