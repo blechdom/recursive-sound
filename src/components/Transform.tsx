@@ -1,14 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
-import Select from "react-select";
 import {
-  DataOptionType,
-} from "@/utils/matrixGenerator";
-import {
-  transformMatrix,
-  transforms,
-} from "@/utils/matrixTransformer";
-import { draw2DMatrix } from "@/utils/dataDrawing";
+  ButtonContainer,
+  ButtonRow,
+  DataCanvas,
+  DataContainer,
+  DataSelect,
+  Label,
+  ScrollDiv,
+  Scroller,
+  StyledHead,
+  StyledProcessButton,
+} from "@/pages/dataTuner";
+import {draw2DMatrix} from "@/utils/dataDrawing";
+import {DataOptionType,} from "@/utils/matrixGenerator";
+import {transformMatrix, transforms,} from "@/utils/matrixTransformer";
+import React, {useEffect, useRef, useState} from "react";
 
 
 type TransformProps = {
@@ -16,7 +21,7 @@ type TransformProps = {
   setTransformedMatrixData: (matrixData: number[][]) => void;
 }
 
-const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransformedMatrixData }) => {
+const Transform: React.FC<TransformProps> = ({generatedMatrixData, setTransformedMatrixData}) => {
   const [transform, setTransform] = useState<DataOptionType>(transforms[0]);
   const [transformType, setTransformType] = useState<string>("none");
   const [transformData, setTransformData] = useState<boolean>(false);
@@ -36,19 +41,18 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
   }, []);
 
   useEffect(() => {
-    if(matrixData.length > 0 && matrixData[0].length > 0 && ctx) {
-        setCanvasHeight(matrixData.length);
-        setCanvasWidth(matrixData[0].length);
-        draw2DMatrix(matrixData, ctx);
-    }
-    else {
+    if (matrixData.length > 0 && matrixData[0].length > 0 && ctx) {
+      setCanvasHeight(matrixData.length);
+      setCanvasWidth(matrixData[0].length);
+      draw2DMatrix(matrixData, ctx);
+    } else {
       setMatrixData(generatedMatrixData);
     }
     setTransformedMatrixData(matrixData);
   }, [matrixData, ctx, setTransformedMatrixData, generatedMatrixData]);
 
   useEffect(() => {
-    if(dataToTransform.length > 0 && dataToTransform[0].length > 0) {
+    if (dataToTransform.length > 0 && dataToTransform[0].length > 0) {
       setMatrixData(transformMatrix({matrix: dataToTransform, transform: transformType}));
     }
   }, [dataToTransform, transformType]);
@@ -61,6 +65,7 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
   function setMouseDownTrue() {
     setMouseDown(true);
   }
+
   function setMouseDownFalse() {
     setMouseDown(false);
   }
@@ -138,7 +143,7 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
 
   return (
     <>
-    <StyledHead>2. Transform</StyledHead>
+      <StyledHead>2. Transform</StyledHead>
       <ButtonContainer>
         <ButtonRow>
           <DataSelect
@@ -156,9 +161,9 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
             onChange={(event) => setTransformData(event.target.checked)}
           />
           <label htmlFor="transform_checkbox">use current transform data</label>
-          <StyledTransformButton onClick={doTransform}>TRANSFORM</StyledTransformButton>
+          <StyledProcessButton onClick={doTransform}>TRANSFORM</StyledProcessButton>
         </ButtonRow>
-         <ButtonRow>
+        <ButtonRow>
           <Label>Height: {canvasHeight}</Label>
           <Label>Width: {canvasWidth}</Label>
         </ButtonRow>
@@ -196,96 +201,12 @@ const Transform: React.FC<TransformProps> = ({ generatedMatrixData, setTransform
         />
         <Scroller height={canvasHeight}>
           <ScrollDiv>
-            {JSON.stringify(
-              matrixData.map(
-                function(subArray: number[]){
-                  return subArray.map(function(elem: number) {
-                    return Number(elem.toFixed(2));
-                  });
-                }))
-            }
+            {JSON.stringify(matrixData.map(row => row.map(elem => Number(elem.toFixed(2)))))}
           </ScrollDiv>
         </Scroller>
       </DataContainer>
     </>
   );
 }
-
-const StyledHead = styled.h2`
-  margin: 1.5rem 0 0 0;
-`;
-
-const DataSelect = styled(Select)`
-  padding-left: .5rem;
-  font-size: 0.85rem; 
-  max-width: 512px; 
-  min-width: 200px;
-  `;
-
-const Label = styled.label`
-  display: flex;
-  flex-direction: row;
-  font-size: .85rem;
-  padding: .5rem;
-  height: 100%;
-  align-items: center;
-`;
-
-const DataContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
-const DataCanvas = styled.canvas`
-  border: 1px solid #DDDDDD;
-  border-radius: 4px 0 4px 0;
-`;
-
-const ScrollDiv = styled.div` 
-    font-family: monospace;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 0 4px 0;
-    color: #3B3C3E;
-    font-size: 7px;
-    font-weight: bold;
-    left: -1px;
-    padding: 10px 7px 5px;
-`;
-
-const Scroller = styled.div<{ height: number }>`
-  background-color: #F5F5F5;
-  height: ${({ height }) => height}px;
-  overflow:scroll;
-`;
-const ButtonContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const ButtonRow = styled.div`
-  display: flex; 
-  flex-direction: row;
-  align-items: center;
-`;
-
-const StyledTransformButton = styled.button`
-  margin: 1rem;
-  font-size: 1rem;
-  min-height: 24px;  
-`;
-
-const ButtonColumn = styled.div`
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const StyledButton = styled.button`
-  font-size: 0.7rem;
-  width: 80px;  
-  min-height: 22px;  
-`;
 
 export default Transform;

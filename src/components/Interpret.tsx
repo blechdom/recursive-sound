@@ -1,22 +1,26 @@
-import Transform from "@/components/Transform";
+import {
+  ButtonContainer,
+  ButtonRow,
+  DataCanvas,
+  DataContainer,
+  DataSelect,
+  Label,
+  ScrollDiv,
+  Scroller,
+  StyledHead,
+  StyledProcessButton,
+} from "@/pages/dataTuner";
 import {draw2DMatrix, drawArrayAs2DMatrix} from "@/utils/dataDrawing";
-import React, { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
-import Select from "react-select";
-import {
-  DataOptionType,
-} from "@/utils/matrixGenerator";
-import {
-  interpretMatrix,
-  interpretations,
-} from "@/utils/matrixInterpreter";
+import {DataOptionType,} from "@/utils/matrixGenerator";
+import {interpretations, interpretMatrix,} from "@/utils/matrixInterpreter";
+import React, {useEffect, useRef, useState} from "react";
 
 type InterpretProps = {
   transformedMatrixData: number[][];
   setInterpretedMatrixData: (matrixData: number[] | number[][]) => void;
 }
 
-const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpretedMatrixData }) => {
+const Interpret: React.FC<InterpretProps> = ({transformedMatrixData, setInterpretedMatrixData}) => {
   const [interpretation, setInterpretation] = useState<DataOptionType>(interpretations[0]);
   const [interpretationType, setInterpretationType] = useState<string>("averageRows");
   const [dataToInterpret, setDataToInterpret] = useState<number[][]>(transformedMatrixData);
@@ -44,8 +48,7 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
       } else {
         setMatrixData(transformedMatrixData);
       }
-    }
-    else {
+    } else {
       if (matrixData.length > 0) {
         setCanvasHeight(matrixData.length);
         setCanvasWidth(matrixData.length);
@@ -62,7 +65,7 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
   }, [matrixData, ctx, setInterpretedMatrixData, transformedMatrixData]);
 
   useEffect(() => {
-    if(dataToInterpret.length > 0 && dataToInterpret[0].length > 0) {
+    if (dataToInterpret.length > 0 && dataToInterpret[0].length > 0) {
       setMatrixData(interpretMatrix({matrix: dataToInterpret, interpretation: interpretationType}));
     }
   }, [dataToInterpret, interpretationType]);
@@ -77,18 +80,18 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
       <StyledHead>3. Interpret</StyledHead>
       <ButtonContainer>
         <ButtonRow>
-            <DataSelect
-              options={interpretations}
-              value={interpretation}
-              onChange={(option) => {
-                setInterpretation((option ?? interpretations[0]) as DataOptionType);
-              }}
-            />
+          <DataSelect
+            options={interpretations}
+            value={interpretation}
+            onChange={(option) => {
+              setInterpretation((option ?? interpretations[0]) as DataOptionType);
+            }}
+          />
         </ButtonRow>
         <ButtonRow>
-        <StyledButton onClick={doInterpretation}>Interpret</StyledButton>
+          <StyledProcessButton onClick={doInterpretation}>Interpret</StyledProcessButton>
         </ButtonRow>
-         <ButtonRow>
+        <ButtonRow>
           <Label>Height: {dataHeight}</Label>
           <Label>Width: {dataWidth}</Label>
         </ButtonRow>
@@ -103,19 +106,8 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
         <Scroller height={canvasHeight}>
           <ScrollDiv>
             {Array.isArray(matrixData[0]) ?
-              JSON.stringify(
-                matrixData.map(
-                  function(subArray: number[]){
-                    return subArray.map(function(elem: number) {
-                      return Number(elem.toFixed(2));
-                    });
-                  })
-              ) :
-                JSON.stringify(
-                  matrixData.map(function(elem: number) {
-                    return Number(elem.toFixed(2));
-                  })
-                )
+              JSON.stringify((matrixData as number[][]).map(row => row.map(elem => Number(elem.toFixed(2))))) :
+              JSON.stringify((matrixData as number[]).map(elem => Number(elem.toFixed(2))))
             }
           </ScrollDiv>
         </Scroller>
@@ -123,68 +115,5 @@ const Interpret: React.FC<InterpretProps> = ({ transformedMatrixData, setInterpr
     </>
   );
 }
-
-const StyledHead = styled.h2`
-  margin: 1.5rem 0 0 0;
-`;
-
-const DataSelect = styled(Select)`
-  padding-left: .5rem;
-  font-size: 0.85rem; 
-  max-width: 512px; 
-  min-width: 200px;
-  `;
-
-const Label = styled.label`
-  display: flex;
-  flex-direction: row;
-  font-size: .85rem;
-  padding: .5rem;
-  height: 100%;
-  align-items: center;
-`;
-
-const DataContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
-const DataCanvas = styled.canvas`
-  border: 1px solid #DDDDDD;
-  border-radius: 4px 0 4px 0;
-`;
-
-const ScrollDiv = styled.div` 
-    font-family: monospace;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 0 4px 0;
-    color: #3B3C3E;
-    font-size: 7px;
-    font-weight: bold;
-    left: -1px;
-    padding: 10px 7px 5px;
-`;
-
-const Scroller = styled.div<{ height: number }>`
-  background-color: #F5F5F5;
-  height: ${({ height }) => height}px;
-  overflow:scroll;
-`;
-const ButtonContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const ButtonRow = styled.div`
-  display: flex; 
-  flex-direction: row;
-  align-items: center;
-`;
-const StyledButton = styled.button`
-  margin: 1rem;
-  font-size: 1rem;
-  min-height: 24px;  
-`;
 
 export default Interpret;
