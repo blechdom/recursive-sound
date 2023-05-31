@@ -9,6 +9,7 @@ export interface InterpretationMatrix {
 
 export const interpretations: DataOptionType[] = [
   {value: "none", label: "none"},
+  {value: "maxValuePosition", label: "1D: Max Value Position"},
   {value: "averageRows", label: "1D: Average Rows"},
   {value: "averageColumns", label: "1D: Average Columns"},
   {value: "sumRows", label: "1D: Sum Rows Mod(1)"},
@@ -21,6 +22,8 @@ export const interpretMatrix = ({interpretation, matrix, options}: Interpretatio
   switch (interpretation) {
     case 'none':
       return matrix;
+    case 'maxValuePosition':
+      return maxValuePosition(matrix);
     case 'averageRows':
       return averageRows(matrix);
     case 'averageColumns':
@@ -32,6 +35,10 @@ export const interpretMatrix = ({interpretation, matrix, options}: Interpretatio
     default:
       return matrix;
   }
+}
+
+const maxValuePosition = (matrix: number[][]): number[] => {
+  return matrix.map((row) => row.indexOf(Math.max(...row)) / row.length);
 }
 
 const averageRows = (matrix: number[][]): number[] => {
