@@ -26,7 +26,7 @@ const PerformWebAudio: React.FC<PerformWebAudioProps> = ({performMatrixData, map
   const [playing, setPlaying] = useMemoizedState<boolean>(false);
   const [offset, setOffset] = useMemoizedState<number>(200); // hz
   const [scaleBy, setScaleBy] = useMemoizedState<number>(500); // hz
-  const [msBetweenEvents, setMsBetweenEvents] = useMemoizedState<number>(50);
+  const [msBetweenEvents, setMsBetweenEvents] = useMemoizedState<number>(5);
   const [freq, setFreq] = useState<NodeRepr_t | null>(null);
 
   const freqList = useMemo(() => {
