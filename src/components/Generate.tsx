@@ -6,12 +6,18 @@ import {
   DataSelect,
   Input,
   Label,
-  ScrollDiv,
-  Scroller,
-  StyledHead,
+  StyledHead
 } from "@/pages/dataTuner";
 import {draw2DMatrix} from "@/utils/dataDrawing";
-import {DataOptionType, generatePattern, patterns} from "@/utils/matrixGenerator";
+import {
+  DataOptionType,
+  dimensionsList,
+  generatePattern,
+  patterns1D,
+  patterns2D,
+  patterns3D
+} from "@/utils/matrixGenerator";
+import DataModal from "./DataModal";
 import React, {useEffect, useRef, useState} from "react";
 
 type GenerateProps = {
@@ -19,7 +25,8 @@ type GenerateProps = {
 }
 
 const Generate: React.FC<GenerateProps> = ({setGeneratedMatrixData}) => {
-  const [pattern, setPattern] = useState<DataOptionType>(patterns[0]);
+  const [dimensions, setDimensions] = useState<DataOptionType>(dimensionsList[0]);
+  const [pattern, setPattern] = useState<DataOptionType>(patterns1D[0]);
   const [canvasHeight, setCanvasHeight] = useState<number>(256);
   const [canvasWidth, setCanvasWidth] = useState<number>(256);
   const [matrixData, setMatrixData] = useState<number[][]>([]);
@@ -62,10 +69,18 @@ const Generate: React.FC<GenerateProps> = ({setGeneratedMatrixData}) => {
       <ButtonContainer>
         <ButtonRow>
           <DataSelect
-            options={patterns}
+            options={dimensionsList}
+            value={dimensions}
+            onChange={(option) => {
+              setDimensions((option ?? dimensionsList[0]) as DataOptionType);
+            }}
+          />
+          <DataSelect
+            options={
+              dimensions.value === "oneDimension" ? patterns1D : dimensions.value === "twoDimensions" ? patterns2D : patterns3D}
             value={pattern}
             onChange={(option) => {
-              setPattern((option ?? patterns[1]) as DataOptionType);
+              setPattern(option as DataOptionType);
             }}
           />
         </ButtonRow>
@@ -90,29 +105,18 @@ const Generate: React.FC<GenerateProps> = ({setGeneratedMatrixData}) => {
               onChange={(value: React.ChangeEvent<HTMLInputElement>) => setCanvasWidth(value.target.valueAsNumber)}
             />
           </Label>
+          <DataModal title={"GeneratedData"} matrixData={matrixData}/>
         </ButtonRow>
+        <DataContainer>
+          <DataCanvas
+            ref={dataCanvasRef}
+            width={canvasWidth}
+            height={canvasHeight}
+            onMouseDown={setMouseDownTrue}
+            onMouseUp={setMouseDownFalse}
+          />
+        </DataContainer>
       </ButtonContainer>
-      <DataContainer>
-        <DataCanvas
-          ref={dataCanvasRef}
-          width={canvasWidth}
-          height={canvasHeight}
-          onMouseDown={setMouseDownTrue}
-          onMouseUp={setMouseDownFalse}
-        />
-        <Scroller height={canvasHeight}>
-          <ScrollDiv>
-            {JSON.stringify(
-              matrixData.map(
-                function (subArray: number[]) {
-                  return subArray.map(function (elem: number) {
-                    return Number(elem.toFixed(2));
-                  });
-                }))
-            }
-          </ScrollDiv>
-        </Scroller>
-      </DataContainer>
     </>
   );
 }

@@ -41,8 +41,8 @@ const PerformWebAudio: React.FC<PerformWebAudioProps> = ({performMatrixData, map
       let i = 0;
       let frequency: NodeRepr_t = el.sm(el.const({key: `freq-{i}`, value: freqList[i]}));
       if (intervalId) clearInterval(intervalId);
+      // use elementary.audio metronome instead?
       intervalId = setInterval(() => {
-        console.log("i: ", i, "freq: ", freqList[i]);
         i++;
         frequency = el.sm(el.const({key: `freq-{i}`, value: freqList[i]}));
         setFreq(frequency);
