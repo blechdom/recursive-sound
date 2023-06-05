@@ -5,14 +5,13 @@ import {
   DataContainer,
   DataSelect,
   Label,
-  ScrollDiv,
-  Scroller,
   StyledHead,
   StyledProcessButton,
 } from "@/pages/dataTuner";
 import {draw2DMatrix, drawArrayAs2DMatrix} from "@/utils/dataDrawing";
 import {DataOptionType,} from "@/utils/matrixGenerator";
 import {interpretations, interpretMatrix,} from "@/utils/matrixInterpreter";
+import DataModal from "./DataModal";
 import React, {useEffect, useRef, useState} from "react";
 
 type InterpretProps = {
@@ -77,7 +76,7 @@ const Interpret: React.FC<InterpretProps> = ({transformedMatrixData, setInterpre
 
   return (
     <>
-      <StyledHead>3. Interpret</StyledHead>
+      <StyledHead>Interpret</StyledHead>
       <ButtonContainer>
         <ButtonRow>
           <DataSelect
@@ -95,6 +94,7 @@ const Interpret: React.FC<InterpretProps> = ({transformedMatrixData, setInterpre
           <Label>Height: {dataHeight}</Label>
           <Label>Width: {dataWidth}</Label>
         </ButtonRow>
+        <DataModal title={"Show Data"} matrixData={matrixData}/>
       </ButtonContainer>
 
       <DataContainer>
@@ -103,14 +103,6 @@ const Interpret: React.FC<InterpretProps> = ({transformedMatrixData, setInterpre
           width={canvasWidth}
           height={canvasHeight}
         />
-        <Scroller height={canvasHeight}>
-          <ScrollDiv>
-            {Array.isArray(matrixData[0]) ?
-              JSON.stringify((matrixData as number[][]).map(row => row.map(elem => Number(elem.toFixed(2))))) :
-              JSON.stringify((matrixData as number[]).map(elem => Number(elem.toFixed(2))))
-            }
-          </ScrollDiv>
-        </Scroller>
       </DataContainer>
     </>
   );

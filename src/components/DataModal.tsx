@@ -7,7 +7,7 @@ const Modal = dynamic(() => import("el-vis-audio").then((mod) => mod.Modal), {ss
 
 type DataModalProps = {
   title: string;
-  matrixData: number[][];
+  matrixData: number[] | number[][];
 }
 
 const DataModal: React.FC<DataModalProps> = ({title, matrixData}) => {
@@ -30,8 +30,9 @@ const DataModal: React.FC<DataModalProps> = ({title, matrixData}) => {
         <DataContainer>
           <Scroller height={320}>
             <ScrollDiv>
-              {JSON.stringify(
-                matrixData.map((row: number[]) => row.map((elem: number) => Number(elem.toFixed(2)))))
+              {Array.isArray(matrixData[0]) ?
+                JSON.stringify((matrixData as number[][]).map(row => row.map(elem => Number(elem.toFixed(2))))) :
+                JSON.stringify((matrixData as number[]).map(elem => Number(elem.toFixed(2))))
               }
             </ScrollDiv>
           </Scroller>

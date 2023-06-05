@@ -2,9 +2,8 @@ import {
   ButtonContainer,
   ButtonRow,
   DataSelect,
-  StyledHead,
 } from "@/pages/dataTuner";
-import {DataOptionType,} from "@/utils/matrixGenerator";
+import {DataOptionType} from "@/utils/matrixGenerator";
 import {performanceTypes, mappings1D, mappings2D, playMethods2D} from "@/utils/matrixPerformer";
 import React, {useState} from "react";
 import PerformWebAudio from "@/components/PerformWebAudio";
@@ -12,10 +11,11 @@ import PerformWebMidi from "@/components/PerformWebMidi";
 import PerformOSC from "@/components/PerformOSC";
 
 type PerformProps = {
-  interpretedMatrixData: number[] | number[][];
+  data: number[] | number[][];
+  dimensions: 1 | 2 | 3;
 }
 
-const Perform: React.FC<PerformProps> = ({interpretedMatrixData}) => {
+const Perform: React.FC<PerformProps> = ({data, dimensions}) => {
   const [performanceType, setPerformanceType] = useState<DataOptionType>(performanceTypes[0]);
   const [mapping1D, setMapping1D] = useState<DataOptionType>(mappings1D[0]);
   const [mapping2D, setMapping2D] = useState<DataOptionType>(mappings2D[0]);
@@ -23,18 +23,16 @@ const Perform: React.FC<PerformProps> = ({interpretedMatrixData}) => {
 
   return (
     <>
-      <StyledHead>4. Perform</StyledHead>
-      <br/>
       <ButtonContainer>
         <ButtonRow>
-          <DataSelect
+          {/*<DataSelect
             options={performanceTypes}
             value={performanceType}
             onChange={(option) => {
               setPerformanceType((option ?? performanceTypes[0]) as DataOptionType);
             }}
-          />
-          {!Array.isArray(interpretedMatrixData[0]) ? (
+          />*/}
+          {!Array.isArray(data[0]) ? (
             <DataSelect
               options={mappings1D}
               value={mapping1D}
@@ -63,7 +61,7 @@ const Perform: React.FC<PerformProps> = ({interpretedMatrixData}) => {
         </ButtonRow>
       </ButtonContainer>
       {performanceType.value === "WebAudio" &&
-        <PerformWebAudio performMatrixData={interpretedMatrixData} mapping={mapping1D.value}/>}
+        <PerformWebAudio performMatrixData={data} mapping={mapping1D.value}/>}
       {performanceType.value === "WebMIDI" && <PerformWebMidi/>}
       {performanceType.value === "OSC" && <PerformOSC/>}
     </>

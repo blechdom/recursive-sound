@@ -15,7 +15,6 @@ import {
   generatePattern,
   patterns1D,
   patterns2D,
-  patterns3D
 } from "@/utils/matrixGenerator";
 import DataModal from "./DataModal";
 import React, {useEffect, useRef, useState} from "react";
@@ -65,7 +64,7 @@ const Generate: React.FC<GenerateProps> = ({setGeneratedMatrixData}) => {
 
   return (
     <>
-      <StyledHead>1. Generate</StyledHead>
+      <StyledHead>Generate</StyledHead>
       <ButtonContainer>
         <ButtonRow>
           <DataSelect
@@ -77,7 +76,7 @@ const Generate: React.FC<GenerateProps> = ({setGeneratedMatrixData}) => {
           />
           <DataSelect
             options={
-              dimensions.value === "oneDimension" ? patterns1D : dimensions.value === "twoDimensions" ? patterns2D : patterns3D}
+              dimensions.value === "oneDimension" ? patterns1D : patterns2D}
             value={pattern}
             onChange={(option) => {
               setPattern(option as DataOptionType);
@@ -105,7 +104,7 @@ const Generate: React.FC<GenerateProps> = ({setGeneratedMatrixData}) => {
               onChange={(value: React.ChangeEvent<HTMLInputElement>) => setCanvasWidth(value.target.valueAsNumber)}
             />
           </Label>
-          <DataModal title={"GeneratedData"} matrixData={matrixData}/>
+          <DataModal title={"Show Data"} matrixData={matrixData}/>
         </ButtonRow>
         <DataContainer>
           <DataCanvas

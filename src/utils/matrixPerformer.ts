@@ -8,7 +8,7 @@ export interface PerformMatrix {
 
 export const performanceTypes: DataOptionType[] = [
   {value: "WebAudio", label: "WebAudio"},
-  {value: "WebMIDI", label: "WebMIDI"},
+  //{value: "WebMIDI", label: "WebMIDI"},
   {value: "OSC", label: "OSC"},
 ];
 

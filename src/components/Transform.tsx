@@ -13,6 +13,7 @@ import {
 import {draw2DMatrix} from "@/utils/dataDrawing";
 import {DataOptionType,} from "@/utils/matrixGenerator";
 import {transformMatrix, transforms,} from "@/utils/matrixTransformer";
+import DataModal from "./DataModal";
 import React, {useEffect, useRef, useState} from "react";
 
 
@@ -55,7 +56,7 @@ const Transform: React.FC<TransformProps> = ({generatedMatrixData, setTransforme
     if (dataToTransform.length > 0 && dataToTransform[0].length > 0) {
       setMatrixData(transformMatrix({matrix: dataToTransform, transform: transformType}));
     }
-  }, [dataToTransform, transformType]);
+  }, [generatedMatrixData, dataToTransform, transformType]);
 
   function doTransform() {
     setTransformType(transform.value);
@@ -143,7 +144,7 @@ const Transform: React.FC<TransformProps> = ({generatedMatrixData, setTransforme
 
   return (
     <>
-      <StyledHead>2. Transform</StyledHead>
+      <StyledHead>Transform</StyledHead>
       <ButtonContainer>
         <ButtonRow>
           <DataSelect
@@ -167,6 +168,7 @@ const Transform: React.FC<TransformProps> = ({generatedMatrixData, setTransforme
           <Label>Height: {canvasHeight}</Label>
           <Label>Width: {canvasWidth}</Label>
         </ButtonRow>
+        <DataModal title={"Show Data"} matrixData={matrixData}/>
       </ButtonContainer>
       {/*<ButtonContainer>
         <ButtonColumn>
@@ -199,11 +201,6 @@ const Transform: React.FC<TransformProps> = ({generatedMatrixData, setTransforme
           onMouseDown={setMouseDownTrue}
           onMouseUp={setMouseDownFalse}
         />
-        <Scroller height={canvasHeight}>
-          <ScrollDiv>
-            {JSON.stringify(matrixData.map(row => row.map(elem => Number(elem.toFixed(2)))))}
-          </ScrollDiv>
-        </Scroller>
       </DataContainer>
     </>
   );

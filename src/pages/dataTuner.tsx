@@ -4,30 +4,32 @@ import Perform from "@/components/Perform";
 import Transform from "@/components/Transform";
 import {faArrowRight} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import Select from "react-select";
 import styled from "styled-components";
-
-const ArrowIcon = () => {
-  return <FontAwesomeIcon
-    icon={faArrowRight}
-    style={{fontSize: 18, color: "red"}}
-  />
-};
 
 export default function DataTuner() {
   const [generatedMatrixData, setGeneratedMatrixData] = useState<number[][]>([]);
   const [transformedMatrixData, setTransformedMatrixData] = useState<number[][]>([]);
   const [interpretedMatrixData, setInterpretedMatrixData] = useState<number[] | number[][]>([]);
+  const [dimensionsToPerform, setDimensionsToPerform] = useState<1 | 2 | 3>(1);
+  const [dataToPerform, setDataToPerform] = useState<number[] | number[][]>([]);
+  const [dataHistory1d, setDataHistory1d] = useState<number[][]>([]);
+  const [dataHistory2d, setDataHistory2d] = useState<number[][][]>([]);
+
+  useEffect(() => {
+    if (Array.isArray(interpretedMatrixData[0])) setDimensionsToPerform(2);
+    else setDimensionsToPerform(1);
+    setDataToPerform(interpretedMatrixData);
+  }, [interpretedMatrixData]);
 
   return (
     <Page>
-      <h2>Data Tuner 2D</h2>
-      <StyledSubhead>Generate <ArrowIcon/> Transform <ArrowIcon/> Interpret <ArrowIcon/> Perform</StyledSubhead>
+      <h2>Data Tuner</h2>
       <Generate setGeneratedMatrixData={setGeneratedMatrixData}/>
       <Transform generatedMatrixData={generatedMatrixData} setTransformedMatrixData={setTransformedMatrixData}/>
       <Interpret transformedMatrixData={transformedMatrixData} setInterpretedMatrixData={setInterpretedMatrixData}/>
-      <Perform interpretedMatrixData={interpretedMatrixData}/>
+      <Perform dimensions={dimensionsToPerform} data={dataToPerform}/>
     </Page>
   );
 }

@@ -14,9 +14,8 @@ export type DataOptionType = {
 }
 
 export const dimensionsList: DataOptionType[] = [
-  {value: "oneDimension", label: "1D"},
-  {value: "twoDimensions", label: "2D"},
-  {value: "threeDimensions", label: "3D"},
+  {value: "oneDimension", label: "Generate 1D Array"},
+  {value: "twoDimensions", label: "Generate 2D Matrix"},
 ];
 
 export const patterns1D: DataOptionType[] = [
@@ -44,11 +43,6 @@ export const patterns2D: DataOptionType[] = [
   {value: "checkerboard", label: "Checkerboard"},
   {value: "horizontalGradient", label: "Horizontal Gradient"},
   {value: "horizonDrawingMode", label: "Horizon Drawing Mode"},
-];
-
-export const patterns3D: DataOptionType[] = [
-  {value: "zoomIn", label: "Zoom In"},
-  {value: "zoomOut", label: "Zoom Out"},
 ];
 
 export const generatePattern = ({pattern, height, width}: GeneratePattern): number[][] => {
