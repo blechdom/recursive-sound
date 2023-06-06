@@ -16,16 +16,16 @@ import {
 } from "@/utils/fractal";
 
 const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
-  { ssr: false }
+  {ssr: false}
 )
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
-  return { value: index.toString(), label: index.toString() };
+  return {value: index.toString(), label: index.toString()};
 });
 
 let socket: Socket;
 
-export default function Home() {
+export default function Fractals() {
   const [renderOption, setRenderOption] = useState<OptionType>(
     renderOptions[renderOptions?.findIndex((o: OptionType) => o?.value === 'lsm')]
   );
@@ -56,7 +56,7 @@ export default function Home() {
 
   useEffect(() => {
     console.log("volume", volume);
-    socket?.emit("volume", volume );
+    socket?.emit("volume", volume);
   }, [volume]);
 
   useEffect(() => {
@@ -128,53 +128,54 @@ export default function Home() {
 
   const sendMandelbrot = useCallback((fractal2DArray: number[][]) => {
     fractal2DArray.forEach((row: number[], index: number) => {
-      setTimeout(function() {
-         socket?.emit("fractalMandelbrotRow", row);
+      setTimeout(function () {
+        socket?.emit("fractalMandelbrotRow", row);
       }, msBetweenRows * index);
     });
   }, [msBetweenRows]);
 
   const sendJulia = useCallback((fractal2DArray: number[][]) => {
     fractal2DArray.forEach((row: number[], index: number) => {
-      setTimeout(function() {
-         socket?.emit("fractalJuliaRow", row);
+      setTimeout(function () {
+        socket?.emit("fractalJuliaRow", row);
       }, msBetweenRows * index);
     });
   }, [msBetweenRows]);
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
-    if(mandelbrotCanvasRef.current) {
-       const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
-        const pos = {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        };
-        const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
-        const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
-        const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
-        setCx(newCx);
-        setCy(newCy);
+    if (mandelbrotCanvasRef.current) {
+      const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
+      const pos = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+      const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
+      const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
+      const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
+      setCx(newCx);
+      setCy(newCy);
     }
   }, [canvasHeight, canvasWidth, mandelbrotWindow]);
 
   const setJuliaComplexNumber = useCallback((e: any) => {
-    if(mandelbrotCanvasRef.current && mandelbrotMouseDown) {
-       const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
-        const pos = {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        };
-        const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
-        const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
-        const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
-        setCx(newCx);
-        setCy(newCy);
+    if (mandelbrotCanvasRef.current && mandelbrotMouseDown) {
+      const rect = mandelbrotCanvasRef.current.getBoundingClientRect();
+      const pos = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+      const scalingFactors = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
+      const newCx = mandelbrotWindow.x_min + pos.x * scalingFactors.x;
+      const newCy = mandelbrotWindow.y_min + pos.y * scalingFactors.y;
+      setCx(newCx);
+      setCy(newCy);
     }
   }, [canvasHeight, canvasWidth, mandelbrotWindow, mandelbrotMouseDown]);
 
   function setDownForMandelbrotMouseDown() {
     setMandelbrotMouseDown(true);
   }
+
   function setUpForMandelbrotMouseDown() {
     setMandelbrotMouseDown(false);
   }
@@ -207,20 +208,17 @@ export default function Home() {
       tempWindow.y_max = tempWindow.y_max * 0.885;
       tempWindow.y_min = tempWindow.y_min * 0.885;
       setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'ur') {
+    } else if (value === 'ur') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_max = tempWindow.y_max * 0.75;
       setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'll') {
+    } else if (value === 'll') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_max = tempWindow.x_max * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
       setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'lr') {
+    } else if (value === 'lr') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
@@ -239,8 +237,7 @@ export default function Home() {
       tempWindow.x_max = tempWindow.x_max * 0.885;
       tempWindow.x_min = tempWindow.x_min * 0.885;
       setMandelbrotWindow({...tempWindow});
-    }
-    else if (value === 'in') {
+    } else if (value === 'in') {
       const tempWindow = mandelbrotWindow;
       tempWindow.x_min = tempWindow.x_min * 0.92;
       tempWindow.y_min = tempWindow.y_min * 0.92;
@@ -278,20 +275,17 @@ export default function Home() {
       tempWindow.y_max = tempWindow.y_max * 0.885;
       tempWindow.y_min = tempWindow.y_min * 0.885;
       setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'ur') {
+    } else if (value === 'ur') {
       const tempWindow = juliaWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_max = tempWindow.y_max * 0.75;
       setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'll') {
+    } else if (value === 'll') {
       const tempWindow = juliaWindow;
       tempWindow.x_max = tempWindow.x_max * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
       setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'lr') {
+    } else if (value === 'lr') {
       const tempWindow = juliaWindow;
       tempWindow.x_min = tempWindow.x_min * 0.75;
       tempWindow.y_min = tempWindow.y_min * 0.75;
@@ -310,8 +304,7 @@ export default function Home() {
       tempWindow.x_max = tempWindow.x_max * 0.885;
       tempWindow.x_min = tempWindow.x_min * 0.885;
       setJuliaWindow({...tempWindow});
-    }
-    else if (value === 'in') {
+    } else if (value === 'in') {
       const tempWindow = juliaWindow;
       tempWindow.x_min = tempWindow.x_min * 0.92;
       tempWindow.y_min = tempWindow.y_min * 0.92;
@@ -325,60 +318,60 @@ export default function Home() {
     <Page>
       <ButtonContainer>
         <Label>Render Algorithm{" "}
-      <FractalSelect
-        options={renderOptions}
-        value={renderOption}
-        onChange={(option) => {
-          setRenderOption((option ?? renderOptions[1]) as OptionType);
-        }}
-      /></Label>
-      <Label>Color Palette{" "}
-      <FractalSelect
-        options={palettes}
-        value={paletteNumber}
-        onChange={(option) => {
-          setPaletteNumber((option ?? palettes[0]) as OptionType);
-        }}
-      /></Label>
+          <FractalSelect
+            options={renderOptions}
+            value={renderOption}
+            onChange={(option) => {
+              setRenderOption((option ?? renderOptions[1]) as OptionType);
+            }}
+          /></Label>
+        <Label>Color Palette{" "}
+          <FractalSelect
+            options={palettes}
+            value={paletteNumber}
+            onChange={(option) => {
+              setPaletteNumber((option ?? palettes[0]) as OptionType);
+            }}
+          /></Label>
         <ButtonRow>
-      <Label>Height{" "}
-      <Input
-        type="number"
-        min={16}
-        max={1024}
-        value={canvasHeight}
-        step={1}
-        onChange={(value) => setCanvasHeight(value.target.valueAsNumber)}
-      /></Label>
-      <Label>Width{" "}
-      <Input
-        type="number"
-        min={16}
-        max={1024}
-        value={canvasWidth}
-        step={1}
-        onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
-      /></Label></ButtonRow>
-      <Label>Iterations{" "}
-      <Input
-        type="number"
-        min={25}
-        max={5000}
-        value={maxIterations}
-        step={25}
-        onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
-      /></Label>
-      {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
-        <Label>Threshold{"   "}
-        <Input
-          type="number"
-          value={lsmThreshold}
-          step={100}
-          min={100}
-          max={10000}
-          onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
-        /></Label>
-      )}
+          <Label>Height{" "}
+            <Input
+              type="number"
+              min={16}
+              max={1024}
+              value={canvasHeight}
+              step={1}
+              onChange={(value) => setCanvasHeight(value.target.valueAsNumber)}
+            /></Label>
+          <Label>Width{" "}
+            <Input
+              type="number"
+              min={16}
+              max={1024}
+              value={canvasWidth}
+              step={1}
+              onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
+            /></Label></ButtonRow>
+        <Label>Iterations{" "}
+          <Input
+            type="number"
+            min={25}
+            max={5000}
+            value={maxIterations}
+            step={25}
+            onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
+          /></Label>
+        {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
+          <Label>Threshold{"   "}
+            <Input
+              type="number"
+              value={lsmThreshold}
+              step={100}
+              min={100}
+              max={10000}
+              onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
+            /></Label>
+        )}
         {renderOption.value && (renderOption.value === 'dem' || renderOption.value === 'dem-raw') && (
           <>
             <Label>Threshold{"   "}
@@ -412,16 +405,16 @@ export default function Home() {
               />
             </Label>
           </>
-      )}
+        )}
         <Label>ms speed{"   "}
-        <Input
-          type="number"
-          value={msBetweenRows}
-          step={0.01}
-          min={1}
-          max={250}
-          onChange={(value) => setMsBetweenRows(value.target.valueAsNumber)}
-        />
+          <Input
+            type="number"
+            value={msBetweenRows}
+            step={0.01}
+            min={1}
+            max={250}
+            onChange={(value) => setMsBetweenRows(value.target.valueAsNumber)}
+          />
         </Label>
         <Knob
           id={"speed"}
@@ -444,14 +437,14 @@ export default function Home() {
       </ButtonContainer>
       <ButtonContainer>
         <ButtonColumn>
-        <Label>Zoom Mandelbrot</Label>
-         <StyledButton onClick={zoomMandelbrot('reset')}>RESET</StyledButton>
-          </ButtonColumn>
+          <Label>Zoom Mandelbrot</Label>
+          <StyledButton onClick={zoomMandelbrot('reset')}>RESET</StyledButton>
+        </ButtonColumn>
         <ButtonColumn>
           <ButtonRow>
             <StyledButton onClick={zoomMandelbrot('ul')}>Upper-Left</StyledButton>
             <StyledButton onClick={zoomMandelbrot('up')}>Up</StyledButton>
-          <StyledButton onClick={zoomMandelbrot('ur')}>Upper-Right</StyledButton>
+            <StyledButton onClick={zoomMandelbrot('ur')}>Upper-Right</StyledButton>
           </ButtonRow>
           <ButtonRow>
             <StyledButton onClick={zoomMandelbrot('l')}>Left</StyledButton>
@@ -465,14 +458,14 @@ export default function Home() {
           </ButtonRow>
         </ButtonColumn>
         <ButtonColumn>
-        <Label>Zoom Julia</Label>
-         <StyledButton onClick={zoomJulia('reset')}>RESET</StyledButton>
-          </ButtonColumn>
+          <Label>Zoom Julia</Label>
+          <StyledButton onClick={zoomJulia('reset')}>RESET</StyledButton>
+        </ButtonColumn>
         <ButtonColumn>
           <ButtonRow>
             <StyledButton onClick={zoomJulia('ul')}>Upper-Left</StyledButton>
             <StyledButton onClick={zoomJulia('up')}>Up</StyledButton>
-          <StyledButton onClick={zoomJulia('ur')}>Upper-Right</StyledButton>
+            <StyledButton onClick={zoomJulia('ur')}>Upper-Right</StyledButton>
           </ButtonRow>
           <ButtonRow>
             <StyledButton onClick={zoomJulia('l')}>Left</StyledButton>
@@ -489,21 +482,21 @@ export default function Home() {
       <ButtonContainer>
         <Label>Julia Complex Number (click and Drag over Mandelbrot)</Label>
         <Label>cx
-        <ComplexInput
-          type="number"
-          value={cx}
-          min={-2.0}
-          max={2.0}
-          onChange={(value) => setCx(value.target.valueAsNumber)}
-        /></Label>
+          <ComplexInput
+            type="number"
+            value={cx}
+            min={-2.0}
+            max={2.0}
+            onChange={(value) => setCx(value.target.valueAsNumber)}
+          /></Label>
         <Label>cy
-        <ComplexInput
-          type="number"
-          value={cy}
-          min={-2.0}
-          max={2.0}
-          onChange={(value) => setCy(value.target.valueAsNumber)}
-        /></Label>
+          <ComplexInput
+            type="number"
+            value={cy}
+            min={-2.0}
+            max={2.0}
+            onChange={(value) => setCy(value.target.valueAsNumber)}
+          /></Label>
       </ButtonContainer>
       <FractalContainer>
         <MandelbrotCanvas
@@ -519,8 +512,8 @@ export default function Home() {
           <ScrollDiv>
             {JSON.stringify(
               mandelbrot2DArray.map(
-                function(subArray: number[]){
-                  return subArray.map(function(elem: number) {
+                function (subArray: number[]) {
+                  return subArray.map(function (elem: number) {
                     return Number(elem.toFixed(2));
                   });
                 }))
@@ -528,7 +521,7 @@ export default function Home() {
           </ScrollDiv>
         </Scroller>
       </FractalContainer>
-      <br />
+      <br/>
       <FractalContainer>
         <JuliaCanvas
           ref={juliaCanvasRef}
@@ -539,8 +532,8 @@ export default function Home() {
           <ScrollDiv>
             {JSON.stringify(
               julia2DArray.map(
-                function(subArray: number[]){
-                  return subArray.map(function(elem: number) {
+                function (subArray: number[]) {
+                  return subArray.map(function (elem: number) {
                     return Number(elem.toFixed(2));
                   });
                 }))
@@ -562,9 +555,9 @@ const Page = styled.div`
 
 const FractalSelect = styled(Select)`
   padding-left: .5rem;
-  font-size: 0.85rem; 
-  max-width: 512px; 
-  `;
+  font-size: 0.85rem;
+  max-width: 512px;
+`;
 
 const Label = styled.label`
   display: flex;
@@ -578,7 +571,7 @@ const Label = styled.label`
 const Input = styled.input`
   min-height: 30px;
   padding: 0.5rem;
-  margin-left: .5rem ;
+  margin-left: .5rem;
   font-size: 0.85rem;
   transition: all 100ms;
   background-color: hsl(0, 0%, 100%);
@@ -587,6 +580,7 @@ const Input = styled.input`
   border-style: solid;
   border-width: 1px;
   box-sizing: border-box;
+
   &:focus {
     border: 2px solid dodgerblue;
     transition: border-color 0.3s ease-in-out;
@@ -608,21 +602,21 @@ const MandelbrotCanvas = styled.canvas`
 const JuliaCanvas = styled.canvas`
 `;
 
-const ScrollDiv = styled.div` 
-    font-family: monospace;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 0 4px 0;
-    color: #3B3C3E;
-    font-size: 7px;
-    font-weight: bold;
-    left: -1px;
-    padding: 10px 7px 5px;
+const ScrollDiv = styled.div`
+  font-family: monospace;
+  border: 1px solid #DDDDDD;
+  border-radius: 4px 0 4px 0;
+  color: #3B3C3E;
+  font-size: 7px;
+  font-weight: bold;
+  left: -1px;
+  padding: 10px 7px 5px;
 `;
 
 const Scroller = styled.div`
   background-color: #F5F5F5;
   height: 256px;
-    overflow:scroll;
+  overflow: scroll;
 `;
 const ButtonContainer = styled.div`
   display: flex;
@@ -631,7 +625,7 @@ const ButtonContainer = styled.div`
 `;
 
 const ButtonRow = styled.div`
-  display: flex; 
+  display: flex;
   flex-direction: row;
   align-items: center;
 `;
@@ -645,6 +639,6 @@ const ButtonColumn = styled.div`
 
 const StyledButton = styled.button`
   font-size: 0.7rem;
-  width: 80px;  
-  min-height: 22px;  
+  width: 80px;
+  min-height: 22px;
 `;

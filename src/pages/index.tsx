@@ -57,10 +57,8 @@ export default function Home() {
           Storybook:
           <p>Here are the recursive and more complex-function oriented demos: </p>
           <ul>
-            <li><Link href={"https://blechdom.github.io/el-vis-audio/?path=/story/experiments-recursivepm3--default"}>Recursive
-              PM</Link></li>
-            <li><Link href={"https://blechdom.github.io/el-vis-audio/?path=/story/experiments-recursive-fm--default"}>Recursive
-              FM</Link></li>
+            <li><Link href={"./recursivePM"}>Recursive PM</Link></li>
+            <li><Link href={"./recursiveFM"}>Recursive FM</Link></li>
             <li><Link
               href={"https://blechdom.github.io/el-vis-audio/?path=/story/experiments-weierstrass-function--default"}>Weierstrass
               Function</Link></li>
