@@ -47,6 +47,7 @@ const RecursiveFMAudio: React.FC = () => {
     modAmpDiv: number,
     count: number
   ): NodeRepr_t => {
+    console.log('count ', count);
     return audioContext && count > 0
       ? recursiveModulatedCycle(
         el.cycle(
@@ -74,7 +75,7 @@ const RecursiveFMAudio: React.FC = () => {
             carrier,
             el.sm(el.const({key: `start-amp`, value: currentSetting?.modAmp}))
           ),
-          el.sm(el.const({key: `start-amp-offset`, value: currentSetting?.offset}))
+          el.sm(el.const({key: `start-amp-offset`, value: currentSetting?.offset + currentSetting?.modAmp}))
         )
       );
 
@@ -179,7 +180,7 @@ const RecursiveFMAudio: React.FC = () => {
         allowAdd
         allowEdit
         allowLocalStorage
-        presetsName="recursive-fm-nextjs"
+        presetsName="recursive-fm-next"
         currentSetting={currentSetting}
         presetList={presetList}
         onUpdateCurrentPreset={updateCurrentPreset}
@@ -199,6 +200,13 @@ const KnobsFlexBox = styled.div`
 `;
 
 const defaultPresets: RecursiveFMPreset[] = [
+  {
+    steps: 0,
+    carrierFreq: 1,
+    offset: 0,
+    modAmp: 500,
+    modAmpDiv: 2,
+  },
   {
     steps: 3,
     carrierFreq: 3.32,
