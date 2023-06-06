@@ -73,15 +73,15 @@ const RecursiveFMAudio: React.FC = () => {
         el.add(
           el.mul(
             carrier,
-            el.sm(el.const({key: `start-amp`, value: currentSetting?.modAmp}))
+            el.sm(el.const({key: `start-amp`, value: (currentSetting?.modAmp / 2)}))
           ),
-          el.sm(el.const({key: `start-amp-offset`, value: currentSetting?.offset + currentSetting?.modAmp}))
+          el.sm(el.const({key: `start-amp-offset`, value: currentSetting?.offset + (currentSetting?.modAmp / 2)}))
         )
       );
 
       return recursiveModulatedCycle(
         firstMod,
-        currentSetting?.modAmp,
+        currentSetting?.modAmp / 2,
         currentSetting?.modAmpDiv,
         currentSetting?.steps,
       );
