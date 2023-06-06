@@ -47,7 +47,6 @@ const RecursiveFMAudio: React.FC = () => {
     modAmpDiv: number,
     count: number
   ): NodeRepr_t => {
-    console.log('count ', count);
     return audioContext && count > 0
       ? recursiveModulatedCycle(
         el.cycle(
@@ -112,7 +111,6 @@ const RecursiveFMAudio: React.FC = () => {
 
   function updateCurrentPreset(presetNumber: number) {
     const preset = presetList[presetNumber];
-    console.log("preset ", preset);
     setSteps(preset?.steps);
     setCarrierFreq(preset?.carrierFreq);
     setModAmp(preset?.modAmp);

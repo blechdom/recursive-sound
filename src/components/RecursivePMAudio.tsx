@@ -130,7 +130,6 @@ const RecursivePMAudio: React.FC = () => {
 
   function updateCurrentPreset(presetNumber: number) {
     const preset = presetList[presetNumber];
-    console.log("preset ", preset);
     setSteps(preset?.steps);
     setCarrierFreq(preset?.carrierFreq);
     setStartModFreq(preset?.startModFreq);
