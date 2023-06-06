@@ -10,8 +10,7 @@ export default function RecursivePM() {
       <RecursivePMAudio/>
       <br/>
       <br/>
-      <img src="/recursive-sound/images/recursivePM.png" alt="Recursive Phase Modulation Algorithm Flowchart"
-           width="100%"/>
+      <img src="/images/recursivePM.png" alt="Recursive Phase Modulation Algorithm Flowchart" width="100%"/>
     </>
   );
 }

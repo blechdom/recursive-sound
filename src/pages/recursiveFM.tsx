@@ -9,8 +9,7 @@ export default function RecursiveFM() {
       <RecursiveFMAudio/>
       <br/>
       <br/>
-      <img src="/recursive-sound/images/recursiveFM.png" alt="Recursive Frequency Modulation Algorithm Flowchart"
-           width="100%"/>
+      <img src="/images/recursiveFM.png" alt="Recursive Frequency Modulation Algorithm Flowchart" width="100%"/>
     </>
   );
 }
