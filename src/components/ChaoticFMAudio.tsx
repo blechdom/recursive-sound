@@ -16,7 +16,7 @@ type ChaoticFMPreset = {
   offset: number;
   modAmp: number;
   modAmpDiv: number;
-  gs: number;
+  filter: number;
 };
 
 const ChaoticFMAudio: React.FC = () => {
@@ -34,7 +34,7 @@ const ChaoticFMAudio: React.FC = () => {
   const [carrierFreq, setCarrierFreq] = useState<number>(3.32);
   const [offset, setOffset] = useState<number>(6335);
   const [modAmpDiv, setModAmpDiv] = useState<number>(2.48);
-  const [gs, setGs] = useState<number>(300);
+  const [filter, setFilter] = useState<number>(300);
   const [presetList, setPresetList] =
     useMemoizedState<ChaoticFMPreset[]>(defaultPresets);
   const [currentSetting, setCurrentSetting] =
@@ -47,10 +47,10 @@ const ChaoticFMAudio: React.FC = () => {
     signal: NodeRepr_t,
     amp: number,
     modAmpDiv: number,
-    gs: number,
+    filter: number,
     count: number
   ): NodeRepr_t => {
-    let shaper = el.sm(el.const({key: 'ex1:gain', value: gs}));
+    let shaper = el.sm(el.const({key: 'ex1:gain', value: filter}));
     let simpleModulator = el.mul(signal, el.sm(el.const({key: `mod-amp-${count}`, value: amp})));
     let transformedModulator = el.tanh(simpleModulator);
     let modulator = el.mul(transformedModulator, shaper);
@@ -60,7 +60,7 @@ const ChaoticFMAudio: React.FC = () => {
         el.cycle(modulator) as NodeRepr_t,
         amp / modAmpDiv,
         modAmpDiv,
-        gs,
+        filter,
         count - 1,
       )
       : signal;
@@ -89,7 +89,7 @@ const ChaoticFMAudio: React.FC = () => {
         firstMod,
         currentSetting?.modAmp / 2,
         currentSetting?.modAmpDiv,
-        currentSetting?.gs,
+        currentSetting?.filter,
         currentSetting?.steps,
       );
     }
@@ -108,11 +108,11 @@ const ChaoticFMAudio: React.FC = () => {
         carrierFreq,
         modAmp,
         modAmpDiv,
-        gs,
+        filter,
         offset
       });
     }
-  }, [audioContext, steps, carrierFreq, modAmp, modAmpDiv, gs, offset]);
+  }, [audioContext, steps, carrierFreq, modAmp, modAmpDiv, filter, offset]);
 
   function updatePresetList(presetList: ChaoticFMPreset[]) {
     setPresetList(presetList);
@@ -124,7 +124,7 @@ const ChaoticFMAudio: React.FC = () => {
     setCarrierFreq(preset?.carrierFreq);
     setModAmp(preset?.modAmp);
     setModAmpDiv(preset?.modAmpDiv);
-    setGs(preset?.gs);
+    setFilter(preset?.filter);
     setOffset(preset?.offset);
   }
 
@@ -183,13 +183,13 @@ const ChaoticFMAudio: React.FC = () => {
           onKnobInput={setModAmpDiv}
         />
         <KnobParamLabel
-          id={"gs"}
-          label={"gs"}
-          knobValue={gs}
+          id={"filter"}
+          label={"filter"}
+          knobValue={filter}
           min={0.001}
           step={0.01}
           max={4000}
-          onKnobInput={setGs}
+          onKnobInput={setFilter}
         />
       </KnobsFlexBox>
       <br/>
@@ -223,7 +223,7 @@ const defaultPresets: ChaoticFMPreset[] = [
     offset: 0,
     modAmp: 350,
     modAmpDiv: 0.4,
-    gs: 256,
+    filter: 256,
   },
   {
     steps: 4,
@@ -231,7 +231,7 @@ const defaultPresets: ChaoticFMPreset[] = [
     offset: 100,
     modAmp: 4200,
     modAmpDiv: 4,
-    gs: 375,
+    filter: 375,
   },
   {
     steps: 5,
@@ -239,7 +239,7 @@ const defaultPresets: ChaoticFMPreset[] = [
     offset: 637,
     modAmp: 2737,
     modAmpDiv: 5.8,
-    gs: 531,
+    filter: 531,
   },
   {
     steps: 2,
@@ -247,7 +247,7 @@ const defaultPresets: ChaoticFMPreset[] = [
     offset: 637,
     modAmp: 4762,
     modAmpDiv: 7.611,
-    gs: 1024,
+    filter: 1024,
   },
   {
     steps: 1,
@@ -255,7 +255,7 @@ const defaultPresets: ChaoticFMPreset[] = [
     offset: 787,
     modAmp: 125,
     modAmpDiv: 4.3,
-    gs: 725,
+    filter: 725,
   },
 ];
 
