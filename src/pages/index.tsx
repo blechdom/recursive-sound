@@ -11,6 +11,9 @@ export default function Home() {
       <h1>MORPHISMA</h1>
       <h2>Recursive Sounds, WebAudio Experiments, and other Works-In-Progress...</h2>
       <ul>
+        <li><Link href={"./recursivePM"}>Recursive PM</Link></li>
+        <li><Link href={"./recursiveFM"}>Recursive FM</Link></li>
+        <li><Link href={"./chaoticFM"}>Chaotic FM</Link></li>
         <li>
           <Link href={"./dataTuner"}>Data Tuner 2D</Link>
           <p>WIP: Preview 2D Data Sets and experiment with a range of transformations, interpretations, and sonification
