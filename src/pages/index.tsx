@@ -52,11 +52,12 @@ export default function Home() {
           </p>
         </li>
         <li>
-          <Link href={"./juliasPlayheads"}>Julia's Playheads</Link>
+          <Link href={"./juliasPlayheads"}>Julia&apos;s Playheads</Link>
           <p>
             Render a frame of the Julia Set in a 2D Matrix with values between 0 and 1. Using the principles
             of coloring algorithms that animate cyclically through the set using a modulo functions on each point,
-            "color" the data using cyclic Risset Glissandi. Mapping notes within the glissandi to the values in each
+            <i>color</i> the data using cyclic Risset Glissandi. Mapping notes within the glissandi to the values in
+            each
             position. Time is represented by a 1D array playhead that moves through the data. This is the playhead.
             Possible playhead options:
             <ul>
