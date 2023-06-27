@@ -55,28 +55,29 @@ const ChaoticPMAudio: React.FC = () => {
     indexDiv: number,
     filter: number,
   ): NodeRepr_t => {
-    let shaper = el.sm(el.const({key: 'ex1:gain', value: filter}));
-    let phaseModulator =
-      el.add(
-        el.phasor(
-          el.sm(el.const({key: `modFreq-${count}`, value: modFreq})),
-          0
-        ),
-        el.mul(
-          signal,
-          el.sm(
-            el.const({
-              key: `index-${count}`,
-              value: indexOfModulation,
-            })
+    const shaperMix = el.sm(el.const({key: `shaper:mix-${count}`, value: filter * 4}));
+    const shaperGain = el.sm(el.const({key: `shaper:gain-${count}`, value: (1.2 - Math.sqrt(filter))}));
+    const phaseModulator =
+      el.mod(
+        el.add(
+          el.phasor(
+            el.sm(el.const({key: `modFreq-${count}`, value: modFreq})),
+            0
+          ),
+          el.mul(
+            signal,
+            el.sm(
+              el.const({
+                key: `index-${count}`,
+                value: indexOfModulation,
+              })
+            )
           )
-        )
-      );
-    let transformedModulator = el.tanh(phaseModulator);
-    let modulator = el.mul(transformedModulator, shaper);
+        ), 1);
+    const modulator = el.mul(el.tanh(el.mul(phaseModulator, shaperMix)), shaperGain);
     return audioContext && count > 0 && modFreq < audioContext.sampleRate / 2
       ? chaoticModulatedCycle(
-        cycleByPhasor(el.mod(modulator, 1)) as NodeRepr_t,
+        cycleByPhasor(modulator) as NodeRepr_t,
         modFreq / freqDiv,
         indexOfModulation / indexDiv,
         count - 1,
@@ -213,9 +214,9 @@ const ChaoticPMAudio: React.FC = () => {
           id={"filter"}
           label={"filter"}
           knobValue={filter}
-          min={0.001}
+          min={0.0}
           step={0.001}
-          max={1000}
+          max={1}
           onKnobInput={setFilter}
         />
       </KnobsFlexBox>
@@ -251,7 +252,7 @@ const defaultPresets: ChaoticPMPreset[] = [
     startModFreq: 0.035,
     freqDiv: 22,
     indexDiv: 6,
-    filter: 340,
+    filter: .340,
   },
   {
     steps: 1,
@@ -260,7 +261,7 @@ const defaultPresets: ChaoticPMPreset[] = [
     freqDiv: 10,
     indexOfMod: 6.66,
     indexDiv: 6.5,
-    filter: 512,
+    filter: .512,
   },
   {
     steps: 4,
@@ -269,7 +270,16 @@ const defaultPresets: ChaoticPMPreset[] = [
     freqDiv: 1,
     indexOfMod: .365,
     indexDiv: 5.75,
-    filter: 246,
+    filter: .246,
+  },
+  {
+    steps: 8,
+    carrierFreq: 0.006,
+    startModFreq: 0.05,
+    freqDiv: .001,
+    indexOfMod: .625,
+    indexDiv: 4.75,
+    filter: .666,
   },
   {
     steps: 5,
@@ -278,7 +288,7 @@ const defaultPresets: ChaoticPMPreset[] = [
     freqDiv: 1,
     indexOfMod: 0.864,
     indexDiv: 6.75,
-    filter: 410,
+    filter: .410,
   },
   {
     steps: 4,
@@ -287,7 +297,25 @@ const defaultPresets: ChaoticPMPreset[] = [
     freqDiv: 2.6,
     indexOfMod: .5,
     indexDiv: 7,
-    filter: 90,
+    filter: .90,
+  },
+  {
+    steps: 4,
+    carrierFreq: 1000,
+    startModFreq: 0.02,
+    freqDiv: 17.85,
+    indexOfMod: 13.5,
+    indexDiv: 6.75,
+    filter: .130,
+  },
+  {
+    steps: 6,
+    carrierFreq: 0.144,
+    startModFreq: 400,
+    freqDiv: 10.247,
+    indexOfMod: 64,
+    indexDiv: 1.75,
+    filter: .279,
   },
 ];
 

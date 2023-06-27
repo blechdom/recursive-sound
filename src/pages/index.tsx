@@ -14,7 +14,7 @@ export default function Home() {
         <li><Link href={"./recursiveFM"}>Recursive FM</Link></li>
         <li><Link href={"./recursivePM"}>Recursive PM</Link></li>
         <li><Link href={"./chaoticFM"}>Chaotic FM</Link></li>
-        <li><Link href={"./chaoticPM"}>Chaotic PM</Link></li>
+        <li><Link href={"./chaoticPM"}>Chaotic PM (WIP)</Link></li>
         <li>
           <Link href={"./dataTuner"}>Data Tuner 2D</Link>
           <p>WIP: Preview 2D Data Sets and experiment with a range of transformations, interpretations, and sonification
@@ -49,6 +49,24 @@ export default function Home() {
             Interface heavily borrows from <Link
               href={"https://github.com/mikebharris/javascript_mandelbrot_set_and_julia_set_explorer"}>Mike
               Harris&apos; work</Link>
+          </p>
+        </li>
+        <li>
+          <Link href={"./juliasPlayheads"}>Julia's Playheads</Link>
+          <p>
+            Render a frame of the Julia Set in a 2D Matrix with values between 0 and 1. Using the principles
+            of coloring algorithms that animate cyclically through the set using a modulo functions on each point,
+            "color" the data using cyclic Risset Glissandi. Mapping notes within the glissandi to the values in each
+            position. Time is represented by a 1D array playhead that moves through the data. This is the playhead.
+            Possible playhead options:
+            <ul>
+              <li>Polar: CW & CCW</li>
+              <li>Radiant: a circle grows or shrinks. Inside-out & Outside-in</li>
+              <li>Linear: Left-to-Right, Right-to-Left, Top-to-Bottom, Bottom-to-Top</li>
+              <li>All-Data: Use another data factor to envelope sound, making space for all points to be heard
+                simultaneously
+              </li>
+            </ul>
           </p>
         </li>
         <li><Link href={"./tesselation-with-audio.html"}>Tesselations (with webAudio controls coming soon)</Link>

@@ -1,4 +1,6 @@
-import io, {Socket} from "socket.io-client";
+import DataModal from "@/components/DataModal";
+import WindowZoomer from "@/components/WindowZoomer";
+import {ButtonRow} from "@/pages/dataTuner";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import Select from "react-select";
@@ -14,7 +16,6 @@ import {
   OptionType,
   renderOptions,
 } from "@/utils/fractal";
-import WindowZoomer from "@/components/WindowZoomer";
 
 const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
   {ssr: false}
@@ -24,9 +25,7 @@ const palettes: OptionType[] = colourPalettes.map((color, index) => {
   return {value: index.toString(), label: index.toString()};
 });
 
-let socket: Socket;
-
-export default function Fractals() {
+export default function JuliasPlayheads() {
   const [renderOption, setRenderOption] = useState<OptionType>(
     renderOptions[renderOptions?.findIndex((o: OptionType) => o?.value === 'lsm')]
   );
@@ -52,13 +51,9 @@ export default function Fractals() {
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    socketInitializer();
+    mandelbrot();
+    julia();
   }, []);
-
-  useEffect(() => {
-    console.log("volume", volume);
-    socket?.emit("volume", volume);
-  }, [volume]);
 
   useEffect(() => {
     julia();
@@ -69,24 +64,12 @@ export default function Fractals() {
   }, [maxIterations, demColorModulo, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
 
   useEffect(() => {
-    sendMandelbrot(mandelbrot2DArray)
+    playMandelbrot(mandelbrot2DArray)
   }, [mandelbrot2DArray]);
 
   useEffect(() => {
-    sendJulia(julia2DArray)
+    playJulia(julia2DArray)
   }, [julia2DArray]);
-
-  const socketInitializer = async () => {
-    await fetch("/recursive-sound/api/socket");
-
-    socket = io();
-
-    socket.on("newIncomingMessage", (msg) => {
-      console.log(msg);
-    });
-    mandelbrot();
-    julia();
-  };
 
   const mandelbrot = () => {
     const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
@@ -127,18 +110,18 @@ export default function Fractals() {
     }
   };
 
-  const sendMandelbrot = useCallback((fractal2DArray: number[][]) => {
+  const playMandelbrot = useCallback((fractal2DArray: number[][]) => {
     fractal2DArray.forEach((row: number[], index: number) => {
       setTimeout(function () {
-        socket?.emit("fractalMandelbrotRow", row);
+        // socket?.emit("fractalMandelbrotRow", row);
       }, msBetweenRows * index);
     });
   }, [msBetweenRows]);
 
-  const sendJulia = useCallback((fractal2DArray: number[][]) => {
+  const playJulia = useCallback((fractal2DArray: number[][]) => {
     fractal2DArray.forEach((row: number[], index: number) => {
       setTimeout(function () {
-        socket?.emit("fractalJuliaRow", row);
+        // socket?.emit("fractalJuliaRow", row);
       }, msBetweenRows * index);
     });
   }, [msBetweenRows]);
@@ -319,56 +302,35 @@ export default function Fractals() {
             min={-2.0}
             max={2.0}
             onChange={(value) => setCy(value.target.valueAsNumber)}
-          /></Label>
+          />
+        </Label>
       </ButtonContainer>
       <ButtonContainer>
-        <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
-                      setWindow={setMandelbrotWindow}/>
-        <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane} setWindow={setJuliaWindow}/>
+        <FractalContainer>
+          <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
+                        setWindow={setMandelbrotWindow}/>
+          <DataModal title={"Show Mandelbrot Data"} matrixData={mandelbrot2DArray}/>
+          <MandelbrotCanvas
+            ref={mandelbrotCanvasRef}
+            width={canvasWidth}
+            height={canvasHeight}
+            onMouseDown={setDownForMandelbrotMouseDown}
+            onMouseUp={setUpForMandelbrotMouseDown}
+            onMouseMove={setJuliaComplexNumber}
+            onClick={setJuliaComplexNumberByClick}
+          />
+        </FractalContainer>
+        <FractalContainer>
+          <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane}
+                        setWindow={setJuliaWindow}/>
+          <DataModal title={"Show Julia Data"} matrixData={julia2DArray}/>
+          <JuliaCanvas
+            ref={juliaCanvasRef}
+            width={canvasWidth}
+            height={canvasHeight}
+          />
+        </FractalContainer>
       </ButtonContainer>
-      <FractalContainer>
-        <MandelbrotCanvas
-          ref={mandelbrotCanvasRef}
-          width={canvasWidth}
-          height={canvasHeight}
-          onMouseDown={setDownForMandelbrotMouseDown}
-          onMouseUp={setUpForMandelbrotMouseDown}
-          onMouseMove={setJuliaComplexNumber}
-          onClick={setJuliaComplexNumberByClick}
-        />
-        <Scroller>
-          <ScrollDiv>
-            {JSON.stringify(
-              mandelbrot2DArray.map(
-                function (subArray: number[]) {
-                  return subArray.map(function (elem: number) {
-                    return Number(elem.toFixed(2));
-                  });
-                }))
-            }
-          </ScrollDiv>
-        </Scroller>
-      </FractalContainer>
-      <br/>
-      <FractalContainer>
-        <JuliaCanvas
-          ref={juliaCanvasRef}
-          width={canvasWidth}
-          height={canvasHeight}
-        />
-        <Scroller>
-          <ScrollDiv>
-            {JSON.stringify(
-              julia2DArray.map(
-                function (subArray: number[]) {
-                  return subArray.map(function (elem: number) {
-                    return Number(elem.toFixed(2));
-                  });
-                }))
-            }
-          </ScrollDiv>
-        </Scroller>
-      </FractalContainer>
     </Page>
   );
 }
@@ -422,38 +384,23 @@ const ComplexInput = styled(Input)`
 
 const FractalContainer = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 `;
 
 const MandelbrotCanvas = styled.canvas`
-`;
-const JuliaCanvas = styled.canvas`
-`;
-
-const ScrollDiv = styled.div`
-  font-family: monospace;
+  margin: 0.5rem;
   border: 1px solid #DDDDDD;
   border-radius: 4px 0 4px 0;
-  color: #3B3C3E;
-  font-size: 7px;
-  font-weight: bold;
-  left: -1px;
-  padding: 10px 7px 5px;
 `;
 
-const Scroller = styled.div`
-  background-color: #F5F5F5;
-  height: 256px;
-  overflow: scroll;
+const JuliaCanvas = styled.canvas`
+  margin: 0.5rem;
+  border: 1px solid #DDDDDD;
+  border-radius: 4px 0 4px 0;
 `;
+
 const ButtonContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  flex-direction: row;
   align-items: center;
 `;

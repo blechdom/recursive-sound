@@ -2,8 +2,6 @@ import Generate from "@/components/Generate";
 import Interpret from "@/components/Interpret";
 import Perform from "@/components/Perform";
 import Transform from "@/components/Transform";
-import {faArrowRight} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import React, {useEffect, useState} from "react";
 import Select from "react-select";
 import styled from "styled-components";
@@ -14,8 +12,6 @@ export default function DataTuner() {
   const [interpretedMatrixData, setInterpretedMatrixData] = useState<number[] | number[][]>([]);
   const [dimensionsToPerform, setDimensionsToPerform] = useState<1 | 2 | 3>(1);
   const [dataToPerform, setDataToPerform] = useState<number[] | number[][]>([]);
-  const [dataHistory1d, setDataHistory1d] = useState<number[][]>([]);
-  const [dataHistory2d, setDataHistory2d] = useState<number[][][]>([]);
 
   useEffect(() => {
     if (Array.isArray(interpretedMatrixData[0])) setDimensionsToPerform(2);
@@ -39,10 +35,6 @@ const Page = styled.div`
   flex-direction: column;
   padding: 0.5rem;
   font-family: "Roboto", sans-serif;
-`;
-
-const StyledSubhead = styled.h3`
-  margin-top: -1rem;
 `;
 
 export const StyledHead = styled.h2`
@@ -102,19 +94,6 @@ export const ButtonRow = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-`;
-
-export const ButtonColumn = styled.div`
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-export const StyledButton = styled.button`
-  font-size: 0.7rem;
-  width: 80px;
-  min-height: 22px;
 `;
 
 export const StyledProcessButton = styled.button`
