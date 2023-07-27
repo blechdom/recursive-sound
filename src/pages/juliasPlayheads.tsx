@@ -1,14 +1,17 @@
 import DataModal from "@/components/DataModal";
+import PlayheadControls from "@/components/PlayheadControls";
+import PlayheadTypes from "@/components/PlayheadTypes";
+import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
-import {ButtonRow} from "@/pages/dataTuner";
 import React, {useCallback, useEffect, useRef, useState} from "react";
+import io, {Socket} from "socket.io-client";
 import styled from "styled-components";
 import Select from "react-select";
-import dynamic from 'next/dynamic'
 import {
   colourPalettes,
   defaultJuliaPlane,
   defaultMandelbrotPlane,
+  drawPlayhead,
   generateJulia,
   generateMandelbrot,
   FractalPlane,
@@ -17,13 +20,11 @@ import {
   renderOptions,
 } from "@/utils/fractal";
 
-const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
-  {ssr: false}
-)
-
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
   return {value: index.toString(), label: index.toString()};
 });
+
+let socket: Socket;
 
 export default function JuliasPlayheads() {
   const [renderOption, setRenderOption] = useState<OptionType>(
@@ -36,23 +37,49 @@ export default function JuliasPlayheads() {
   const [overflow, setOverflow] = useState<number>(100000000000)
   const [canvasHeight, setCanvasHeight] = useState<number>(256);
   const [canvasWidth, setCanvasWidth] = useState<number>(256);
-  const [mandelbrotWindow, setMandelbrotWindow] = useState<FractalPlane>(defaultMandelbrotPlane)
-  const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
-  const [mandelbrot2DArray, setMandelbrot2DArray] = useState<number[][]>([]);
-  const [julia2DArray, setJulia2DArray] = useState<number[][]>([]);
-  const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
-  const [msBetweenRows, setMsBetweenRows] = useState<number>(50);
   const [demColorModulo, setDemColorModulo] = useState<number>(100);
   const [cx, setCx] = useState<number>(-0.7);
   const [cy, setCy] = useState<number>(0.27015);
-  const [volume, setVolume] = useState<number>(0);
+
+  const [mandelbrotWindow, setMandelbrotWindow] = useState<FractalPlane>(defaultMandelbrotPlane)
+  const [mandelbrot2DArray, setMandelbrot2DArray] = useState<number[][]>([]);
+  const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
+  const [mandelbrotSpeed, setMandelbrotSpeed] = useState<number>(50);
+  const [mandelbrotVolume, setMandelbrotVolume] = useState<number>(0);
+  const [mandelbrotThreshold, setMandelbrotThreshold] = useState<number>(0);
+  const [mandelbrotInterval, setMandelbrotInterval] = useState<number>(0);
+  const [mandelbrotPlayheadType, setMandelbrotPlayheadType] = useState<string>('down');
+  const [mandelbrotTransport, setMandelbrotTransport] = useState<string>('stop');
+  const [mandelbrotLoop, setMandelbrotLoop] = useState<boolean>(false);
 
   const mandelbrotCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mandelbrotPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
+  const [julia2DArray, setJulia2DArray] = useState<number[][]>([]);
+  const [juliaSpeed, setJuliaSpeed] = useState<number>(50);
+  const [juliaVolume, setJuliaVolume] = useState<number>(0);
+  const [juliaThreshold, setJuliaThreshold] = useState<number>(0);
+  const [juliaInterval, setJuliaInterval] = useState<number>(0);
+  const [juliaPlayheadType, setJuliaPlayheadType] = useState<string>('down');
+  const [juliaTransport, setJuliaTransport] = useState<string>('stop');
+  const [juliaLoop, setJuliaLoop] = useState<boolean>(false);
+
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const juliaPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const socketInitializer = async () => {
+    await fetch("/recursive-sound/api/socket");
+
+    socket = io();
+
+    socket.on("newIncomingMessage", (msg) => {
+      console.log(msg);
+    });
+  };
 
   useEffect(() => {
-    mandelbrot();
-    julia();
+    socketInitializer();
   }, []);
 
   useEffect(() => {
@@ -64,12 +91,20 @@ export default function JuliasPlayheads() {
   }, [maxIterations, demColorModulo, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
 
   useEffect(() => {
-    playMandelbrot(mandelbrot2DArray)
-  }, [mandelbrot2DArray]);
+    console.log('mandelbrotPlayheadType', mandelbrotPlayheadType, ' juliaPlayheadType', juliaPlayheadType);
+  }, [mandelbrotPlayheadType, juliaPlayheadType]);
 
   useEffect(() => {
-    playJulia(julia2DArray)
-  }, [julia2DArray]);
+    if (mandelbrotTransport === 'play') {
+      playMandelbrot(mandelbrotTransport);
+    }
+  }, [mandelbrotTransport]);
+
+  useEffect(() => {
+    if (juliaTransport === 'play') {
+      playJulia(juliaTransport);
+    }
+  }, [juliaTransport]);
 
   const mandelbrot = () => {
     const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
@@ -110,21 +145,23 @@ export default function JuliasPlayheads() {
     }
   };
 
-  const playMandelbrot = useCallback((fractal2DArray: number[][]) => {
-    fractal2DArray.forEach((row: number[], index: number) => {
+  const playMandelbrot = (transport: string) => {
+    mandelbrot2DArray.forEach((row: number[], index: number) => {
       setTimeout(function () {
-        // socket?.emit("fractalMandelbrotRow", row);
-      }, msBetweenRows * index);
+        if (mandelbrotPlayheadCanvasRef.current) drawPlayhead(mandelbrotPlayheadCanvasRef.current, index);
+        socket?.emit("fractalMandelbrotRow", row);
+      }, mandelbrotSpeed * index);
     });
-  }, [msBetweenRows]);
+  };
 
-  const playJulia = useCallback((fractal2DArray: number[][]) => {
-    fractal2DArray.forEach((row: number[], index: number) => {
+  const playJulia = (transport: string) => {
+    julia2DArray.forEach((row: number[], index: number) => {
       setTimeout(function () {
-        // socket?.emit("fractalJuliaRow", row);
-      }, msBetweenRows * index);
+        if (juliaPlayheadCanvasRef.current) drawPlayhead(juliaPlayheadCanvasRef.current, index);
+        socket?.emit("fractalJuliaRow", row);
+      }, juliaSpeed * index);
     });
-  }, [msBetweenRows]);
+  };
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
     if (mandelbrotCanvasRef.current) {
@@ -167,22 +204,24 @@ export default function JuliasPlayheads() {
   return (
     <Page>
       <ButtonContainer>
-        <Label>Render Algorithm{" "}
-          <FractalSelect
-            options={renderOptions}
-            value={renderOption}
-            onChange={(option) => {
-              setRenderOption((option ?? renderOptions[1]) as OptionType);
-            }}
-          /></Label>
-        <Label>Color Palette{" "}
-          <FractalSelect
-            options={palettes}
-            value={paletteNumber}
-            onChange={(option) => {
-              setPaletteNumber((option ?? palettes[0]) as OptionType);
-            }}
-          /></Label>
+        <ButtonRow>
+          <Label>Render Algorithm{" "}
+            <FractalSelect
+              options={renderOptions}
+              value={renderOption}
+              onChange={(option) => {
+                setRenderOption((option ?? renderOptions[1]) as OptionType);
+              }}
+            /></Label>
+          <Label>Color Palette{" "}
+            <FractalSelect
+              options={palettes}
+              value={paletteNumber}
+              onChange={(option) => {
+                setPaletteNumber((option ?? palettes[0]) as OptionType);
+              }}
+            /></Label>
+        </ButtonRow>
         <ButtonRow>
           <Label>Height{" "}
             <Input
@@ -201,135 +240,166 @@ export default function JuliasPlayheads() {
               value={canvasWidth}
               step={1}
               onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
-            /></Label></ButtonRow>
-        <Label>Iterations{" "}
-          <Input
-            type="number"
-            min={25}
-            max={5000}
-            value={maxIterations}
-            step={25}
-            onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
-          /></Label>
-        {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
-          <Label>Threshold{"   "}
+            /></Label>
+        </ButtonRow>
+        <ButtonRow>
+          <Label>Iterations{" "}
             <Input
               type="number"
-              value={lsmThreshold}
-              step={100}
-              min={100}
-              max={10000}
-              onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
+              min={25}
+              max={5000}
+              value={maxIterations}
+              step={25}
+              onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
             /></Label>
-        )}
-        {renderOption.value && (renderOption.value === 'dem' || renderOption.value === 'dem-raw') && (
-          <>
+          {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
             <Label>Threshold{"   "}
               <Input
                 type="number"
-                value={demThreshold}
-                step={0.01}
-                min={0}
-                max={3}
-                onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
-              />
-            </Label>
-            <Label>Threshold{"   "}
-              <Input
-                type="number"
-                value={overflow}
-                step={100000000000}
-                min={0}
-                max={100000000000000}
-                onChange={(value) => setOverflow(value.target.valueAsNumber)}
-              />
-            </Label>
-            <Label>Color Mod{"   "}
-              <Input
-                type="number"
-                value={demColorModulo}
-                step={1}
-                min={1}
+                value={lsmThreshold}
+                step={100}
+                min={100}
                 max={10000}
-                onChange={(value) => setDemColorModulo(value.target.valueAsNumber)}
+                onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
+              /></Label>
+          )}
+          {renderOption.value && (renderOption.value === 'dem' || renderOption.value === 'dem-raw') && (
+            <>
+              <Label>Threshold{"   "}
+                <Input
+                  type="number"
+                  value={demThreshold}
+                  step={0.01}
+                  min={0}
+                  max={3}
+                  onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
+                />
+              </Label>
+              <Label>Threshold{"   "}
+                <Input
+                  type="number"
+                  value={overflow}
+                  step={100000000000}
+                  min={0}
+                  max={100000000000000}
+                  onChange={(value) => setOverflow(value.target.valueAsNumber)}
+                />
+              </Label>
+              <Label>Color Mod{"   "}
+                <Input
+                  type="number"
+                  value={demColorModulo}
+                  step={1}
+                  min={1}
+                  max={10000}
+                  onChange={(value) => setDemColorModulo(value.target.valueAsNumber)}
+                />
+              </Label>
+            </>
+          )}
+        </ButtonRow>
+        <ButtonRow>
+          <Label>Julia Complex Number (click and Drag over Mandelbrot)</Label>
+          <Label>cx
+            <ComplexInput
+              type="number"
+              value={cx}
+              min={-2.0}
+              max={2.0}
+              onChange={(value) => setCx(value.target.valueAsNumber)}
+            /></Label>
+          <Label>cy
+            <ComplexInput
+              type="number"
+              value={cy}
+              min={-2.0}
+              max={2.0}
+              onChange={(value) => setCy(value.target.valueAsNumber)}
+            />
+          </Label>
+        </ButtonRow>
+      </ButtonContainer>
+      <ButtonContainer>
+        <ButtonRow>
+          <FractalContainer>
+            <ControlRows>
+              <PlayheadTypes playheadType={mandelbrotPlayheadType} setPlayheadType={setMandelbrotPlayheadType}/>
+              <Transport
+                transport={mandelbrotTransport}
+                setTransport={setMandelbrotTransport}
+                loop={mandelbrotLoop}
+                setLoop={setMandelbrotLoop}
               />
-            </Label>
-          </>
-        )}
-        <Label>ms speed{"   "}
-          <Input
-            type="number"
-            value={msBetweenRows}
-            step={0.01}
-            min={1}
-            max={250}
-            onChange={(value) => setMsBetweenRows(value.target.valueAsNumber)}
-          />
-        </Label>
-        <Knob
-          id={"speed"}
-          label={"Speed (ms)"}
-          knobValue={msBetweenRows}
-          step={0.01}
-          min={1}
-          max={250}
-          onKnobInput={setMsBetweenRows}
-        />
-        <Knob
-          id={"volume"}
-          label={"Volume (OSC)"}
-          knobValue={volume}
-          step={0.01}
-          min={0}
-          max={1}
-          onKnobInput={setVolume}
-        />
-      </ButtonContainer>
-      <ButtonContainer>
-        <Label>Julia Complex Number (click and Drag over Mandelbrot)</Label>
-        <Label>cx
-          <ComplexInput
-            type="number"
-            value={cx}
-            min={-2.0}
-            max={2.0}
-            onChange={(value) => setCx(value.target.valueAsNumber)}
-          /></Label>
-        <Label>cy
-          <ComplexInput
-            type="number"
-            value={cy}
-            min={-2.0}
-            max={2.0}
-            onChange={(value) => setCy(value.target.valueAsNumber)}
-          />
-        </Label>
-      </ButtonContainer>
-      <ButtonContainer>
-        <FractalContainer>
-          <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
-                        setWindow={setMandelbrotWindow}/>
-          <DataModal title={"Show Mandelbrot Data"} matrixData={mandelbrot2DArray}/>
-          <MandelbrotCanvas
-            ref={mandelbrotCanvasRef}
-            width={canvasWidth}
-            height={canvasHeight}
-            onMouseDown={setDownForMandelbrotMouseDown}
-            onMouseUp={setUpForMandelbrotMouseDown}
-            onMouseMove={setJuliaComplexNumber}
-            onClick={setJuliaComplexNumberByClick}
-          />
-        </FractalContainer>
-        <FractalContainer>
-          <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane}
-                        setWindow={setJuliaWindow}/>
-          <DataModal title={"Show Julia Data"} matrixData={julia2DArray}/>
-          <JuliaCanvas
-            ref={juliaCanvasRef}
-            width={canvasWidth}
-            height={canvasHeight}
-          />
-        </FractalContainer>
+              <PlayheadControls
+                name={"Mandelbrot"}
+                speed={mandelbrotSpeed}
+                setSpeed={setMandelbrotSpeed}
+                volume={mandelbrotVolume}
+                setVolume={setMandelbrotVolume}
+                threshold={mandelbrotThreshold}
+                setThreshold={setMandelbrotThreshold}
+                interval={mandelbrotInterval}
+                setInterval={setMandelbrotInterval}
+              />
+            </ControlRows>
+            <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
+                          setWindow={setMandelbrotWindow}/>
+            <DataModal title={"Show Mandelbrot Data"} matrixData={mandelbrot2DArray}/>
+            <CanvasContainer>
+              <Canvas
+                ref={mandelbrotCanvasRef}
+                width={canvasWidth}
+                height={canvasHeight}
+              />
+              <Canvas
+                ref={mandelbrotPlayheadCanvasRef}
+                width={canvasWidth}
+                height={canvasHeight}
+                onMouseDown={setDownForMandelbrotMouseDown}
+                onMouseUp={setUpForMandelbrotMouseDown}
+                onMouseMove={setJuliaComplexNumber}
+                onClick={setJuliaComplexNumberByClick}
+              />
+            </CanvasContainer>
+          </FractalContainer>
+          <FractalContainer>
+            <ControlRows>
+              <PlayheadTypes playheadType={juliaPlayheadType} setPlayheadType={setJuliaPlayheadType}/>
+              <Transport
+                transport={juliaTransport}
+                setTransport={setJuliaTransport}
+                loop={juliaLoop}
+                setLoop={setJuliaLoop}
+              />
+              <PlayheadControls
+                name={"Julia"}
+                speed={juliaSpeed}
+                setSpeed={setJuliaSpeed}
+                volume={juliaVolume}
+                setVolume={setJuliaVolume}
+                threshold={juliaThreshold}
+                setThreshold={setJuliaThreshold}
+                interval={juliaInterval}
+                setInterval={setJuliaInterval}
+              />
+            </ControlRows>
+            <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane}
+                          setWindow={setJuliaWindow}/>
+            <DataModal title={"Show Julia Data"} matrixData={julia2DArray}/>
+            <CanvasContainer>
+              <Canvas
+                ref={juliaCanvasRef}
+                width={canvasWidth}
+                height={canvasHeight}
+              />
+              <Canvas
+                ref={juliaPlayheadCanvasRef}
+                width={canvasWidth}
+                height={canvasHeight}
+              />
+            </CanvasContainer>
+          </FractalContainer>
+        </ButtonRow>
       </ButtonContainer>
     </Page>
   );
@@ -347,6 +417,43 @@ const FractalSelect = styled(Select)`
   padding-left: .5rem;
   font-size: 0.85rem;
   max-width: 512px;
+`;
+
+const ControlKnob = styled.div`
+  margin: 0.5rem;
+`;
+
+const ControlButton = styled.div<{
+  onClick: () => void;
+  selected: boolean;
+  bottom?: boolean;
+}>`
+  background-color: ${props => props.selected ? '#FF0000' : '#EEE'};
+  border: 1px solid #000;
+  color: ${props => props.selected ? '#FFF' : '#FF0000'};
+  font-size: 3rem;
+  width: 4rem;
+  height: 4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ${prop => prop.bottom && `border-top: none`};
+
+  :not(:last-child) {
+    border-right: none;
+  }
+
+  :after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+
+  :hover {
+    background-color: ${props => props.selected ? '#FF0000' : '#DDD'};
+  }
 `;
 
 const Label = styled.label`
@@ -385,22 +492,41 @@ const ComplexInput = styled(Input)`
 const FractalContainer = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  margin: 1rem;
+  padding: 1rem;
 `;
 
-const MandelbrotCanvas = styled.canvas`
+const CanvasContainer = styled.div`
+  width: 256px;
+  height: 256px;
+  position: relative;
+`;
+
+const Canvas = styled.canvas`
+  position: absolute;
   margin: 0.5rem;
   border: 1px solid #DDDDDD;
-  border-radius: 4px 0 4px 0;
 `;
 
-const JuliaCanvas = styled.canvas`
-  margin: 0.5rem;
-  border: 1px solid #DDDDDD;
-  border-radius: 4px 0 4px 0;
-`;
-
-const ButtonContainer = styled.div`
+export const ButtonContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+`;
+
+export const ButtonRow = styled.div`
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-flow: row wrap;
+`;
+
+export const ControlRow = styled.div`
+  display: flex;
+  flex-flow: row wrap;
+`;
+
+export const ControlRows = styled.div`
+  display: flex;
+  flex-direction: column;
 `;

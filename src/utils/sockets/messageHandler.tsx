@@ -9,7 +9,7 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
   });
 
   const sendMandelbrotToKyma = (fractalRow: number[]) => {
-    if(oscClient) {
+    if (oscClient) {
       console.log("sending fractal/mandelbrot row");
       const sliced: number[] = fractalRow.slice(0, 255);
       // @ts-ignore
@@ -17,16 +17,16 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     }
   };
   const sendJuliaToKyma = (fractalRow: number[]) => {
-    if(oscClient) {
-      //console.log("sending fractal/julia row");
+    if (oscClient) {
+      console.log("sending fractal/julia row");
       const sliced: number[] = fractalRow.slice(0, 255);
       // @ts-ignore
-      //oscClient.send('/fractal/julia', sliced);
+      oscClient.send('/fractal/julia', sliced);
     }
   };
 
   const sendVolume = (volumeAmount: number) => {
-    if(oscClient) {
+    if (oscClient) {
       console.log("/fractal/volume", volumeAmount);
       // @ts-ignore
       oscClient.send("/fractal/volume", volumeAmount);

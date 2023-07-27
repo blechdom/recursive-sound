@@ -55,7 +55,7 @@ const ChaoticPMAudio: React.FC = () => {
     indexDiv: number,
     filter: number,
   ): NodeRepr_t => {
-    const shaperMix = el.sm(el.const({key: `shaper:mix-${count}`, value: filter * 4}));
+    const shaperMix = el.sm(el.const({key: `shaper:mix-${count}`, value: filter * modFreq}));
     const shaperGain = el.sm(el.const({key: `shaper:gain-${count}`, value: (1.2 - Math.sqrt(filter))}));
     const phaseModulator =
       el.mod(
@@ -74,7 +74,7 @@ const ChaoticPMAudio: React.FC = () => {
             )
           )
         ), 1);
-    const modulator = el.mul(el.tanh(el.mul(phaseModulator, shaperMix)), shaperGain);
+    const modulator = el.mul(el.tanh(el.mul(el.mul(phaseModulator, shaperMix), modFreq)), shaperGain);
     return audioContext && count > 0 && modFreq < audioContext.sampleRate / 2
       ? chaoticModulatedCycle(
         cycleByPhasor(modulator) as NodeRepr_t,

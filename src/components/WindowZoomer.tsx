@@ -92,6 +92,9 @@ const StyledButton = styled.button`
   font-size: 0.7rem;
   width: 80px;
   min-height: 22px;
+  border-radius: 0px;
+  border-style: solid;
+  border-width: 1px;
 `;
 
 const StyledLabel = styled.label`
