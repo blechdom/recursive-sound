@@ -431,3 +431,17 @@ export function clearCanvas(canvas: HTMLCanvasElement) {
     ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
   }
 }
+
+export const rotateMatrixCW90 = (matrix: number[][]): number[][] => {
+  const width = matrix.length;
+  const height = matrix[0].length;
+  let temp = new Array(height);
+  for (let y = 0; y < height; y++) {
+    temp[y] = new Array(width);
+    for (let x = 0; x < width; x++) {
+      temp[y][x] = matrix[width - 1 - x][y];
+    }
+  }
+  return temp;
+}
+

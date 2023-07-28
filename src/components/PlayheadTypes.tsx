@@ -10,7 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import React from "react";
-import styled from "styled-components";
+import {ControlButton, ControlRow} from "./PlayheadFractal";
 
 type PlayheadTypesProps = {
   playheadType: string;
@@ -51,43 +51,5 @@ const PlayheadTypes: React.FC<PlayheadTypesProps> = ({playheadType, setPlayheadT
     </>
   );
 };
-
-const ControlButton = styled.div<{
-  onClick: () => void;
-  selected: boolean;
-  bottom?: boolean;
-}>`
-  background-color: ${props => props.selected ? '#FF0000' : '#EEE'};
-  border: 1px solid #000;
-  color: ${props => props.selected ? '#FFF' : '#FF0000'};
-  font-size: 3rem;
-  width: 4rem;
-  height: 4rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  ${prop => prop.bottom && `border-top: none`};
-
-  :not(:last-child) {
-    border-right: none;
-  }
-
-  :after {
-    content: "";
-    clear: both;
-    display: table;
-  }
-
-  :hover {
-    background-color: ${props => props.selected ? '#FF0000' : '#DDD'};
-  }
-`;
-
-export const ControlRow = styled.div`
-  display: flex;
-  flex-flow: row wrap;
-`;
 
 export default PlayheadTypes;

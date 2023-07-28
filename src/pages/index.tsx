@@ -53,6 +53,7 @@ export default function Home() {
         </li>
         <li>
           <Link href={"./juliasPlayheads"}>Julia&apos;s Playheads</Link>
+          <Link href={"./fractalPlayheads"}>Fractal Playheads</Link>
           <p>
             Render a frame of the Julia Set in a 2D Matrix with values between 0 and 1. Using the principles
             of coloring algorithms that animate cyclically through the set using a modulo functions on each point,

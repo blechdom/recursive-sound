@@ -17,7 +17,9 @@ import {
   FractalPlane,
   getScalingFactors,
   OptionType,
-  renderOptions, clearCanvas,
+  renderOptions,
+  rotateMatrixCW90,
+  clearCanvas,
 } from "@/utils/fractal";
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
@@ -89,9 +91,11 @@ export default function JuliasPlayheads() {
   }, []);
 
   useEffect(() => {
-    //if (mandelbrotPlayheadType === 'down' || mandelbrotPlayheadType === 'up') {
-    setMandelbrotTransformed(mandelbrot2DArray);
-    //}
+    if (mandelbrotPlayheadType === 'left' || mandelbrotPlayheadType === 'right') {
+      setMandelbrotTransformed(rotateMatrixCW90(mandelbrot2DArray));
+    } else {
+      setMandelbrotTransformed(mandelbrot2DArray);
+    }
   }, [mandelbrotPlayheadType, mandelbrot2DArray]);
 
   useEffect(() => {
@@ -191,6 +195,7 @@ export default function JuliasPlayheads() {
     mandelbrotTimeouts.forEach(async (timeoutId) => {
       await clearTimeout(timeoutId);
     });
+    socket?.emit("fractalMandelbrotRow", mandelbrotTransformed[0].fill(0));
     if (mandelbrotPlayheadCanvasRef.current) clearCanvas(mandelbrotPlayheadCanvasRef.current);
     setMandelbrotPauseTimeElapsed(0);
   }
