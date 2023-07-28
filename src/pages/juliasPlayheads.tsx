@@ -17,7 +17,7 @@ import {
   FractalPlane,
   getScalingFactors,
   OptionType,
-  renderOptions,
+  renderOptions, clearCanvas,
 } from "@/utils/fractal";
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
@@ -43,6 +43,7 @@ export default function JuliasPlayheads() {
 
   const [mandelbrotWindow, setMandelbrotWindow] = useState<FractalPlane>(defaultMandelbrotPlane)
   const [mandelbrot2DArray, setMandelbrot2DArray] = useState<number[][]>([]);
+  const [mandelbrotTransformed, setMandelbrotTransformed] = useState<number[][]>([]);
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
   const [mandelbrotSpeed, setMandelbrotSpeed] = useState<number>(50);
   const [mandelbrotVolume, setMandelbrotVolume] = useState<number>(0);
@@ -50,6 +51,8 @@ export default function JuliasPlayheads() {
   const [mandelbrotInterval, setMandelbrotInterval] = useState<number>(0);
   const [mandelbrotPlayheadType, setMandelbrotPlayheadType] = useState<string>('down');
   const [mandelbrotTransport, setMandelbrotTransport] = useState<string>('stop');
+  const [mandelbrotTimeouts, setMandelbrotTimeouts] = useState<any[]>([]);
+  const [mandelbrotPauseTimeElapsed, setMandelbrotPauseTimeElapsed] = useState<number>(0);
   const [mandelbrotLoop, setMandelbrotLoop] = useState<boolean>(false);
 
   const mandelbrotCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -57,12 +60,15 @@ export default function JuliasPlayheads() {
 
   const [juliaWindow, setJuliaWindow] = useState<FractalPlane>(defaultJuliaPlane)
   const [julia2DArray, setJulia2DArray] = useState<number[][]>([]);
+  const [juliaTransformed, setJuliaTransformed] = useState<number[][]>([]);
   const [juliaSpeed, setJuliaSpeed] = useState<number>(50);
   const [juliaVolume, setJuliaVolume] = useState<number>(0);
   const [juliaThreshold, setJuliaThreshold] = useState<number>(0);
   const [juliaInterval, setJuliaInterval] = useState<number>(0);
   const [juliaPlayheadType, setJuliaPlayheadType] = useState<string>('down');
   const [juliaTransport, setJuliaTransport] = useState<string>('stop');
+  const [juliaTimeouts, setJuliaTimeouts] = useState<any[]>([]);
+  const [juliaPauseTimeElapsed, setJuliaPauseTimeElapsed] = useState<number>(0);
   const [juliaLoop, setJuliaLoop] = useState<boolean>(false);
 
   const juliaCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -83,6 +89,34 @@ export default function JuliasPlayheads() {
   }, []);
 
   useEffect(() => {
+    //if (mandelbrotPlayheadType === 'down' || mandelbrotPlayheadType === 'up') {
+    setMandelbrotTransformed(mandelbrot2DArray);
+    //}
+  }, [mandelbrotPlayheadType, mandelbrot2DArray]);
+
+  useEffect(() => {
+    setMandelbrotTransport('stop');
+  }, [mandelbrotPlayheadType]);
+
+  useEffect(() => {
+    setJuliaTransport('stop');
+  }, [juliaPlayheadType]);
+
+  useEffect(() => {
+    setMandelbrotTransport('stop');
+  }, [mandelbrotLoop]);
+
+  useEffect(() => {
+    setJuliaTransport('stop');
+  }, [juliaLoop]);
+
+  useEffect(() => {
+    //if (juliaPlayheadType === 'down' || juliaPlayheadType === 'up') {
+    setJuliaTransformed(julia2DArray);
+    //}
+  }, [juliaPlayheadType, julia2DArray]);
+
+  useEffect(() => {
     julia();
   }, [cx, cy, demColorModulo, maxIterations, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, juliaWindow, renderOption]);
 
@@ -91,18 +125,26 @@ export default function JuliasPlayheads() {
   }, [maxIterations, demColorModulo, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, mandelbrotWindow, renderOption]);
 
   useEffect(() => {
-    console.log('mandelbrotPlayheadType', mandelbrotPlayheadType, ' juliaPlayheadType', juliaPlayheadType);
-  }, [mandelbrotPlayheadType, juliaPlayheadType]);
-
-  useEffect(() => {
     if (mandelbrotTransport === 'play') {
-      playMandelbrot(mandelbrotTransport);
+      playMandelbrot();
+    } else if (mandelbrotTransport === 'stop') {
+      stopMandelbrot();
+    } else if (mandelbrotTransport === 'pause') {
+      pauseMandelbrot();
+    } else if (mandelbrotTransport === 'replay') {
+      setMandelbrotTransport('play');
     }
   }, [mandelbrotTransport]);
 
   useEffect(() => {
     if (juliaTransport === 'play') {
-      playJulia(juliaTransport);
+      playJulia();
+    } else if (juliaTransport === 'stop') {
+      stopJulia();
+    } else if (juliaTransport === 'pause') {
+      pauseJulia();
+    } else if (juliaTransport === 'replay') {
+      setJuliaTransport('play');
     }
   }, [juliaTransport]);
 
@@ -145,22 +187,82 @@ export default function JuliasPlayheads() {
     }
   };
 
-  const playMandelbrot = (transport: string) => {
-    mandelbrot2DArray.forEach((row: number[], index: number) => {
-      setTimeout(function () {
-        if (mandelbrotPlayheadCanvasRef.current) drawPlayhead(mandelbrotPlayheadCanvasRef.current, index);
-        socket?.emit("fractalMandelbrotRow", row);
-      }, mandelbrotSpeed * index);
+  const stopMandelbrot = () => {
+    mandelbrotTimeouts.forEach(async (timeoutId) => {
+      await clearTimeout(timeoutId);
     });
+    if (mandelbrotPlayheadCanvasRef.current) clearCanvas(mandelbrotPlayheadCanvasRef.current);
+    setMandelbrotPauseTimeElapsed(0);
+  }
+
+  const pauseMandelbrot = () => {
+    console.log('pause Mandelbrot');
+    setMandelbrotTransport('stop');
+    // setMandelbrotPauseTimeElapsed(mandelbrotPauseTimeElapsed + timeSince);
+  }
+
+  const playMandelbrot = async () => {
+    const timeoutIds: any[] = [];
+    for (let i = 0; i < mandelbrotTransformed.length; i++) {
+      let index = i;
+      if (mandelbrotPlayheadType === 'up' || mandelbrotPlayheadType === 'left' || mandelbrotPlayheadType === 'in' || mandelbrotPlayheadType === 'ccw') {
+        index = mandelbrotTransformed.length - 1 - i;
+      }
+      const timeoutId = setTimeout(function () {
+        if (mandelbrotPlayheadCanvasRef.current) {
+          drawPlayhead(mandelbrotPlayheadCanvasRef.current, mandelbrotPlayheadType, index);
+        }
+        socket?.emit("fractalMandelbrotRow", mandelbrotTransformed[index]);
+        if (i >= mandelbrotTransformed.length - 1) {
+          if (mandelbrotLoop) {
+            setMandelbrotTransport('replay');
+          } else {
+            setMandelbrotTransport('stop');
+          }
+        }
+      }, (mandelbrotSpeed * i) - mandelbrotPauseTimeElapsed);
+      timeoutIds.push(timeoutId);
+      setMandelbrotTimeouts(timeoutIds);
+    }
   };
 
-  const playJulia = (transport: string) => {
-    julia2DArray.forEach((row: number[], index: number) => {
-      setTimeout(function () {
-        if (juliaPlayheadCanvasRef.current) drawPlayhead(juliaPlayheadCanvasRef.current, index);
-        socket?.emit("fractalJuliaRow", row);
-      }, juliaSpeed * index);
+  const stopJulia = () => {
+    juliaTimeouts.forEach(async (timeoutId) => {
+      await clearTimeout(timeoutId);
     });
+    if (juliaPlayheadCanvasRef.current) clearCanvas(juliaPlayheadCanvasRef.current);
+    setJuliaPauseTimeElapsed(0);
+  }
+
+  const pauseJulia = () => {
+    console.log("pause julia");
+    setJuliaTransport('stop');
+    // setJuliaPauseTimeElapsed(juliaPauseTimeElapsed + timeSince);
+  }
+
+  const playJulia = async () => {
+    const timeoutIds: any[] = [];
+    for (let i = 0; i < juliaTransformed.length; i++) {
+      let index = i;
+      if (juliaPlayheadType === 'up' || juliaPlayheadType === 'left' || juliaPlayheadType === 'in' || juliaPlayheadType === 'ccw') {
+        index = juliaTransformed.length - 1 - i;
+      }
+      const timeoutId = setTimeout(function () {
+        if (juliaPlayheadCanvasRef.current) {
+          drawPlayhead(juliaPlayheadCanvasRef.current, juliaPlayheadType, index);
+        }
+        socket?.emit("fractalJuliaRow", juliaTransformed[index]);
+        if (i >= juliaTransformed.length - 1) {
+          if (juliaLoop) {
+            setJuliaTransport('replay');
+          } else {
+            setJuliaTransport('stop');
+          }
+        }
+      }, (juliaSpeed * i) - juliaPauseTimeElapsed);
+      timeoutIds.push(timeoutId);
+      setJuliaTimeouts(timeoutIds);
+    }
   };
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
@@ -419,43 +521,6 @@ const FractalSelect = styled(Select)`
   max-width: 512px;
 `;
 
-const ControlKnob = styled.div`
-  margin: 0.5rem;
-`;
-
-const ControlButton = styled.div<{
-  onClick: () => void;
-  selected: boolean;
-  bottom?: boolean;
-}>`
-  background-color: ${props => props.selected ? '#FF0000' : '#EEE'};
-  border: 1px solid #000;
-  color: ${props => props.selected ? '#FFF' : '#FF0000'};
-  font-size: 3rem;
-  width: 4rem;
-  height: 4rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  ${prop => prop.bottom && `border-top: none`};
-
-  :not(:last-child) {
-    border-right: none;
-  }
-
-  :after {
-    content: "";
-    clear: both;
-    display: table;
-  }
-
-  :hover {
-    background-color: ${props => props.selected ? '#FF0000' : '#DDD'};
-  }
-`;
-
 const Label = styled.label`
   display: flex;
   flex-direction: row;
@@ -517,11 +582,6 @@ export const ButtonContainer = styled.div`
 
 export const ButtonRow = styled.div`
   margin: 1rem 0 0 0;
-  display: flex;
-  flex-flow: row wrap;
-`;
-
-export const ControlRow = styled.div`
   display: flex;
   flex-flow: row wrap;
 `;

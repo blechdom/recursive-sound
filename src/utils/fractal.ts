@@ -393,11 +393,41 @@ function setColourUsingBinaryDecompositionMethod2(
   }
 }
 
-export function drawPlayhead(canvas: HTMLCanvasElement, position: number) {
+export function drawPlayhead(canvas: HTMLCanvasElement, playheadType: string, position: number) {
+  const ctx = canvas.getContext("2d");
+  if (ctx !== null) {
+    //ctx.restore();
+    ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+    ctx.fillStyle = "#FF0000";
+    ctx.strokeStyle = "#FF0000";
+    if (playheadType === 'down' || playheadType === 'up') {
+      ctx.fillRect(0, position, ctx.canvas.clientWidth, 1);
+    } else if (playheadType === 'right' || playheadType === 'left') {
+      ctx.fillRect(position, 0, 1, ctx.canvas.clientHeight);
+    } else if (playheadType === 'in' || playheadType === 'out') {
+      ctx.beginPath();
+      ctx.arc(ctx.canvas.clientWidth / 2, ctx.canvas.clientHeight / 2, position / 2, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else if (playheadType === 'cw' || playheadType === 'ccw') {
+      const radius = ctx.canvas.clientWidth / 2;
+      ctx.translate(radius, radius);
+      const angle = position * Math.PI / ctx.canvas.clientWidth;
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.lineWidth = 1;
+      ctx.moveTo(0, 0);
+      ctx.rotate(angle);
+      ctx.lineTo(0, -radius);
+      ctx.stroke();
+      ctx.closePath();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+  }
+}
+
+export function clearCanvas(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
   if (ctx !== null) {
     ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(0, position, ctx.canvas.clientWidth, 1);
   }
 }

@@ -20,7 +20,7 @@ const Transport: React.FC<TransportProps> = ({transport, loop, setTransport, set
   return (
     <>
       <ButtonRow>
-        <ControlButton onClick={() => setTransport('play')} selected={transport === 'play'}>
+        <ControlButton onClick={() => setTransport('play')} selected={(transport === 'play' || transport === 'replay')}>
           <FontAwesomeIcon icon={faPlay}/>
         </ControlButton>
         <ControlButton onClick={() => setTransport('stop')} selected={transport === 'stop'}>
