@@ -306,120 +306,112 @@ export default function JuliasPlayheads() {
   return (
     <Page>
       <ButtonContainer>
-        <ButtonRow>
-          <Label>Render Algorithm{" "}
-            <FractalSelect
-              options={renderOptions}
-              value={renderOption}
-              onChange={(option) => {
-                setRenderOption((option ?? renderOptions[1]) as OptionType);
-              }}
-            /></Label>
-          <Label>Color Palette{" "}
-            <FractalSelect
-              options={palettes}
-              value={paletteNumber}
-              onChange={(option) => {
-                setPaletteNumber((option ?? palettes[0]) as OptionType);
-              }}
-            /></Label>
-        </ButtonRow>
-        <ButtonRow>
-          <Label>Height{" "}
+        <Label>Render Algorithm{" "}
+          <FractalSelect
+            options={renderOptions}
+            value={renderOption}
+            onChange={(option) => {
+              setRenderOption((option ?? renderOptions[1]) as OptionType);
+            }}
+          /></Label>
+        <Label>Color Palette{" "}
+          <FractalSelect
+            options={palettes}
+            value={paletteNumber}
+            onChange={(option) => {
+              setPaletteNumber((option ?? palettes[0]) as OptionType);
+            }}
+          /></Label>
+        <Label>Height{" "}
+          <Input
+            type="number"
+            min={16}
+            max={1024}
+            value={canvasHeight}
+            step={1}
+            onChange={(value) => setCanvasHeight(value.target.valueAsNumber)}
+          /></Label>
+        <Label>Width{" "}
+          <Input
+            type="number"
+            min={16}
+            max={1024}
+            value={canvasWidth}
+            step={1}
+            onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
+          /></Label>
+        <Label>Iterations{" "}
+          <Input
+            type="number"
+            min={25}
+            max={5000}
+            value={maxIterations}
+            step={25}
+            onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
+          /></Label>
+        {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
+          <Label>Threshold{"   "}
             <Input
               type="number"
-              min={16}
-              max={1024}
-              value={canvasHeight}
-              step={1}
-              onChange={(value) => setCanvasHeight(value.target.valueAsNumber)}
+              value={lsmThreshold}
+              step={100}
+              min={100}
+              max={10000}
+              onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
             /></Label>
-          <Label>Width{" "}
-            <Input
-              type="number"
-              min={16}
-              max={1024}
-              value={canvasWidth}
-              step={1}
-              onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
-            /></Label>
-        </ButtonRow>
-        <ButtonRow>
-          <Label>Iterations{" "}
-            <Input
-              type="number"
-              min={25}
-              max={5000}
-              value={maxIterations}
-              step={25}
-              onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
-            /></Label>
-          {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
+        )}
+        {renderOption.value && (renderOption.value === 'dem' || renderOption.value === 'dem-raw') && (
+          <>
             <Label>Threshold{"   "}
               <Input
                 type="number"
-                value={lsmThreshold}
-                step={100}
-                min={100}
+                value={demThreshold}
+                step={0.01}
+                min={0}
+                max={3}
+                onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
+              />
+            </Label>
+            <Label>Threshold{"   "}
+              <Input
+                type="number"
+                value={overflow}
+                step={100000000000}
+                min={0}
+                max={100000000000000}
+                onChange={(value) => setOverflow(value.target.valueAsNumber)}
+              />
+            </Label>
+            <Label>Color Mod{"   "}
+              <Input
+                type="number"
+                value={demColorModulo}
+                step={1}
+                min={1}
                 max={10000}
-                onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
-              /></Label>
-          )}
-          {renderOption.value && (renderOption.value === 'dem' || renderOption.value === 'dem-raw') && (
-            <>
-              <Label>Threshold{"   "}
-                <Input
-                  type="number"
-                  value={demThreshold}
-                  step={0.01}
-                  min={0}
-                  max={3}
-                  onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
-                />
-              </Label>
-              <Label>Threshold{"   "}
-                <Input
-                  type="number"
-                  value={overflow}
-                  step={100000000000}
-                  min={0}
-                  max={100000000000000}
-                  onChange={(value) => setOverflow(value.target.valueAsNumber)}
-                />
-              </Label>
-              <Label>Color Mod{"   "}
-                <Input
-                  type="number"
-                  value={demColorModulo}
-                  step={1}
-                  min={1}
-                  max={10000}
-                  onChange={(value) => setDemColorModulo(value.target.valueAsNumber)}
-                />
-              </Label>
-            </>
-          )}
-        </ButtonRow>
-        <ButtonRow>
-          <Label>Julia Complex Number (click and Drag over Mandelbrot)</Label>
-          <Label>cx
-            <ComplexInput
-              type="number"
-              value={cx}
-              min={-2.0}
-              max={2.0}
-              onChange={(value) => setCx(value.target.valueAsNumber)}
-            /></Label>
-          <Label>cy
-            <ComplexInput
-              type="number"
-              value={cy}
-              min={-2.0}
-              max={2.0}
-              onChange={(value) => setCy(value.target.valueAsNumber)}
-            />
-          </Label>
-        </ButtonRow>
+                onChange={(value) => setDemColorModulo(value.target.valueAsNumber)}
+              />
+            </Label>
+          </>
+        )}
+        <Label>Julia Complex Number (click and Drag over Mandelbrot)</Label>
+        <Label>cx
+          <ComplexInput
+            type="number"
+            value={cx}
+            min={-2.0}
+            max={2.0}
+            onChange={(value) => setCx(value.target.valueAsNumber)}
+          /></Label>
+        <Label>cy
+          <ComplexInput
+            type="number"
+            value={cy}
+            min={-2.0}
+            max={2.0}
+            onChange={(value) => setCy(value.target.valueAsNumber)}
+          />
+        </Label>
       </ButtonContainer>
       <ButtonContainer>
         <FractalContainer>
@@ -508,7 +500,6 @@ export default function JuliasPlayheads() {
 const Page = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0.5rem;
   font-family: "Roboto", sans-serif;
   font-size: 0.5rem;
 `;
