@@ -422,86 +422,84 @@ export default function JuliasPlayheads() {
         </ButtonRow>
       </ButtonContainer>
       <ButtonContainer>
-        <ButtonRow>
-          <FractalContainer>
-            <ControlRows>
-              <PlayheadTypes playheadType={mandelbrotPlayheadType} setPlayheadType={setMandelbrotPlayheadType}/>
-              <Transport
-                transport={mandelbrotTransport}
-                setTransport={setMandelbrotTransport}
-                loop={mandelbrotLoop}
-                setLoop={setMandelbrotLoop}
-              />
-              <PlayheadControls
-                name={"Mandelbrot"}
-                speed={mandelbrotSpeed}
-                setSpeed={setMandelbrotSpeed}
-                volume={mandelbrotVolume}
-                setVolume={setMandelbrotVolume}
-                threshold={mandelbrotThreshold}
-                setThreshold={setMandelbrotThreshold}
-                interval={mandelbrotInterval}
-                setInterval={setMandelbrotInterval}
-              />
-            </ControlRows>
-            <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
-                          setWindow={setMandelbrotWindow}/>
-            <DataModal title={"Show Mandelbrot Data"} matrixData={mandelbrot2DArray}/>
-            <CanvasContainer>
-              <Canvas
-                ref={mandelbrotCanvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
-              />
-              <Canvas
-                ref={mandelbrotPlayheadCanvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
-                onMouseDown={setDownForMandelbrotMouseDown}
-                onMouseUp={setUpForMandelbrotMouseDown}
-                onMouseMove={setJuliaComplexNumber}
-                onClick={setJuliaComplexNumberByClick}
-              />
-            </CanvasContainer>
-          </FractalContainer>
-          <FractalContainer>
-            <ControlRows>
-              <PlayheadTypes playheadType={juliaPlayheadType} setPlayheadType={setJuliaPlayheadType}/>
-              <Transport
-                transport={juliaTransport}
-                setTransport={setJuliaTransport}
-                loop={juliaLoop}
-                setLoop={setJuliaLoop}
-              />
-              <PlayheadControls
-                name={"Julia"}
-                speed={juliaSpeed}
-                setSpeed={setJuliaSpeed}
-                volume={juliaVolume}
-                setVolume={setJuliaVolume}
-                threshold={juliaThreshold}
-                setThreshold={setJuliaThreshold}
-                interval={juliaInterval}
-                setInterval={setJuliaInterval}
-              />
-            </ControlRows>
-            <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane}
-                          setWindow={setJuliaWindow}/>
-            <DataModal title={"Show Julia Data"} matrixData={julia2DArray}/>
-            <CanvasContainer>
-              <Canvas
-                ref={juliaCanvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
-              />
-              <Canvas
-                ref={juliaPlayheadCanvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
-              />
-            </CanvasContainer>
-          </FractalContainer>
-        </ButtonRow>
+        <FractalContainer>
+          <ControlRows>
+            <PlayheadTypes playheadType={mandelbrotPlayheadType} setPlayheadType={setMandelbrotPlayheadType}/>
+            <Transport
+              transport={mandelbrotTransport}
+              setTransport={setMandelbrotTransport}
+              loop={mandelbrotLoop}
+              setLoop={setMandelbrotLoop}
+            />
+            <PlayheadControls
+              name={"Mandelbrot"}
+              speed={mandelbrotSpeed}
+              setSpeed={setMandelbrotSpeed}
+              volume={mandelbrotVolume}
+              setVolume={setMandelbrotVolume}
+              threshold={mandelbrotThreshold}
+              setThreshold={setMandelbrotThreshold}
+              interval={mandelbrotInterval}
+              setInterval={setMandelbrotInterval}
+            />
+          </ControlRows>
+          <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
+                        setWindow={setMandelbrotWindow}/>
+          <DataModal title={"Show Mandelbrot Data"} matrixData={mandelbrot2DArray}/>
+          <CanvasContainer>
+            <Canvas
+              ref={mandelbrotCanvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+            />
+            <Canvas
+              ref={mandelbrotPlayheadCanvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+              onMouseDown={setDownForMandelbrotMouseDown}
+              onMouseUp={setUpForMandelbrotMouseDown}
+              onMouseMove={setJuliaComplexNumber}
+              onClick={setJuliaComplexNumberByClick}
+            />
+          </CanvasContainer>
+        </FractalContainer>
+        <FractalContainer>
+          <ControlRows>
+            <PlayheadTypes playheadType={juliaPlayheadType} setPlayheadType={setJuliaPlayheadType}/>
+            <Transport
+              transport={juliaTransport}
+              setTransport={setJuliaTransport}
+              loop={juliaLoop}
+              setLoop={setJuliaLoop}
+            />
+            <PlayheadControls
+              name={"Julia"}
+              speed={juliaSpeed}
+              setSpeed={setJuliaSpeed}
+              volume={juliaVolume}
+              setVolume={setJuliaVolume}
+              threshold={juliaThreshold}
+              setThreshold={setJuliaThreshold}
+              interval={juliaInterval}
+              setInterval={setJuliaInterval}
+            />
+          </ControlRows>
+          <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane}
+                        setWindow={setJuliaWindow}/>
+          <DataModal title={"Show Julia Data"} matrixData={julia2DArray}/>
+          <CanvasContainer>
+            <Canvas
+              ref={juliaCanvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+            />
+            <Canvas
+              ref={juliaPlayheadCanvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+            />
+          </CanvasContainer>
+        </FractalContainer>
       </ButtonContainer>
     </Page>
   );
@@ -583,7 +581,7 @@ export const ButtonContainer = styled.div`
 export const ButtonRow = styled.div`
   margin: 1rem 0 0 0;
   display: flex;
-  flex-flow: row wrap;
+  flex-direction: row;
 `;
 
 export const ControlRows = styled.div`
