@@ -37,9 +37,9 @@ export type OptionType = {
 
 export const renderOptions: OptionType[] = [
   {value: "lsm", label: "Level Set Method (LSM)"},
-  {value: "lsm-raw", label: "Level Set Method (LSM) - Greyscale"},
+  {value: "lsm-raw", label: "Level Set Method (LSM) - greyscale"},
   {value: "dem", label: "Distance Estimator Method (DEM)"},
-  {value: "dem-raw", label: "Distance Estimator Method (DEM) - Greyscale"},
+  {value: "dem-raw", label: "Distance Estimator Method (DEM) - greyscale"},
   {value: "bdm", label: "Binary Decomposition Method (BDM)"},
   {value: "tdm", label: "Trinary Decomposition Method (TDM)"},
   {value: "bdm2", label: "Binary Decomposition Method II (BDM2)"},
@@ -153,167 +153,6 @@ function computePointJuliaDem(point: Point, cx: number, cy: number, maxIteration
   return 0;
 }
 
-export function generateMandelbrot(
-  canvas: HTMLCanvasElement,
-  mandelbrotWindow: FractalPlane,
-  canvasWidth: number,
-  canvasHeight: number,
-  renderMethod: string,
-  maxIterations: number,
-  threshold: number,
-  overflow: number,
-  demColorModulo: number,
-  palette: number
-): number[][] {
-  const ctx = canvas.getContext("2d");
-  let min = 0;
-  let max = 0;
-  if (ctx !== null) {
-    // @ts-ignore
-    ctx.reset();
-    const scalingFactor = getScalingFactors(mandelbrotWindow, canvasWidth, canvasHeight);
-    const delta = threshold * scalingFactor.x;
-    const manYArray = [];
-    for (let iy = 0; iy < canvasHeight; iy++) {
-      const cy = mandelbrotWindow.y_min + iy * scalingFactor.y
-      const manXArray = [];
-      for (let ix = 0; ix < canvasWidth; ix++) {
-        const cx = mandelbrotWindow.x_min + ix * scalingFactor.x
-        const currentPoint = {x: 0.0, y: 0.0}
-        let i = 0;
-        if (renderMethod === 'dem' || renderMethod === 'dem-raw') {
-          i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
-          if (renderMethod === 'dem') {
-            if (i < delta) {
-              ctx.fillStyle = "#000000"
-            } else {
-              ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
-            }
-          }
-        } else {
-          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-          switch (renderMethod) {
-            case 'bdm':
-              setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
-              break;
-            case 'bdm2':
-              setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
-              break;
-            case 'tdm':
-              setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
-              break;
-            default:
-              setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
-              break;
-          }
-        }
-        if (i > max) max = i;
-        if (i < min) min = i;
-        manXArray.push(i);
-        if (renderMethod !== "dem-raw") ctx.fillRect(ix, iy, 1, 1);
-      }
-      manYArray.push(manXArray);
-    }
-    const scaledArray = manYArray.map((row) => {
-      return row.map((value) => {
-        return (value - min) / (max - min);
-      })
-    });
-    if (renderMethod === 'dem-raw') {
-      scaledArray.map((row, j) => {
-        row.map((value, index) => {
-          let shade = (1 - value) * 255;
-          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
-          ctx.fillRect(index, j, 1, 1);
-        })
-      })
-    }
-    return scaledArray;
-  }
-  return [];
-}
-
-export function generateJulia(
-  canvas: HTMLCanvasElement,
-  juliaWindow: FractalPlane,
-  canvasWidth: number,
-  canvasHeight: number,
-  renderMethod: string,
-  maxIterations: number,
-  threshold: number,
-  cx: number,
-  cy: number,
-  overflow: number,
-  demColorModulo: number,
-  palette: number
-): number[][] {
-  const ctx = canvas.getContext("2d");
-  let min = 0;
-  let max = 0;
-  if (ctx !== null) {
-    // @ts-ignore
-    ctx.reset();
-    const scalingFactor = getScalingFactors(juliaWindow, canvasWidth, canvasHeight);
-    const delta = computePointJuliaDem({x: 0, y: 0}, cx, cy, maxIterations);
-    const juliaYArray = [];
-    for (let iy = 0; iy < canvasHeight; iy++) {
-      const y = juliaWindow.y_min + iy * scalingFactor.y //y = julia and cy = mandelbrot?
-      const juliaXArray = [];
-      for (let ix = 0; ix < canvasWidth; ix++) {
-        const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
-        let i = 0;
-        if (renderMethod === 'dem' || renderMethod === 'dem-raw') {
-          i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
-          if (renderMethod === 'dem') {
-            if (i < delta) {
-              ctx.fillStyle = "#000000"
-            } else {
-              ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
-            }
-          }
-        } else {
-          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-          switch (renderMethod) {
-            case 'bdm':
-              setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
-              break;
-            case 'bdm2':
-              setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
-              break;
-            case 'tdm':
-              setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
-              break;
-            default:
-              setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
-              break;
-          }
-        }
-        if (i > max) max = i;
-        if (i < min) min = i;
-        juliaXArray.push(i);
-        if (renderMethod !== "dem-raw") ctx.fillRect(ix, iy, 1, 1);
-      }
-      juliaYArray.push(juliaXArray);
-    }
-    const scaledArray = juliaYArray.map((row) => {
-      return row.map((value) => {
-        return (value - min) / (max - min);
-      })
-    });
-    if (renderMethod === 'dem-raw') {
-      scaledArray.map((row, j) => {
-        row.map((value, index) => {
-          let shade = (1 - value) * 255;
-          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
-          ctx.fillRect(index, j, 1, 1);
-        })
-      })
-    }
-    return scaledArray;
-  }
-  return [];
-}
-
 function setColourUsingLevelSetMethod(
   iterations: number,
   maxIterations: number,
@@ -333,12 +172,38 @@ function setColourUsingLevelSetMethod(
   }
 }
 
-function setColourUsingDecompositionMethod(iterations: number, delta: number, ctx: CanvasRenderingContext2D, palette: number, demColorModulo: number) {
+function setColourUsingDecompositionMethod(
+  iterations: number,
+  delta: number,
+  ctx: CanvasRenderingContext2D,
+  palette: number,
+  demColorModulo: number) {
   if (iterations < delta) {
     ctx.fillStyle = "#000000"
   } else {
     ctx.fillStyle = colourPalettes[palette][parseInt((iterations * demColorModulo % colourPalettes[palette].length).toString())];
   }
+}
+
+function setColourtUsingDecompositionMethod(
+  iterations: number,
+  delta: number,
+  ctx: CanvasRenderingContext2D,
+  renderMethod: string,
+  palette: number,
+  demColorModulo: number
+) {
+  if (renderMethod === 'dem') {
+    if (iterations < delta) {
+      ctx.fillStyle = "#000000"
+    } else {
+      ctx.fillStyle = colourPalettes[palette][parseInt((iterations * demColorModulo % colourPalettes[palette].length).toString())];
+    }
+  } else {
+    let shade = (1 - iterations) * 255;
+    ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  }
+  // setColourtUsingDecompositionMethod(i, ctx, palette, demColorModulo);
 }
 
 function setColourUsingBinaryDecompositionMethod(
@@ -492,51 +357,44 @@ export function generateFractal(
           y: 0.0
         } : {x: x, y: y};
         let i = 0;
-        if (renderMethod === 'dem-raw') {
-          if (fractal === 'mandelbrot') {
-            i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
-          } else {
-            i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
-          }
-          /* if (renderMethod === 'dem') {
-             if (i < delta) {
-               ctx.fillStyle = "#000000"
-             } else {
-               ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
-             }
-           }*/
-        } else {
-          switch (renderMethod) {
-            case 'dem':
-              if (fractal === 'mandelbrot') {
-                i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
-              } else {
-                i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
-              }
-              setColourUsingDecompositionMethod(i, delta, ctx, demColorModulo, palette);
-              break;
-            case 'bdm':
-              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-              setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
-              break;
-            case 'bdm2':
-              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-              setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
-              break;
-            case 'tdm':
-              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-              setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
-              break;
-            default:
-              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-              setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
-              break;
-          }
+        switch (renderMethod) {
+          case 'dem':
+            if (fractal === 'mandelbrot') {
+              i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
+            } else {
+              i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+            }
+            setColourtUsingDecompositionMethod(i, delta, ctx, renderMethod, palette, demColorModulo);
+            break;
+          case 'dem-raw':
+            if (fractal === 'mandelbrot') {
+              i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
+            } else {
+              i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+            }
+            setColourtUsingDecompositionMethod(i, delta, ctx, renderMethod, palette, demColorModulo);
+            break;
+          case 'bdm':
+            i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+            setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
+            break;
+          case 'bdm2':
+            i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+            setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
+            break;
+          case 'tdm':
+            i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+            setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
+            break;
+          default:
+            i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+            setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
+            break;
         }
         if (i > max) max = i;
         if (i < min) min = i;
         fractalXArray.push(i);
-        if (renderMethod !== "dem-raw") ctx.fillRect(ix, iy, 1, 1);
+        ctx.fillRect(ix, iy, 1, 1);
       }
       fractalYArray.push(fractalXArray);
     }
@@ -545,15 +403,6 @@ export function generateFractal(
         return (value - min) / (max - min);
       })
     });
-    if (renderMethod === 'dem-raw') {
-      scaledArray.map((row, j) => {
-        row.map((value, index) => {
-          let shade = (1 - value) * 255;
-          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
-          ctx.fillRect(index, j, 1, 1);
-        })
-      })
-    }
     return scaledArray;
   }
   return [];
