@@ -13,6 +13,7 @@ export type FractalPlane = {
   x_max: number;
   y_max: number;
 };
+
 export const defaultMandelbrotPlane: FractalPlane = {
   x_min: -2.5,
   y_min: -1.25,
@@ -47,7 +48,7 @@ export const renderOptions: OptionType[] = [
 
 export const colourPalettes: string[][] =
   [
-    ['#00429d', '#1448a0', '#204fa3', '#2955a6', '#315ca9', '#3862ac', '#3f69af', '#466fb2', '#4c76b5', '#527db7', '#5884ba', '#5e8abd', '#6491c0', '#6a98c2', '#709fc5', '#76a6c8', '#7cadca', '#83b4cd', '#89bbcf', '#90c2d2', '#97c9d4', '#9fd0d6', '#a7d6d8', '#afddda', '#b8e4dc', '#c2eade', '#ccf1e0', '#d9f7e1', '#e8fce1', '#ffffe0'],
+    ['#006bfc', '#1448a0', '#204fa3', '#2955a6', '#315ca9', '#3862ac', '#3f69af', '#466fb2', '#4c76b5', '#527db7', '#5884ba', '#5e8abd', '#6491c0', '#6a98c2', '#709fc5', '#76a6c8', '#7cadca', '#83b4cd', '#89bbcf', '#90c2d2', '#97c9d4', '#9fd0d6', '#a7d6d8', '#afddda', '#b8e4dc', '#c2eade', '#ccf1e0', '#d9f7e1', '#e8fce1', '#ffffe0'],
     ['#94003a', '#98163e', '#9c2341', '#a12e45', '#a53849', '#a9414d', '#ae4951', '#b25155', '#b65959', '#ba615e', '#be6962', '#c27167', '#c6796b', '#ca8070', '#cd8874', '#d19079', '#d5977e', '#d99f83', '#dca689', '#e0ae8e', '#e3b694', '#e7bd9a', '#eac5a0', '#edcda6', '#f1d4ad', '#f4dcb4', '#f7e4bc', '#faebc5', '#fdf3cf', '#fffadf'],
     ['#890079', '#8c197d', '#8e2881', '#903385', '#933d89', '#95478d', '#975091', '#995995', '#9b619a', '#9d699e', '#9f71a2', '#a179a6', '#a281aa', '#a489af', '#a691b3', '#a798b7', '#a9a0bc', '#aba8c0', '#adafc5', '#afb7c9', '#b1bece', '#b3c6d2', '#b6cdd7', '#b8d5dc', '#bcdce1', '#c0e3e6', '#c5eaeb', '#ccf0f1', '#d5f6f7', '#e9f9ff'],
     ['#007600', '#177b09', '#257f12', '#318419', '#3b8921', '#448e28', '#4d922f', '#569736', '#5e9c3d', '#66a144', '#6fa54c', '#77aa54', '#7faf5b', '#86b463', '#8eb86b', '#96bd74', '#9ec27c', '#a6c685', '#adcb8e', '#b5d097', '#bcd5a1', '#c4d9aa', '#cbdeb4', '#d3e3be', '#dae7c8', '#e2ecd3', '#e9f1de', '#f0f6e8', '#f8faf4', '#ffffff'],
@@ -256,7 +257,7 @@ export function generateJulia(
     const delta = computePointJuliaDem({x: 0, y: 0}, cx, cy, maxIterations);
     const juliaYArray = [];
     for (let iy = 0; iy < canvasHeight; iy++) {
-      const y = juliaWindow.y_min + iy * scalingFactor.y
+      const y = juliaWindow.y_min + iy * scalingFactor.y //y = julia and cy = mandelbrot?
       const juliaXArray = [];
       for (let ix = 0; ix < canvasWidth; ix++) {
         const currentPoint = {x: juliaWindow.x_min + ix * scalingFactor.x, y: y}
@@ -329,6 +330,14 @@ function setColourUsingLevelSetMethod(
   } else {
     let shade = (iterations / maxIterations) * 255;
     ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  }
+}
+
+function setColourUsingDecompositionMethod(iterations: number, delta: number, ctx: CanvasRenderingContext2D, palette: number, demColorModulo: number) {
+  if (iterations < delta) {
+    ctx.fillStyle = "#000000"
+  } else {
+    ctx.fillStyle = colourPalettes[palette][parseInt((iterations * demColorModulo % colourPalettes[palette].length).toString())];
   }
 }
 
@@ -442,4 +451,110 @@ export const rotateMatrixCW90 = (matrix: number[][]): number[][] => {
     }
   }
   return temp;
+}
+
+export function generateFractal(
+  fractal: string,
+  canvas: HTMLCanvasElement,
+  fractalWindow: FractalPlane,
+  canvasWidth: number,
+  canvasHeight: number,
+  renderMethod: string,
+  maxIterations: number,
+  threshold: number,
+  cx: number,
+  cy: number,
+  overflow: number,
+  demColorModulo: number,
+  palette: number
+): number[][] {
+  const ctx = canvas.getContext("2d");
+  let min = 0;
+  let max = 0;
+  if (ctx !== null) {
+    // @ts-ignore
+    ctx.reset();
+    const scalingFactor = getScalingFactors(fractalWindow, canvasWidth, canvasHeight);
+    const delta = (fractal === 'mandelbrot') ? threshold * scalingFactor.x : computePointJuliaDem({
+      x: 0,
+      y: 0
+    }, cx, cy, maxIterations);
+    const fractalYArray = [];
+    for (let iy = 0; iy < canvasHeight; iy++) {
+      const y = fractalWindow.y_min + iy * scalingFactor.y
+      if (fractal === 'mandelbrot') cy = y;
+      const fractalXArray = [];
+      for (let ix = 0; ix < canvasWidth; ix++) {
+        const x = fractalWindow.x_min + ix * scalingFactor.x;
+        if (fractal === 'mandelbrot') cx = x;
+        const currentPoint = fractal === 'mandelbrot' ? {
+          x: 0.0,
+          y: 0.0
+        } : {x: x, y: y};
+        let i = 0;
+        if (renderMethod === 'dem-raw') {
+          if (fractal === 'mandelbrot') {
+            i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
+          } else {
+            i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+          }
+          /* if (renderMethod === 'dem') {
+             if (i < delta) {
+               ctx.fillStyle = "#000000"
+             } else {
+               ctx.fillStyle = colourPalettes[palette][parseInt((i * demColorModulo % colourPalettes[palette].length).toString())];
+             }
+           }*/
+        } else {
+          switch (renderMethod) {
+            case 'dem':
+              if (fractal === 'mandelbrot') {
+                i = computePointDem(currentPoint, cx, cy, maxIterations, overflow);
+              } else {
+                i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+              }
+              setColourUsingDecompositionMethod(i, delta, ctx, demColorModulo, palette);
+              break;
+            case 'bdm':
+              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+              setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
+              break;
+            case 'bdm2':
+              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+              setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
+              break;
+            case 'tdm':
+              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+              setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
+              break;
+            default:
+              i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+              setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
+              break;
+          }
+        }
+        if (i > max) max = i;
+        if (i < min) min = i;
+        fractalXArray.push(i);
+        if (renderMethod !== "dem-raw") ctx.fillRect(ix, iy, 1, 1);
+      }
+      fractalYArray.push(fractalXArray);
+    }
+    const scaledArray = fractalYArray.map((row) => {
+      return row.map((value) => {
+        return (value - min) / (max - min);
+      })
+    });
+    if (renderMethod === 'dem-raw') {
+      scaledArray.map((row, j) => {
+        row.map((value, index) => {
+          let shade = (1 - value) * 255;
+          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+          ctx.fillRect(index, j, 1, 1);
+        })
+      })
+    }
+    return scaledArray;
+  }
+  return [];
 }

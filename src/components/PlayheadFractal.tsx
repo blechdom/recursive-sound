@@ -3,6 +3,7 @@ import PlayheadControls from "@/components/PlayheadControls";
 import PlayheadTypes from "@/components/PlayheadTypes";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
+import {FlexColumn, Input, Label} from "@/pages/fractalPlayheads";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import io, {Socket} from "socket.io-client";
 import styled from "styled-components";
@@ -12,15 +13,14 @@ import {
   defaultJuliaPlane,
   defaultMandelbrotPlane,
   drawPlayhead,
-  generateJulia,
-  generateMandelbrot,
+  generateFractal,
   FractalPlane,
   getScalingFactors,
   OptionType,
   renderOptions,
   rotateMatrixCW90,
   clearCanvas,
-} from "@/utils/fractal";
+} from "@/utils/playheadFractals";
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
   return {value: index.toString(), label: index.toString()};
@@ -118,37 +118,22 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
 
   const getFractal = () => {
     if (fractalCanvasRef.current) {
-      let fractalArray: number[][] = [];
-      if (fractal === 'mandelbrot') {
-        const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
-        fractalArray = generateMandelbrot(
-          fractalCanvasRef.current,
-          fractalWindow,
-          canvasWidth,
-          canvasHeight,
-          renderOption.value,
-          maxIterations,
-          threshold,
-          overflow,
-          demColorModulo,
-          parseInt(paletteNumber.value)
-        );
-      } else {
-        fractalArray = generateJulia(
-          fractalCanvasRef.current,
-          fractalWindow,
-          canvasWidth,
-          canvasHeight,
-          renderOption.value,
-          maxIterations,
-          lsmThreshold,
-          cx,
-          cy,
-          overflow,
-          demColorModulo,
-          parseInt(paletteNumber.value)
-        );
-      }
+      const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
+      let fractalArray: number[][] = generateFractal(
+        fractal,
+        fractalCanvasRef.current,
+        fractalWindow,
+        canvasWidth,
+        canvasHeight,
+        renderOption.value,
+        maxIterations,
+        threshold,
+        cx,
+        cy,
+        overflow,
+        demColorModulo,
+        parseInt(paletteNumber.value)
+      );
       setFractal2DArray(fractalArray);
     }
   };
@@ -252,7 +237,7 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
                         setWindow={setFractalWindow}/>
-          <Label>Generate julia: click and crag over mandelbrot</Label>
+          <Label>generate julia: click and drag over mandelbrot</Label>
           <CanvasContainer>
             <Canvas
               ref={fractalCanvasRef}
@@ -372,27 +357,6 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
             </Label>
           </>
         )}
-        {fractal === 'mandelbrot' && (
-          <>
-            <Label>cx
-              <ComplexInput
-                type="number"
-                value={cx}
-                min={-2.0}
-                max={2.0}
-                onChange={(value) => fractal == 'mandelbrot' && setCx && setCx(value.target.valueAsNumber)}
-              /></Label>
-            <Label>cy
-              <ComplexInput
-                type="number"
-                value={cy}
-                min={-2.0}
-                max={2.0}
-                onChange={(value) => fractal == 'mandelbrot' && setCy && setCy(value.target.valueAsNumber)}
-              />
-            </Label>
-          </>
-        )}
       </FlexColumn>
     </Page>
   );
@@ -409,39 +373,6 @@ const FractalSelect = styled(Select)`
   padding-left: .5rem;
   font-size: 0.85rem;
   max-width: 512px;
-`;
-
-const Label = styled.label`
-  display: flex;
-  flex-direction: row;
-  font-size: .85rem;
-  padding: .5rem;
-  height: 100%;
-  align-items: center;
-`;
-
-const Input = styled.input`
-  min-height: 30px;
-  padding: 0.5rem;
-  margin-left: .5rem;
-  font-size: 0.85rem;
-  transition: all 100ms;
-  background-color: hsl(0, 0%, 100%);
-  border-color: hsl(0, 0%, 80%);
-  border-radius: 4px;
-  border-style: solid;
-  border-width: 1px;
-  box-sizing: border-box;
-
-  &:focus {
-    border: 2px solid dodgerblue;
-    transition: border-color 0.3s ease-in-out;
-    outline: 0;
-  }
-`;
-
-const ComplexInput = styled(Input)`
-  width: 200px;
 `;
 
 const FractalContainer = styled.div`
@@ -479,10 +410,6 @@ export const ButtonRow = styled.div`
 export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
-`;
-export const FlexColumn = styled.div`
-  display: flex;
-  flex-direction: column;
 `;
 
 export const ControlRows = styled.div`
