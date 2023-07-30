@@ -118,6 +118,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
       if (program === 'lsm-binary' || program === 'lsm-raw') {
         setAudioTransformed(audio2DArray);
       } else if (program === 'lsm-difference') {
+        setAudio2DArray(fractal2DArray);
         setAudioTransformed(transformAudioMatrix(fractal2DArray, program));
       } else {
         setAudioTransformed(transformAudioMatrix(audio2DArray, program));
