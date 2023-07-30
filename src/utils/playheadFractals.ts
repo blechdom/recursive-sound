@@ -44,6 +44,12 @@ export const renderOptions: OptionType[] = [
   {value: "tdm", label: "Trinary Decomposition Method (TDM)"},
   {value: "bdm2", label: "Binary Decomposition Method II (BDM2)"},
 ];
+export const lsmAudioOptions: OptionType[] = [
+  {value: "binary-mod", label: "Binary Mod"},
+  {value: "trinary-mod", label: "Trinary Mod"},
+  {value: "outlines", label: "Outlines"},
+  {value: "difference", label: "Difference"},
+];
 
 
 export const colourPalettes: string[][] =
@@ -164,7 +170,7 @@ function drawLevelSetMethod(
   if (renderMethod === 'lsm') {
     if (iterations == maxIterations) { // we are in the set
       a = 0;
-      ctx.fillStyle = "#FFF"
+      ctx.fillStyle = "#000"
     } else {
       a = iterations % 2;
       ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
