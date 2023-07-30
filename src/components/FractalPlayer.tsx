@@ -98,7 +98,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
   useEffect(() => {
     let renderType = 'lsm';
     if (program === 'lsm-raw') renderType = 'lsm-raw';
-
     getFractal(renderType, 16);
   }, [cx, cy, size, fractalWindow, program]);
 

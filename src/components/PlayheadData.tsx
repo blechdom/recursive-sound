@@ -40,6 +40,7 @@ const PlayheadData: React.FC<PlayheadDataProps> = ({title, matrixData, color}) =
               }
             </ScrollDiv>
           </Scroller>
+          width={matrixData.length} height={Array.isArray(matrixData[0]) && (matrixData[0] as number[]).length}
         </DataContainer>
       </Modal>
     </>);

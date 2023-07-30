@@ -461,7 +461,9 @@ export function createOutlinesMatrix(matrix: number[][]): number[][] {
 
 export function createDifferencesMatrix(matrix: number[][]): number[][] {
   let min = 0, max = 0;
-  const transformedMatrix = [];
+  const zeroRow = Array(matrix.length).fill(0);
+  const transformedMatrix = [zeroRow];
+  transformedMatrix.push()
   for (let i = 1; i < matrix.length - 1; i++) {
     const transformedRow = [0];
     for (let j = 1; j < matrix[i].length - 1; j++) {
@@ -469,7 +471,7 @@ export function createDifferencesMatrix(matrix: number[][]): number[][] {
       const rightDiff = Math.abs(matrix[i + 1][j] - matrix[i][j]);
       const aboveDiff = Math.abs(matrix[i][j - 1] - matrix[i][j]);
       const belowDiff = Math.abs(matrix[i][j + 1] - matrix[i][j]);
-      const value = (leftDiff + rightDiff + aboveDiff + belowDiff) / 4;
+      const value = Math.sqrt((leftDiff + rightDiff + aboveDiff + belowDiff) / 4);
       transformedRow.push(value);
       if (value > max) max = value;
       if (value < min) min = value;
@@ -477,5 +479,6 @@ export function createDifferencesMatrix(matrix: number[][]): number[][] {
     transformedRow.push(0);
     transformedMatrix.push(transformedRow);
   }
+  transformedMatrix.push(zeroRow);
   return scaleFractal(transformedMatrix, min, max);
 }
