@@ -153,39 +153,31 @@ function computePointJuliaDem(point: Point, cx: number, cy: number, maxIteration
   return 0;
 }
 
-function setColourUsingLevelSetMethod(
+function drawLevelSetMethod(
   iterations: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
   palette: number,
   renderMethod: string,
-) {
+): number {
+  let a: number = 0;
   if (renderMethod === 'lsm') {
     if (iterations == maxIterations) { // we are in the set
-      ctx.fillStyle = "#000"
+      a = 0;
+      ctx.fillStyle = "#FFF"
     } else {
+      a = iterations % 2;
       ctx.fillStyle = colourPalettes[palette][iterations % colourPalettes[palette].length]
     }
   } else {
     let shade = (iterations / maxIterations) * 255;
     ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+    a = iterations / maxIterations;
   }
+  return a;
 }
 
-function setColourUsingDecompositionMethod(
-  iterations: number,
-  delta: number,
-  ctx: CanvasRenderingContext2D,
-  palette: number,
-  demColorModulo: number) {
-  if (iterations < delta) {
-    ctx.fillStyle = "#000000"
-  } else {
-    ctx.fillStyle = colourPalettes[palette][parseInt((iterations * demColorModulo % colourPalettes[palette].length).toString())];
-  }
-}
-
-function setColourtUsingDecompositionMethod(
+function drawDecompositionMethod(
   iterations: number,
   delta: number,
   ctx: CanvasRenderingContext2D,
@@ -203,10 +195,9 @@ function setColourtUsingDecompositionMethod(
     let shade = (1 - iterations) * 255;
     ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
   }
-  // setColourtUsingDecompositionMethod(i, ctx, palette, demColorModulo);
 }
 
-function setColourUsingBinaryDecompositionMethod(
+function drawBinaryDecompositionMethod(
   iterations: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
@@ -225,7 +216,7 @@ function setColourUsingBinaryDecompositionMethod(
   }
 }
 
-function setColourUsingTrinaryDecompositionMethod(
+function drawTrinaryDecompositionMethod(
   iterations: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
@@ -247,7 +238,7 @@ function setColourUsingTrinaryDecompositionMethod(
   }
 }
 
-function setColourUsingBinaryDecompositionMethod2(
+function drawBinaryDecompositionMethod2(
   iterations: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
@@ -332,10 +323,9 @@ export function generateFractal(
   overflow: number,
   demColorModulo: number,
   palette: number
-): number[][] {
+): { fractalData: number[][], audioData: number[][], min: number, max: number, aMin: number, aMax: number } {
   const ctx = canvas.getContext("2d");
-  let min = 0;
-  let max = 0;
+  let min = 0, max = 0, aMin = 0, aMax = 0;
   if (ctx !== null) {
     // @ts-ignore
     ctx.reset();
@@ -344,11 +334,13 @@ export function generateFractal(
       x: 0,
       y: 0
     }, cx, cy, maxIterations);
-    const fractalYArray = [];
+    const fractalYArray: number[][] = [];
+    const audioYArray: number[][] = [];
     for (let iy = 0; iy < canvasHeight; iy++) {
       const y = fractalWindow.y_min + iy * scalingFactor.y
       if (fractal === 'mandelbrot') cy = y;
       const fractalXArray = [];
+      const audioXArray = [];
       for (let ix = 0; ix < canvasWidth; ix++) {
         const x = fractalWindow.x_min + ix * scalingFactor.x;
         if (fractal === 'mandelbrot') cx = x;
@@ -357,6 +349,7 @@ export function generateFractal(
           y: 0.0
         } : {x: x, y: y};
         let i = 0;
+        let a = 0;
         switch (renderMethod) {
           case 'dem':
             if (fractal === 'mandelbrot') {
@@ -364,7 +357,7 @@ export function generateFractal(
             } else {
               i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
             }
-            setColourtUsingDecompositionMethod(i, delta, ctx, renderMethod, palette, demColorModulo);
+            drawDecompositionMethod(i, delta, ctx, renderMethod, palette, demColorModulo);
             break;
           case 'dem-raw':
             if (fractal === 'mandelbrot') {
@@ -372,38 +365,60 @@ export function generateFractal(
             } else {
               i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
             }
-            setColourtUsingDecompositionMethod(i, delta, ctx, renderMethod, palette, demColorModulo);
+            drawDecompositionMethod(i, delta, ctx, renderMethod, palette, demColorModulo);
             break;
           case 'bdm':
             i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-            setColourUsingBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
+            drawBinaryDecompositionMethod(i, maxIterations, ctx, currentPoint);
             break;
           case 'bdm2':
             i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-            setColourUsingBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
+            drawBinaryDecompositionMethod2(i, maxIterations, ctx, currentPoint, palette);
             break;
           case 'tdm':
             i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-            setColourUsingTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
+            drawTrinaryDecompositionMethod(i, maxIterations, ctx, currentPoint, palette);
             break;
           default:
             i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
-            setColourUsingLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
+            a = drawLevelSetMethod(i, maxIterations, ctx, palette, renderMethod);
             break;
         }
         if (i > max) max = i;
         if (i < min) min = i;
+        if (a > aMax) aMax = a;
+        if (a < aMin) aMin = a;
         fractalXArray.push(i);
+        audioXArray.push(a);
         ctx.fillRect(ix, iy, 1, 1);
       }
       fractalYArray.push(fractalXArray);
+      audioYArray.push(audioXArray);
     }
-    const scaledArray = fractalYArray.map((row) => {
-      return row.map((value) => {
-        return (value - min) / (max - min);
-      })
-    });
-    return scaledArray;
+    //return scaleFractal(fractalYArray, min, max);
+    return {
+      fractalData: fractalYArray,
+      audioData: audioYArray,
+      min,
+      max,
+      aMin,
+      aMax
+    };
   }
-  return [];
+  return {
+    fractalData: [],
+    audioData: [],
+    min: 0,
+    max: 0,
+    aMin: 0,
+    aMax: 0,
+  };
+}
+
+export function scaleFractal(fractalArray: number[][], min: number, max: number): number[][] {
+  return fractalArray.map((row) => {
+    return row.map((value) => {
+      return (value - min) / (max - min);
+    })
+  });
 }

@@ -1,5 +1,5 @@
 import {ControlButton} from "@/components/PlayheadFractal";
-import {ButtonRow} from "@/pages/juliasPlayheads";
+import {ButtonRow} from "@/pages/juliasPlayheadsOld";
 import {
   faArrowsRotate,
   faPause,
@@ -8,7 +8,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import React from "react";
-import styled from "styled-components";
 
 type TransportProps = {
   transport: string;

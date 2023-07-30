@@ -55,6 +55,7 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
 
   const [fractalWindow, setFractalWindow] = useState<FractalPlane>(plane)
   const [fractal2DArray, setFractal2DArray] = useState<number[][]>([]);
+  const [audio2DArray, setAudio2DArray] = useState<number[][]>([]);
   const [fractalTransformed, setFractalTransformed] = useState<number[][]>([]);
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [fractalVolume, setFractalVolume] = useState<number>(0);
@@ -86,11 +87,11 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
 
   useEffect(() => {
     if (fractalPlayheadType === 'left' || fractalPlayheadType === 'right') {
-      setFractalTransformed(rotateMatrixCW90(fractal2DArray));
+      setFractalTransformed(rotateMatrixCW90(audio2DArray));
     } else {
-      setFractalTransformed(fractal2DArray);
+      setFractalTransformed(audio2DArray);
     }
-  }, [fractalPlayheadType, fractal2DArray]);
+  }, [fractalPlayheadType, audio2DArray]);
 
   useEffect(() => {
     setFractalTransport('stop');
@@ -119,7 +120,14 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
   const getFractal = () => {
     if (fractalCanvasRef.current) {
       const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
-      let fractalArray: number[][] = generateFractal(
+      let fractalArray: {
+        fractalData: number[][],
+        audioData: number[][],
+        min: number,
+        max: number,
+        aMin: number,
+        aMax: number
+      } = generateFractal(
         fractal,
         fractalCanvasRef.current,
         fractalWindow,
@@ -134,7 +142,8 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
         demColorModulo,
         parseInt(paletteNumber.value)
       );
-      setFractal2DArray(fractalArray);
+      setFractal2DArray(fractalArray.fractalData);
+      setAudio2DArray(fractalArray.audioData);
     }
   };
 
@@ -262,10 +271,11 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
               />
             )}
           </CanvasContainer>
-          <FlexRow>
-            <DataModal title={"Show Fractal Data"} matrixData={fractal2DArray}/>
-            <DataModal title={"Show Playhead Data"} matrixData={fractalTransformed}/>
-          </FlexRow>
+
+          <DataModal title={"Show Fractal Data"} matrixData={fractal2DArray}/>
+          <DataModal title={"Show Playhead Data"} matrixData={fractalTransformed}/>
+          <DataModal title={"Show Audio Data"} matrixData={audio2DArray}/>
+
         </FractalContainer>
       </ButtonContainer>
       <FlexColumn>

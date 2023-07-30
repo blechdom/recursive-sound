@@ -1,4 +1,4 @@
-import {ButtonRow} from "@/pages/juliasPlayheads";
+import {ButtonRow} from "@/pages/juliasPlayheadsOld";
 import dynamic from "next/dynamic";
 import React from "react";
 import styled from "styled-components";
