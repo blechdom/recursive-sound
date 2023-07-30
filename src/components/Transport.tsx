@@ -1,5 +1,5 @@
-import {ControlButton} from "@/components/PlayheadFractal";
-import {ButtonRow} from "@/pages/juliasPlayheadsOld";
+import {ControlRow} from "@/components/FractalPlayer";
+import {ControlButton} from "@/components/FractalPlayer";
 import {
   faArrowsRotate,
   faPause,
@@ -19,20 +19,21 @@ type TransportProps = {
 const Transport: React.FC<TransportProps> = ({transport, loop, setTransport, setLoop}) => {
   return (
     <>
-      <ButtonRow>
-        <ControlButton onClick={() => setTransport('play')} selected={(transport === 'play' || transport === 'replay')}>
+      <ControlRow>
+        <ControlButton onClick={() => setTransport('play')} selected={(transport === 'play' || transport === 'replay')}
+                       bottom={true}>
           <FontAwesomeIcon icon={faPlay}/>
         </ControlButton>
-        <ControlButton onClick={() => setTransport('stop')} selected={transport === 'stop'}>
+        <ControlButton onClick={() => setTransport('stop')} selected={transport === 'stop'} bottom={true}>
           <FontAwesomeIcon icon={faStop}/>
         </ControlButton>
-        <ControlButton onClick={() => setTransport('pause')} selected={transport === 'pause'}>
+        <ControlButton onClick={() => setTransport('pause')} selected={transport === 'pause'} bottom={true}>
           <FontAwesomeIcon icon={faPause}/>
         </ControlButton>
-        <ControlButton onClick={() => setLoop(!loop)} selected={loop}>
+        <ControlButton onClick={() => setLoop(!loop)} selected={loop} bottom={true}>
           <FontAwesomeIcon icon={faArrowsRotate}/>
         </ControlButton>
-      </ButtonRow>
+      </ControlRow>
     </>
   );
 };

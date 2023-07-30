@@ -1,4 +1,4 @@
-import PlayheadFractal from '@/components/PlayheadFractal';
+import FractalPlayer from '@/components/FractalPlayer';
 import styled from "styled-components";
 import {useState} from "react";
 
@@ -7,9 +7,9 @@ export default function FractalPlayheads() {
   const [cy, setCy] = useState<number>(0.27015);
   return (
     <Page>
-      <PlayheadFractal fractal={"mandelbrot"} setCx={setCx} setCy={setCy}/>
+      <FractalPlayer fractal={"mandelbrot"} setCx={setCx} setCy={setCy}/>
       <FlexColumn>
-        <PlayheadFractal fractal={"julia"} cx={cx} cy={cy}/>
+        <FractalPlayer fractal={"julia"} cx={cx} cy={cy}/>
         <Label>cx
           <ComplexInput
             type="number"
@@ -35,6 +35,7 @@ export default function FractalPlayheads() {
 const Page = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   font-family: "Roboto", sans-serif;
   font-size: 0.5rem;
 `;

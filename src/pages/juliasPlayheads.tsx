@@ -35,6 +35,7 @@ export default function JuliasPlayheads() {
 const Page = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   font-family: "Roboto", sans-serif;
   font-size: 0.5rem;
 `;

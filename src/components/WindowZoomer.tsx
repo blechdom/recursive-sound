@@ -47,6 +47,11 @@ const WindowZoomer: React.FC<WindowZoomerProps> = ({name, window, defaultWindow,
       window.y_min = window.y_min * 0.92;
       window.x_max = window.x_max * 0.92;
       window.y_max = window.y_max * 0.92;
+    } else if (action === 'out') {
+      window.x_min = window.x_min * 1.09;
+      window.y_min = window.y_min * 1.09;
+      window.x_max = window.x_max * 1.09;
+      window.y_max = window.y_max * 1.09;
     }
     setWindow({...window});
   }
@@ -63,7 +68,8 @@ const WindowZoomer: React.FC<WindowZoomerProps> = ({name, window, defaultWindow,
       </ButtonRow>
       <ButtonRow>
         <StyledButton onClick={zoom('l')}>Left</StyledButton>
-        <StyledButton onClick={zoom('in')}>In</StyledButton>
+        <StyledHalfButton onClick={zoom('in')}>In</StyledHalfButton>
+        <StyledHalfButton onClick={zoom('out')}>Out</StyledHalfButton>
         <StyledButton onClick={zoom('r')}>Right</StyledButton>
       </ButtonRow>
       <ButtonRow>
@@ -91,6 +97,15 @@ const ButtonColumn = styled.div`
 const StyledButton = styled.button`
   font-size: 0.7rem;
   width: 80px;
+  min-height: 22px;
+  border-radius: 0px;
+  border-style: solid;
+  border-width: 1px;
+`;
+
+const StyledHalfButton = styled.button`
+  font-size: 0.7rem;
+  width: 40px;
   min-height: 22px;
   border-radius: 0px;
   border-style: solid;

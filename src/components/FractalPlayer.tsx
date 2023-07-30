@@ -1,6 +1,7 @@
 import DataModal from "@/components/DataModal";
 import PlayheadControls from "@/components/PlayheadControls";
-import PlayheadTypes from "@/components/PlayheadTypes";
+import PlayheadProgram from "@/components/PlayheadProgram";
+import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
 import {FlexColumn, Input, Label} from "@/pages/fractalPlayheads";
@@ -21,7 +22,7 @@ import {
   lsmAudioOptions,
   rotateMatrixCW90,
   clearCanvas,
-} from "@/utils/playheadFractals";
+} from "@/utils/fractalGenerator";
 
 const palettes: OptionType[] = colourPalettes.map((color, index) => {
   return {value: index.toString(), label: index.toString()};
@@ -29,7 +30,7 @@ const palettes: OptionType[] = colourPalettes.map((color, index) => {
 
 let socket: Socket;
 
-type PlayheadFractalProps = {
+type FractalPlayerProps = {
   fractal: string;
   cx?: number;
   cy?: number;
@@ -37,7 +38,7 @@ type PlayheadFractalProps = {
   setCy?: (cy: number) => void;
 }
 
-const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy = 0.27015, setCx, setCy}) => {
+const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0.27015, setCx, setCy}) => {
   const plane: FractalPlane = fractal === 'mandelbrot' ? defaultMandelbrotPlane : defaultJuliaPlane;
 
   const [renderOption, setRenderOption] = useState<OptionType>(
@@ -67,7 +68,7 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
   const [fractalTimeouts, setFractalTimeouts] = useState<any[]>([]);
   const [fractalPauseTimeElapsed, setFractalPauseTimeElapsed] = useState<number>(0);
   const [fractalLoop, setFractalLoop] = useState<boolean>(false);
-
+  const [program, setProgram] = useState<string>('lsm-binary');
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fractalPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -226,7 +227,11 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
       <ButtonContainer>
         <FractalContainer>
           <ControlRows>
-            <PlayheadTypes playheadType={fractalPlayheadType} setPlayheadType={setFractalPlayheadType}/>
+            <PlayheadProgram
+              program={program}
+              setProgram={setProgram}
+            />
+            <Playheads playheadType={fractalPlayheadType} setPlayheadType={setFractalPlayheadType}/>
             <Transport
               transport={fractalTransport}
               setTransport={setFractalTransport}
@@ -376,6 +381,7 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
 const Page = styled.div`
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
   font-family: "Roboto", sans-serif;
   font-size: 0.5rem;
 `;
@@ -433,14 +439,19 @@ export const ControlRow = styled.div`
   flex-flow: row wrap;
 `;
 
+export const ButtonText = styled.span`
+  font-size: 0.8rem;
+`;
+
 export const ControlButton = styled.div<{
   onClick: () => void;
   selected: boolean;
   bottom?: boolean;
+  color?: string;
 }>`
-  background-color: ${props => props.selected ? '#FF0000' : '#EEE'};
+  background-color: ${props => props.selected ? props.color ?? '#FF0000' : '#EEE'};
   border: 1px solid #000;
-  color: ${props => props.selected ? '#FFF' : '#FF0000'};
+  color: ${props => props.selected ? '#FFF' : props.color ?? '#FF0000'};
   font-size: 3rem;
   width: 4rem;
   height: 4rem;
@@ -462,8 +473,8 @@ export const ControlButton = styled.div<{
   }
 
   :hover {
-    background-color: ${props => props.selected ? '#FF0000' : '#DDD'};
+    background-color: ${props => props.selected ? props.color ?? '#FF0000' : '#DDD'};
   }
 `;
 
-export default PlayheadFractal;
+export default FractalPlayer;
