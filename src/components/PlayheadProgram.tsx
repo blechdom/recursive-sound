@@ -1,37 +1,36 @@
 import {ControlRow, ButtonText} from "@/components/FractalPlayer";
 import {ControlButton} from "@/components/FractalPlayer";
-import {
-  faArrowsRotate,
-  faPause,
-  faPlay,
-  faStop
-} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import React from "react";
 
 type TransportProps = {
   program: string;
   setProgram: (program: string) => void;
+  color: string;
+  height?: string;
 }
 
-const PlayheadProgram: React.FC<TransportProps> = ({program, setProgram}) => {
+const PlayheadProgram: React.FC<TransportProps> = ({program, setProgram, color, height = '4rem'}) => {
   return (
     <>
       <ControlRow>
-        <ControlButton onClick={() => setProgram('lsm-binary')} selected={program === 'lsm-binary'} color={'#3d8c40\t'}>
-          <ButtonText>LSM<br/>Binary</ButtonText>
-        </ControlButton>
-        <ControlButton onClick={() => setProgram('lsm-tirnary')} selected={program === 'lsm-tirnary'}
-                       color={'#3d8c40\t'}>
-          <ButtonText>LSM<br/>Tirnary</ButtonText>
+        <ControlButton onClick={() => setProgram('lsm-binary')} selected={program === 'lsm-binary'} color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Binary</ButtonText>
         </ControlButton>
         <ControlButton onClick={() => setProgram('lsm-outline')} selected={program === 'lsm-outline'}
-                       color={'#3d8c40\t'}>
-          <ButtonText>LSM<br/>Outline</ButtonText>
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Outline</ButtonText>
         </ControlButton>
         <ControlButton onClick={() => setProgram('lsm-difference')} selected={program === 'lsm-difference'}
-                       color={'#3d8c40\t'}>
-          <ButtonText>LSM<br/>Difference</ButtonText>
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Difference</ButtonText>
+        </ControlButton>
+        <ControlButton onClick={() => setProgram('lsm-raw')} selected={program === 'lsm-raw'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Greyscale</ButtonText>
         </ControlButton>
       </ControlRow>
     </>

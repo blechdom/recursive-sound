@@ -1,10 +1,11 @@
-import DataModal from "@/components/DataModal";
 import PlayheadControls from "@/components/PlayheadControls";
+import PlayheadData from "@/components/PlayheadData";
 import PlayheadProgram from "@/components/PlayheadProgram";
+import PlayheadSizes from "@/components/PlayheadSizes";
 import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
-import {FlexColumn, Input, Label} from "@/pages/fractalPlayheads";
+import {Label} from "@/pages/fractalPlayheads";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import io, {Socket} from "socket.io-client";
 import styled from "styled-components";
@@ -18,15 +19,10 @@ import {
   FractalPlane,
   getScalingFactors,
   OptionType,
-  renderOptions,
-  lsmAudioOptions,
   rotateMatrixCW90,
   clearCanvas,
+  transformAudioMatrix,
 } from "@/utils/fractalGenerator";
-
-const palettes: OptionType[] = colourPalettes.map((color, index) => {
-  return {value: index.toString(), label: index.toString()};
-});
 
 let socket: Socket;
 
@@ -39,25 +35,21 @@ type FractalPlayerProps = {
 }
 
 const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0.27015, setCx, setCy}) => {
-  const plane: FractalPlane = fractal === 'mandelbrot' ? defaultMandelbrotPlane : defaultJuliaPlane;
+  const maxIterations = 100;
+  const lsmThreshold = 100;
+  const demThreshold = 0.2;
+  const overflow = 100000000000;
+  const demColorModulo = 100;
 
-  const [renderOption, setRenderOption] = useState<OptionType>(
-    renderOptions[renderOptions?.findIndex((o: OptionType) => o?.value === 'lsm')]
-  );
-  const [paletteNumber, setPaletteNumber] = useState<OptionType>(palettes[16]);
-  const [maxIterations, setMaxIterations] = useState<number>(100);
-  const [lsmThreshold, setLsmThreshold] = useState<number>(100);
-  const [demThreshold, setDemThreshold] = useState<number>(0.2);
-  const [overflow, setOverflow] = useState<number>(100000000000)
-  const [canvasHeight, setCanvasHeight] = useState<number>(256);
-  const [canvasWidth, setCanvasWidth] = useState<number>(256);
-  const [demColorModulo, setDemColorModulo] = useState<number>(100);
+  const plane: FractalPlane = fractal === 'mandelbrot' ? defaultMandelbrotPlane : defaultJuliaPlane;
+  const [size, setSize] = useState<number>(256);
 
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
 
   const [fractalWindow, setFractalWindow] = useState<FractalPlane>(plane)
   const [fractal2DArray, setFractal2DArray] = useState<number[][]>([]);
   const [audio2DArray, setAudio2DArray] = useState<number[][]>([]);
+  const [audioTransformed, setAudioTransformed] = useState<number[][]>([]);
   const [fractalTransformed, setFractalTransformed] = useState<number[][]>([]);
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [fractalVolume, setFractalVolume] = useState<number>(0);
@@ -89,11 +81,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
 
   useEffect(() => {
     if (fractalPlayheadType === 'left' || fractalPlayheadType === 'right') {
-      setFractalTransformed(rotateMatrixCW90(audio2DArray));
+      setFractalTransformed(rotateMatrixCW90(audioTransformed));
     } else {
-      setFractalTransformed(audio2DArray);
+      setFractalTransformed(audioTransformed);
     }
-  }, [fractalPlayheadType, audio2DArray]);
+  }, [fractalPlayheadType, audioTransformed]);
 
   useEffect(() => {
     setFractalTransport('stop');
@@ -104,8 +96,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
   }, [fractalLoop]);
 
   useEffect(() => {
-    getFractal();
-  }, [cx, cy, maxIterations, demColorModulo, paletteNumber, lsmThreshold, demThreshold, canvasHeight, canvasWidth, fractalWindow, renderOption]);
+    let renderType = 'lsm';
+    if (program === 'lsm-raw') renderType = 'lsm-raw';
+
+    getFractal(renderType, 16);
+  }, [cx, cy, size, fractalWindow, program]);
 
   useEffect(() => {
     if (fractalTransport === 'play') {
@@ -119,9 +114,21 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
     }
   }, [fractalTransport]);
 
-  const getFractal = () => {
+  useEffect(() => {
+    if (audio2DArray.length > 0) {
+      if (program === 'lsm-binary' || program === 'lsm-raw') {
+        setAudioTransformed(audio2DArray);
+      } else if (program === 'lsm-difference') {
+        setAudioTransformed(transformAudioMatrix(fractal2DArray, program));
+      } else {
+        setAudioTransformed(transformAudioMatrix(audio2DArray, program));
+      }
+    }
+  }, [audio2DArray, program]);
+
+  const getFractal = (renderType: string, paletteNumber: number) => {
     if (fractalCanvasRef.current) {
-      const threshold = renderOption.value === 'dem' ? demThreshold : lsmThreshold;
+      const threshold = renderType === 'dem' ? demThreshold : lsmThreshold;
       let fractalArray: {
         fractalData: number[][],
         audioData: number[][],
@@ -133,16 +140,16 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
         fractal,
         fractalCanvasRef.current,
         fractalWindow,
-        canvasWidth,
-        canvasHeight,
-        renderOption.value,
+        size,
+        size,
+        renderType,
         maxIterations,
         threshold,
         cx,
         cy,
         overflow,
         demColorModulo,
-        parseInt(paletteNumber.value)
+        paletteNumber
       );
       setFractal2DArray(fractalArray.fractalData);
       setAudio2DArray(fractalArray.audioData);
@@ -191,11 +198,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
     setComplex(e);
-  }, [canvasHeight, canvasWidth, fractalWindow]);
+  }, [size, size, fractalWindow]);
 
   const setJuliaComplexNumber = useCallback((e: any) => {
     if (mandelbrotMouseDown) setComplex(e);
-  }, [canvasHeight, canvasWidth, fractalWindow, mandelbrotMouseDown]);
+  }, [size, size, fractalWindow, mandelbrotMouseDown]);
 
   function setComplex(e: any) {
     if (fractalCanvasRef.current) {
@@ -204,7 +211,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       };
-      const scalingFactors = getScalingFactors(fractalWindow, canvasWidth, canvasHeight);
+      const scalingFactors = getScalingFactors(fractalWindow, size, size);
       const newCx = fractalWindow.x_min + pos.x * scalingFactors.x;
       const newCy = fractalWindow.y_min + pos.y * scalingFactors.y;
       if (fractal == 'mandelbrot' && setCx && setCy) {
@@ -227,9 +234,12 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
       <ButtonContainer>
         <FractalContainer>
           <ControlRows>
+            <PlayheadSizes size={size} setSize={setSize} color={'#005dd7'} height={'2rem'}/>
             <PlayheadProgram
               program={program}
               setProgram={setProgram}
+              color={'#3d8c40'}
+              height={'2rem'}
             />
             <Playheads playheadType={fractalPlayheadType} setPlayheadType={setFractalPlayheadType}/>
             <Transport
@@ -256,14 +266,14 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
           <CanvasContainer>
             <Canvas
               ref={fractalCanvasRef}
-              width={canvasWidth}
-              height={canvasHeight}
+              width={size}
+              height={size}
             />
             {fractal === 'mandelbrot' ? (
               <Canvas
                 ref={fractalPlayheadCanvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
+                width={size}
+                height={size}
                 onMouseDown={setDownForMandelbrotMouseDown}
                 onMouseUp={setUpForMandelbrotMouseDown}
                 onMouseMove={setJuliaComplexNumber}
@@ -272,108 +282,21 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
             ) : (
               <Canvas
                 ref={fractalPlayheadCanvasRef}
-                width={canvasWidth}
-                height={canvasHeight}
+                width={size}
+                height={size}
               />
             )}
           </CanvasContainer>
-
-          <DataModal title={"Show Fractal Data"} matrixData={fractal2DArray}/>
-          <DataModal title={"Show Playhead Data"} matrixData={fractalTransformed}/>
-          <DataModal title={"Show Audio Data"} matrixData={audio2DArray}/>
-
+          <ControlRows>
+            <ControlRow>
+              <PlayheadData title={"Fractal Data"} matrixData={fractal2DArray}/>
+              <PlayheadData title={"Audio Data"} matrixData={audio2DArray}/>
+              <PlayheadData title={"Transformed Data"} matrixData={audioTransformed}/>
+              <PlayheadData title={"Playhead Data"} matrixData={fractalTransformed}/>
+            </ControlRow>
+          </ControlRows>
         </FractalContainer>
       </ButtonContainer>
-      <FlexColumn>
-        <Label>Algorithm{" "}
-          <FractalSelect
-            options={renderOptions}
-            value={renderOption}
-            onChange={(option) => {
-              setRenderOption((option ?? renderOptions[1]) as OptionType);
-            }}
-          /></Label>
-        <Label>Colors{" "}
-          <FractalSelect
-            options={palettes}
-            value={paletteNumber}
-            onChange={(option) => {
-              setPaletteNumber((option ?? palettes[0]) as OptionType);
-            }}
-          /></Label>
-        <Label>Height{" "}
-          <Input
-            type="number"
-            min={16}
-            max={1024}
-            value={canvasHeight}
-            step={1}
-            onChange={(value) => setCanvasHeight(value.target.valueAsNumber)}
-          /></Label>
-        <Label>Width{" "}
-          <Input
-            type="number"
-            min={16}
-            max={1024}
-            value={canvasWidth}
-            step={1}
-            onChange={(value) => setCanvasWidth(value.target.valueAsNumber)}
-          /></Label>
-        <Label>Iterations{" "}
-          <Input
-            type="number"
-            min={25}
-            max={5000}
-            value={maxIterations}
-            step={25}
-            onChange={(value) => setMaxIterations(value.target.valueAsNumber)}
-          /></Label>
-        {renderOption.value && renderOption.value !== 'dem' && renderOption.value !== 'dem-raw' && (
-          <Label>Threshold{"   "}
-            <Input
-              type="number"
-              value={lsmThreshold}
-              step={100}
-              min={100}
-              max={10000}
-              onChange={(value) => setLsmThreshold(value.target.valueAsNumber)}
-            /></Label>
-        )}
-        {renderOption.value && (renderOption.value === 'dem' || renderOption.value === 'dem-raw') && (
-          <>
-            <Label>Threshold{"   "}
-              <Input
-                type="number"
-                value={demThreshold}
-                step={0.01}
-                min={0}
-                max={3}
-                onChange={(value) => setDemThreshold(value.target.valueAsNumber)}
-              />
-            </Label>
-            <Label>Threshold{"   "}
-              <Input
-                type="number"
-                value={overflow}
-                step={100000000000}
-                min={0}
-                max={100000000000000}
-                onChange={(value) => setOverflow(value.target.valueAsNumber)}
-              />
-            </Label>
-            <Label>Color Mod{"   "}
-              <Input
-                type="number"
-                value={demColorModulo}
-                step={1}
-                min={1}
-                max={10000}
-                onChange={(value) => setDemColorModulo(value.target.valueAsNumber)}
-              />
-            </Label>
-          </>
-        )}
-      </FlexColumn>
     </Page>
   );
 }
@@ -384,12 +307,6 @@ const Page = styled.div`
   flex-wrap: wrap;
   font-family: "Roboto", sans-serif;
   font-size: 0.5rem;
-`;
-
-const FractalSelect = styled(Select)`
-  padding-left: .5rem;
-  font-size: 0.85rem;
-  max-width: 512px;
 `;
 
 const FractalContainer = styled.div`
@@ -448,13 +365,15 @@ export const ControlButton = styled.div<{
   selected: boolean;
   bottom?: boolean;
   color?: string;
+  width?: string;
+  height?: string;
 }>`
   background-color: ${props => props.selected ? props.color ?? '#FF0000' : '#EEE'};
   border: 1px solid #000;
   color: ${props => props.selected ? '#FFF' : props.color ?? '#FF0000'};
   font-size: 3rem;
-  width: 4rem;
-  height: 4rem;
+  width: ${props => props.width ?? '4rem'};
+  height: ${props => props.height ?? '4rem'};
   cursor: pointer;
   display: flex;
   align-items: center;

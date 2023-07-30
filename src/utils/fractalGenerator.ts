@@ -428,3 +428,54 @@ export function scaleFractal(fractalArray: number[][], min: number, max: number)
     })
   });
 }
+
+
+export function transformAudioMatrix(matrix: number[][], program: string): number[][] {
+  if (program === 'lsm-outline') {
+    return createOutlinesMatrix(matrix);
+  }
+  if (program === 'lsm-difference') {
+    return createDifferencesMatrix(matrix);
+  }
+  return [];
+}
+
+export function createOutlinesMatrix(matrix: number[][]): number[][] {
+  const transformedMatrix = [matrix[0]];
+  for (let i = 1; i < matrix.length - 1; i++) {
+    const transformedRow = [0];
+    for (let j = 1; j < matrix[i].length - 1; j++) {
+      const left = matrix[i - 1][j];
+      const right = matrix[i + 1][j];
+      const above = matrix[i][j - 1];
+      const below = matrix[i][j + 1];
+      const value = (matrix[i][j] === left && matrix[i][j] === right && matrix[i][j] === above && matrix[i][j] === below) ? 0 : 1;
+      transformedRow.push(value);
+    }
+    transformedRow.push(0);
+    transformedMatrix.push(transformedRow);
+  }
+  transformedMatrix.push(matrix[matrix.length - 1]);
+  return transformedMatrix;
+}
+
+export function createDifferencesMatrix(matrix: number[][]): number[][] {
+  let min = 0, max = 0;
+  const transformedMatrix = [];
+  for (let i = 1; i < matrix.length - 1; i++) {
+    const transformedRow = [0];
+    for (let j = 1; j < matrix[i].length - 1; j++) {
+      const leftDiff = Math.abs(matrix[i - 1][j] - matrix[i][j]);
+      const rightDiff = Math.abs(matrix[i + 1][j] - matrix[i][j]);
+      const aboveDiff = Math.abs(matrix[i][j - 1] - matrix[i][j]);
+      const belowDiff = Math.abs(matrix[i][j + 1] - matrix[i][j]);
+      const value = (leftDiff + rightDiff + aboveDiff + belowDiff) / 4;
+      transformedRow.push(value);
+      if (value > max) max = value;
+      if (value < min) min = value;
+    }
+    transformedRow.push(0);
+    transformedMatrix.push(transformedRow);
+  }
+  return scaleFractal(transformedMatrix, min, max);
+}

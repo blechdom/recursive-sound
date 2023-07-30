@@ -96,12 +96,6 @@ export const ButtonRow = styled.div`
   align-items: center;
 `;
 
-export const StyledProcessButton = styled.button`
-  margin: 1rem;
-  font-size: 1rem;
-  min-height: 24px;
-`;
-
 export const Input = styled.input`
   min-height: 30px;
   padding: 0.5rem;
