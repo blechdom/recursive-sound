@@ -84,6 +84,12 @@ export const Scroller = styled.div<{ height: number }>`
   overflow: scroll;
 `;
 
+export const StyledProcessButton = styled.button`
+  margin: 1rem;
+  font-size: 1rem;
+  min-height: 24px;
+`;
+
 export const ButtonContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
