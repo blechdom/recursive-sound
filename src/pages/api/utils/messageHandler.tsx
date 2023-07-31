@@ -33,8 +33,26 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     }
   };
 
+  const sendThreshold = (thresholdAmount: number) => {
+    if (oscClient) {
+      console.log("/fractal/threshold", thresholdAmount);
+      // @ts-ignore
+      oscClient.send("/fractal/threshold", thresholdAmount);
+    }
+  };
+
+  const sendInterval = (intervalAmount: number) => {
+    if (oscClient) {
+      console.log("/fractal/interval", intervalAmount);
+      // @ts-ignore
+      oscClient.send("/fractal/interval", intervalAmount);
+    }
+  };
+
   socket.on("fractalMandelbrotRow", sendMandelbrotToKyma)
   socket.on("fractalJuliaRow", sendJuliaToKyma)
   socket.on("volume", sendVolume);
+  socket.on("threshold", sendThreshold);
+  socket.on("interval", sendInterval);
 
 };

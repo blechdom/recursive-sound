@@ -127,9 +127,10 @@ function drawLSMRaw(
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
 ): number {
-  let shade = (iterations / maxIterations) * 255;
+  const value = iterations / maxIterations;
+  let shade = value * 255;
   ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
-  return iterations / maxIterations;
+  return value;
 }
 
 function generateLSMBinary(
@@ -312,8 +313,8 @@ export function createDifferencesMatrix(matrix: number[][], ctx: CanvasRendering
   for (let i = 1; i < matrix.length - 1; i++) {
     const transformedRow = [];
     for (let j = 0; j < matrix[i].length; j++) {
-      const difference = Math.abs(matrix[i - 1][j] - matrix[i][j]);
-      const value = Math.sqrt(difference);
+      const difference = matrix[i][j] - matrix[i - 1][j];
+      const value = Math.sqrt(difference < 0 ? -difference : difference);
       transformedRow.push(value);
       ctx.fillStyle = `rgb(${value * 255}, ${value * 255}, ${value * 255})`
       ctx.fillRect(j, i, 1, 1);

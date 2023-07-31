@@ -96,7 +96,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
       setFractalTransport('play');
     }
   }, [fractalTransport]);
-  
+
   const getFractal = () => {
     if (fractalCanvasRef.current) {
       let fractalArray: {
@@ -131,6 +131,18 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
     if (fractalPlayheadCanvasRef.current) clearCanvas(fractalPlayheadCanvasRef.current);
     setFractalPauseTimeElapsed(0);
   }
+
+  useEffect(() => {
+    socket?.emit("volume", fractalVolume);
+  }, [fractalVolume]);
+
+  useEffect(() => {
+    socket?.emit("interval", fractalInterval);
+  }, [fractalInterval]);
+
+  useEffect(() => {
+    socket?.emit("threshold", fractalThreshold);
+  }, [fractalThreshold]);
 
   const pauseFractal = () => {
     console.log('pause Fractal');
@@ -335,9 +347,9 @@ export const ControlButton = styled.div<{
   height?: string;
 }>`
   background-color: ${props => props.selected ? props.color ?? '#FF0000' : '#EEE'};
-  border: 1px solid #000;
+  outline: 1px solid #000;
   color: ${props => props.selected ? '#FFF' : props.color ?? '#FF0000'};
-  font-size: 3rem;
+  font-size: 1.5rem;
   width: ${props => props.width ?? '4rem'};
   height: ${props => props.height ?? '4rem'};
   cursor: pointer;

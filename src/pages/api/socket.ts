@@ -1,5 +1,5 @@
-import { Server, Socket} from "socket.io";
-import messageHandler from "../../utils/sockets/messageHandler";
+import {Server, Socket} from "socket.io";
+import messageHandler from "./utils/messageHandler";
 import {Client as OSCClient, Server as OSCServer} from "node-osc";
 
 export default function SocketHandler(req: any, res: any) {
@@ -13,10 +13,10 @@ export default function SocketHandler(req: any, res: any) {
   res.socket.server.io = io;
 
   let oscClient: OSCClient;
-  try{
+  try {
     //oscClient= new OSCClient('pacamara-1111.local', 8000)
     oscClient = new OSCClient('127.0.0.1', 9000);
-  } catch(e) {
+  } catch (e) {
     console.log(e)
   }
 
@@ -24,7 +24,7 @@ export default function SocketHandler(req: any, res: any) {
     console.log('OSC Server is listening on port 0.0.0.0:9999');
   });
 
- const onConnection = (socket: Socket) => {
+  const onConnection = (socket: Socket) => {
     messageHandler(io, socket, oscClient, oscServer);
   };
 
