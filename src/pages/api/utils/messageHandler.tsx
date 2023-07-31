@@ -49,10 +49,27 @@ export default (io: any, socket: Socket, oscClient: Client, oscServer: Server) =
     }
   };
 
+  const sendRange = (rangeAmount: number) => {
+    if (oscClient) {
+      console.log("/fractal/range", rangeAmount);
+      // @ts-ignore
+      oscClient.send("/fractal/range", rangeAmount);
+    }
+  };
+
+  const sendLowest = (lowestAmount: number) => {
+    if (oscClient) {
+      console.log("/fractal/lowest", lowestAmount);
+      // @ts-ignore
+      oscClient.send("/fractal/lowest", lowestAmount);
+    }
+  };
+
   socket.on("fractalMandelbrotRow", sendMandelbrotToKyma)
   socket.on("fractalJuliaRow", sendJuliaToKyma)
   socket.on("volume", sendVolume);
   socket.on("threshold", sendThreshold);
   socket.on("interval", sendInterval);
-
+  socket.on("range", sendRange);
+  socket.on("lowest", sendLowest);
 };

@@ -46,15 +46,12 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
 
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
-  const [fractalVolume, setFractalVolume] = useState<number>(0);
-  const [fractalThreshold, setFractalThreshold] = useState<number>(0);
-  const [fractalInterval, setFractalInterval] = useState<number>(0);
 
   const [fractalPlayheadType, setFractalPlayheadType] = useState<string>('down');
   const [fractalTransport, setFractalTransport] = useState<string>('stop');
   const [fractalTimeouts, setFractalTimeouts] = useState<any[]>([]);
   const [fractalPauseTimeElapsed, setFractalPauseTimeElapsed] = useState<number>(0);
-  const [fractalLoop, setFractalLoop] = useState<boolean>(false);
+  const [fractalLoop, setFractalLoop] = useState<boolean>(true);
 
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fractalPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -131,18 +128,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
     if (fractalPlayheadCanvasRef.current) clearCanvas(fractalPlayheadCanvasRef.current);
     setFractalPauseTimeElapsed(0);
   }
-
-  useEffect(() => {
-    socket?.emit("volume", fractalVolume);
-  }, [fractalVolume]);
-
-  useEffect(() => {
-    socket?.emit("interval", fractalInterval);
-  }, [fractalInterval]);
-
-  useEffect(() => {
-    socket?.emit("threshold", fractalThreshold);
-  }, [fractalThreshold]);
 
   const pauseFractal = () => {
     console.log('pause Fractal');
@@ -229,14 +214,9 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
             />
             <PlayheadControls
               name={fractal}
+              socket={socket}
               speed={fractalSpeed}
               setSpeed={setFractalSpeed}
-              volume={fractalVolume}
-              setVolume={setFractalVolume}
-              threshold={fractalThreshold}
-              setThreshold={setFractalThreshold}
-              interval={fractalInterval}
-              setInterval={setFractalInterval}
             />
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
