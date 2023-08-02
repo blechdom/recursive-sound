@@ -314,8 +314,8 @@ export function createDifferencesMatrix(matrix: number[][], ctx: CanvasRendering
     const transformedRow = [];
     for (let j = 0; j < matrix[i].length; j++) {
       const difference = matrix[i][j] - matrix[i - 1][j];
-      const value = Math.sqrt(difference < 0 ? -difference : difference);
-      transformedRow.push(value);
+      const value = parseFloat((Math.sqrt(difference < 0 ? -difference : difference).toString()));
+      transformedRow.push(value + 0.001);
       ctx.fillStyle = `rgb(${value * 255}, ${value * 255}, ${value * 255})`
       ctx.fillRect(j, i, 1, 1);
     }

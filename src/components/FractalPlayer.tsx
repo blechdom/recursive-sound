@@ -248,9 +248,9 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
           </CanvasContainer>
           <ControlRows>
             <ControlRow>
-              <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
-              <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
-              <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
+              <PlayheadData title={"DATA: Fractal"} matrixData={rawFractalData}/>
+              <PlayheadData title={"DATA: Audio"} matrixData={audioFractalData}/>
+              <PlayheadData title={"DATA: Playhead"} matrixData={playheadFractalData}/>
             </ControlRow>
           </ControlRows>
         </FractalContainer>

@@ -17,7 +17,8 @@ const PlayheadData: React.FC<PlayheadDataProps> = ({title, matrixData, color}) =
   const [showDataModal, setShowDataModal] = useState<boolean>(false);
   return (
     <>
-      <ControlButton onClick={() => setShowDataModal(true)} selected={showDataModal} color={color ?? '#0066FF'}>
+      <ControlButton onClick={() => setShowDataModal(true)} selected={showDataModal} width={"4rem"} height={"2rem"}
+                     color={color ?? '#0066FF'}>
         <ButtonText>{title}</ButtonText>
       </ControlButton>
       <Modal
