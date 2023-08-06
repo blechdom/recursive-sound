@@ -48,9 +48,6 @@ export default function JuliasPlayheadsOld() {
   const [mandelbrotTransformed, setMandelbrotTransformed] = useState<number[][]>([]);
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
   const [mandelbrotSpeed, setMandelbrotSpeed] = useState<number>(50);
-  const [mandelbrotVolume, setMandelbrotVolume] = useState<number>(0);
-  const [mandelbrotThreshold, setMandelbrotThreshold] = useState<number>(0);
-  const [mandelbrotInterval, setMandelbrotInterval] = useState<number>(0);
   const [mandelbrotPlayheadType, setMandelbrotPlayheadType] = useState<string>('down');
   const [mandelbrotTransport, setMandelbrotTransport] = useState<string>('stop');
   const [mandelbrotTimeouts, setMandelbrotTimeouts] = useState<any[]>([]);
@@ -432,12 +429,7 @@ export default function JuliasPlayheadsOld() {
               name={"Mandelbrot"}
               speed={mandelbrotSpeed}
               setSpeed={setMandelbrotSpeed}
-              volume={mandelbrotVolume}
-              setVolume={setMandelbrotVolume}
-              threshold={mandelbrotThreshold}
-              setThreshold={setMandelbrotThreshold}
-              interval={mandelbrotInterval}
-              setInterval={setMandelbrotInterval}
+              socket={socket}
             />
           </ControlRows>
           <WindowZoomer name={"Mandelbrot"} window={mandelbrotWindow} defaultWindow={defaultMandelbrotPlane}
@@ -473,12 +465,7 @@ export default function JuliasPlayheadsOld() {
               name={"Julia"}
               speed={juliaSpeed}
               setSpeed={setJuliaSpeed}
-              volume={juliaVolume}
-              setVolume={setJuliaVolume}
-              threshold={juliaThreshold}
-              setThreshold={setJuliaThreshold}
-              interval={juliaInterval}
-              setInterval={setJuliaInterval}
+              socket={socket}
             />
           </ControlRows>
           <WindowZoomer name={"Julia"} window={juliaWindow} defaultWindow={defaultJuliaPlane}
