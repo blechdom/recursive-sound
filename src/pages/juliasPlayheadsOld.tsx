@@ -1,5 +1,5 @@
 import DataModal from "@/components/DataModal";
-import PlayheadControls from "@/components/PlayheadControls";
+import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadTypes from "@/components/PlayheadTypes";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
@@ -425,7 +425,7 @@ export default function JuliasPlayheadsOld() {
               loop={mandelbrotLoop}
               setLoop={setMandelbrotLoop}
             />
-            <PlayheadControls
+            <PlayheadOSCControls
               name={"Mandelbrot"}
               speed={mandelbrotSpeed}
               setSpeed={setMandelbrotSpeed}
@@ -461,7 +461,7 @@ export default function JuliasPlayheadsOld() {
               loop={juliaLoop}
               setLoop={setJuliaLoop}
             />
-            <PlayheadControls
+            <PlayheadOSCControls
               name={"Julia"}
               speed={juliaSpeed}
               setSpeed={setJuliaSpeed}

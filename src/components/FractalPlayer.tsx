@@ -1,4 +1,5 @@
-import PlayheadControls from "@/components/PlayheadControls";
+import PlayheadOSCControls from "@/components/PlayheadOSCControls";
+import PlayheadAudioControls from "@/components/PlayheadAudioControls";
 import PlayheadData from "@/components/PlayheadData";
 import PlayheadProgram from "@/components/PlayheadProgram";
 import PlayheadSizes from "@/components/PlayheadSizes";
@@ -44,8 +45,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
   const [rawFractalData, setRawFractalData] = useState<number[][]>([]);
   const [audioFractalData, setAudioFractalData] = useState<number[][]>([]);
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
+  const [currentFractalRow, setCurrentFractalRow] = useState<number[]>(Array(size).fill(0));
 
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
+
+  const [playType, setPlayType] = useState<string>('audio');
 
   const [fractalPlayheadType, setFractalPlayheadType] = useState<string>('down');
   const [fractalTransport, setFractalTransport] = useState<string>('stop');
@@ -146,6 +150,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
         if (fractalPlayheadCanvasRef.current) {
           drawPlayhead(fractalPlayheadCanvasRef.current, fractalPlayheadType, index);
         }
+        setCurrentFractalRow(playheadFractalData[index]);
         socket?.emit("fractalMandelbrotRow", playheadFractalData[index]);
         if (i >= playheadFractalData.length - 1) {
           if (fractalLoop) {
@@ -198,6 +203,12 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
       <ButtonContainer>
         <FractalContainer>
           <ControlRows>
+            <input
+              type="checkbox"
+              id="transform_checkbox"
+              onChange={(event) => setPlayType(event.target.checked ? 'osc' : 'audio')}
+            />
+            <label htmlFor="transform_checkbox">Play Type: {playType}</label>
             <PlayheadSizes size={size} setSize={setSize} color={'#005dd7'} height={'2rem'}/>
             <PlayheadProgram
               program={program}
@@ -212,12 +223,21 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
               loop={fractalLoop}
               setLoop={setFractalLoop}
             />
-            <PlayheadControls
-              name={fractal}
-              socket={socket}
-              speed={fractalSpeed}
-              setSpeed={setFractalSpeed}
-            />
+            {playType === 'osc' ? (
+              <PlayheadOSCControls
+                name={fractal}
+                socket={socket}
+                speed={fractalSpeed}
+                setSpeed={setFractalSpeed}
+              />
+            ) : (
+              <PlayheadAudioControls
+                name={fractal}
+                fractalRow={currentFractalRow}
+                speed={fractalSpeed}
+                setSpeed={setFractalSpeed}
+              />
+            )}
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
                         setWindow={setFractalWindow}/>
