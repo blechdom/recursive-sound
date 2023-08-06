@@ -59,9 +59,6 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
   const [audio2DArray, setAudio2DArray] = useState<number[][]>([]);
   const [fractalTransformed, setFractalTransformed] = useState<number[][]>([]);
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
-  const [fractalVolume, setFractalVolume] = useState<number>(0);
-  const [fractalThreshold, setFractalThreshold] = useState<number>(0);
-  const [fractalInterval, setFractalInterval] = useState<number>(0);
   const [fractalPlayheadType, setFractalPlayheadType] = useState<string>('down');
   const [fractalTransport, setFractalTransport] = useState<string>('stop');
   const [fractalTimeouts, setFractalTimeouts] = useState<any[]>([]);
@@ -237,12 +234,7 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
               name={fractal}
               speed={fractalSpeed}
               setSpeed={setFractalSpeed}
-              volume={fractalVolume}
-              setVolume={setFractalVolume}
-              threshold={fractalThreshold}
-              setThreshold={setFractalThreshold}
-              interval={fractalInterval}
-              setInterval={setFractalInterval}
+              socket={socket}
             />
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}

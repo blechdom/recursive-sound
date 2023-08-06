@@ -70,6 +70,9 @@ export default function Home() {
             </ul>
           </p>
         </li>
+        <li>
+          <Link href={"./oscillatorBank"}>Oscillator Bank</Link>
+        </li>
         <li><Link href={"./tesselation-with-audio.html"}>Tesselations (with webAudio controls coming soon)</Link>
           <p>WIP: Currently just a copy of Craig S. Kaplan&apos;s tactile-js demo, with some console.log data for
             interesting parameters. Planning to add webaudio and OSC implementation.</p></li>
