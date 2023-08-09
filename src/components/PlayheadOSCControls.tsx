@@ -4,13 +4,26 @@ import styled from "styled-components";
 import {Socket} from "socket.io-client";
 
 type PlayheadOSCControlsProps = {
-  name: string;
-  speed: number;
+  fractal: string;
   socket: Socket;
+  speed: number;
+  cx?: number;
+  cy?: number;
+  setCx?: (cx: number) => void;
+  setCy?: (cy: number) => void;
   setSpeed: (speed: number) => void;
 }
 
-const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, speed, setSpeed}) => {
+const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
+                                                                   fractal,
+                                                                   socket,
+                                                                   speed,
+                                                                   cx,
+                                                                   cy,
+                                                                   setCx,
+                                                                   setCy,
+                                                                   setSpeed
+                                                                 }) => {
   const [volume, setVolume] = useState<number>(1.0);
   const [threshold, setThreshold] = useState<number>(0);
   const [interval, setInterval] = useState<number>(0);
@@ -41,7 +54,7 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
       <ButtonRow>
         <ControlKnob>
           <Knob
-            id={`${name}-speed`}
+            id={`${fractal}-speed`}
             label={"Speed (ms)"}
             knobValue={speed}
             step={0.01}
@@ -52,7 +65,7 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${name}-volume`}
+            id={`${fractal}-volume`}
             label={"Volume (OSC)"}
             knobValue={volume}
             step={0.01}
@@ -63,31 +76,7 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${name}-volume`}
-            label={"Volume (OSC)"}
-            knobValue={volume}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setVolume}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${name}-volume`}
-            label={"Volume (OSC)"}
-            knobValue={volume}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setVolume}
-          />
-        </ControlKnob>
-      </ButtonRow>
-      <ButtonRow>
-        <ControlKnob>
-          <Knob
-            id={`${name}-threshold`}
+            id={`${fractal}-threshold`}
             label={"Threshold (OSC)"}
             knobValue={threshold}
             step={0.01}
@@ -98,7 +87,7 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${name}-interval`}
+            id={`${fractal}-interval`}
             label={"Interval (OSC)"}
             knobValue={interval}
             step={0.01}
@@ -107,9 +96,11 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
             onKnobInput={setInterval}
           />
         </ControlKnob>
+      </ButtonRow>
+      <ButtonRow>
         <ControlKnob>
           <Knob
-            id={`${name}-range`}
+            id={`${fractal}-range`}
             label={"Range (OSC)"}
             knobValue={range}
             step={0.01}
@@ -120,7 +111,7 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${name}-lowest`}
+            id={`${fractal}-lowest`}
             label={"Lowest (OSC)"}
             knobValue={lowest}
             step={0.01}
@@ -129,6 +120,32 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({name, socket, 
             onKnobInput={setLowest}
           />
         </ControlKnob>
+        {fractal === 'julia' &&
+          <>
+            <ControlKnob>
+              <Knob
+                id={`${fractal}-cx`}
+                label={"Complex X"}
+                knobValue={cx}
+                step={0.00001}
+                min={-2}
+                max={2}
+                onKnobInput={setCx}
+              />
+            </ControlKnob>
+            <ControlKnob>
+              <Knob
+                id={`${fractal}-cy`}
+                label={"Complex Y"}
+                knobValue={cy}
+                step={0.00001}
+                min={-2}
+                max={2}
+                onKnobInput={setCy}
+              />
+            </ControlKnob>
+          </>
+        }
       </ButtonRow>
     </>
   );

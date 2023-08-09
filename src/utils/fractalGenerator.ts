@@ -232,7 +232,7 @@ export function generateFractal(
         let a = 0;
         i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
         if (program === 'lsm-raw') {
-          a = drawLSMRaw(i, maxIterations, ctx);
+          a = parseFloat(String((drawLSMRaw(i, maxIterations, ctx) + 0.001)).toString());
         } else if (program === 'lsm-binary') {
           a = drawLSMBinary(i, maxIterations, ctx);
         } else if (program === 'lsm-outline') {

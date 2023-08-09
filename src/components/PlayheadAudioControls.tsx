@@ -9,13 +9,22 @@ const PlayMonoScopeAndGain = dynamic(() => import("el-vis-audio").then((mod) => 
 require("events").EventEmitter.defaultMaxListeners = 0;
 
 type PlayheadAudioControlsProps = {
-  name: string;
+  fractal: string;
   fractalRow: number[];
   speed: number;
+  cx?: number;
+  cy?: number;
+  setCx?: (cx: number) => void;
+  setCy?: (cy: number) => void;
   setSpeed: (speed: number) => void;
 }
 
-const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRow, speed, setSpeed}) => {
+const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = ({
+                                                                       fractal, fractalRow, speed, cx,
+                                                                       cy,
+                                                                       setCx,
+                                                                       setCy, setSpeed
+                                                                     }) => {
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
 
   useEffect(() => {
@@ -64,7 +73,7 @@ const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRo
       <ButtonRow>
         <ControlKnob>
           <Knob
-            id={`${name}-speed`}
+            id={`${fractal}-speed`}
             label={"Speed (ms)"}
             knobValue={speed}
             step={0.01}
@@ -75,8 +84,8 @@ const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRo
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${name}-volume`}
-            label={"Volume (OSC)"}
+            id={`${fractal}-volume`}
+            label={"Volume"}
             knobValue={volume}
             step={0.01}
             min={0}
@@ -84,12 +93,10 @@ const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRo
             onKnobInput={setVolume}
           />
         </ControlKnob>
-      </ButtonRow>
-      <ButtonRow>
         <ControlKnob>
           <Knob
-            id={`${name}-threshold`}
-            label={"Threshold (OSC)"}
+            id={`${fractal}-threshold`}
+            label={"Threshold"}
             knobValue={threshold}
             step={0.001}
             min={0}
@@ -99,8 +106,8 @@ const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRo
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${name}-interval`}
-            label={"Interval (OSC)"}
+            id={`${fractal}-interval`}
+            label={"Interval"}
             knobValue={interval}
             step={0.01}
             min={0}
@@ -108,10 +115,12 @@ const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRo
             onKnobInput={setInterval}
           />
         </ControlKnob>
+      </ButtonRow>
+      <ButtonRow>
         <ControlKnob>
           <Knob
-            id={`${name}-lowest`}
-            label={"Lowest (OSC)"}
+            id={`${fractal}-lowest`}
+            label={"Lowest"}
             knobValue={lowest}
             step={0.01}
             min={0}
@@ -119,6 +128,32 @@ const PlayheadControls: React.FC<PlayheadAudioControlsProps> = ({name, fractalRo
             onKnobInput={setLowest}
           />
         </ControlKnob>
+        {fractal === 'julia' &&
+          <>
+            <ControlKnob>
+              <Knob
+                id={`${fractal}-cx`}
+                label={"Complex X"}
+                knobValue={cx}
+                step={0.00001}
+                min={-2}
+                max={2}
+                onKnobInput={setCx}
+              />
+            </ControlKnob>
+            <ControlKnob>
+              <Knob
+                id={`${fractal}-cy`}
+                label={"Complex Y"}
+                knobValue={cy}
+                step={0.00001}
+                min={-2}
+                max={2}
+                onKnobInput={setCy}
+              />
+            </ControlKnob>
+          </>
+        }
       </ButtonRow>
     </>
   );
@@ -138,4 +173,4 @@ export const ButtonRow = styled.div`
   flex-direction: row;
 `;
 
-export default PlayheadControls;
+export default PlayheadAudioControls;

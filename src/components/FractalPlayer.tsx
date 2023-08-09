@@ -6,7 +6,6 @@ import PlayheadSizes from "@/components/PlayheadSizes";
 import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
-import {Label} from "@/pages/fractalPlayheads";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import io, {Socket} from "socket.io-client";
 import styled from "styled-components";
@@ -27,8 +26,8 @@ type FractalPlayerProps = {
   fractal: string;
   cx?: number;
   cy?: number;
-  setCx?: (cx: number) => void;
-  setCy?: (cy: number) => void;
+  setCx: (cx: number) => void;
+  setCy: (cy: number) => void;
 }
 
 const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0.27015, setCx, setCy}) => {
@@ -203,12 +202,12 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
       <ButtonContainer>
         <FractalContainer>
           <ControlRows>
-            <input
-              type="checkbox"
-              id="transform_checkbox"
-              onChange={(event) => setPlayType(event.target.checked ? 'osc' : 'audio')}
-            />
-            <label htmlFor="transform_checkbox">Play Type: {playType}</label>
+            <ControlRow>
+              <ControlButton onClick={() => setPlayType(playType === 'osc' ? 'audio' : 'osc')} height={'2rem'}
+                             width={'6rem'}>
+                <ButtonText>{playType}</ButtonText>
+              </ControlButton>
+            </ControlRow>
             <PlayheadSizes size={size} setSize={setSize} color={'#005dd7'} height={'2rem'}/>
             <PlayheadProgram
               program={program}
@@ -225,16 +224,24 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
             />
             {playType === 'osc' ? (
               <PlayheadOSCControls
-                name={fractal}
+                fractal={fractal}
                 socket={socket}
                 speed={fractalSpeed}
+                cx={cx}
+                cy={cy}
+                setCx={setCx}
+                setCy={setCy}
                 setSpeed={setFractalSpeed}
               />
             ) : (
               <PlayheadAudioControls
-                name={fractal}
+                fractal={fractal}
                 fractalRow={currentFractalRow}
                 speed={fractalSpeed}
+                cx={cx}
+                cy={cy}
+                setCx={setCx}
+                setCy={setCy}
                 setSpeed={setFractalSpeed}
               />
             )}
@@ -268,9 +275,9 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
           </CanvasContainer>
           <ControlRows>
             <ControlRow>
-              <PlayheadData title={"DATA: Fractal"} matrixData={rawFractalData}/>
-              <PlayheadData title={"DATA: Audio"} matrixData={audioFractalData}/>
-              <PlayheadData title={"DATA: Playhead"} matrixData={playheadFractalData}/>
+              <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
+              <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
+              <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
             </ControlRow>
           </ControlRows>
         </FractalContainer>
@@ -303,7 +310,7 @@ const CanvasContainer = styled.div`
 
 const Canvas = styled.canvas`
   position: absolute;
-  margin: 0.5rem;
+  margin: -0.25rem 0.5rem 0 0;
   border: 1px solid #DDDDDD;
 `;
 
@@ -340,7 +347,7 @@ export const ButtonText = styled.span`
 
 export const ControlButton = styled.div<{
   onClick: () => void;
-  selected: boolean;
+  selected?: boolean;
   bottom?: boolean;
   color?: string;
   width?: string;
@@ -372,6 +379,15 @@ export const ControlButton = styled.div<{
   :hover {
     background-color: ${props => props.selected ? props.color ?? '#FF0000' : '#DDD'};
   }
+`;
+
+export const Label = styled.label`
+  display: flex;
+  flex-direction: row;
+  font-size: .85rem;
+  padding: .5rem;
+  height: 100%;
+  align-items: center;
 `;
 
 export default FractalPlayer;
