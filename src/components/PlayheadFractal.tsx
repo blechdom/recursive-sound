@@ -3,7 +3,7 @@ import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadTypes from "@/components/PlayheadTypes";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
-import {FlexColumn, Input, Label} from "@/pages/fractalPlayheads";
+import { Input, Label} from "@/pages/dataTuner";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import io, {Socket} from "socket.io-client";
 import styled from "styled-components";
@@ -456,6 +456,10 @@ export const ControlButton = styled.div<{
   :hover {
     background-color: ${props => props.selected ? '#FF0000' : '#DDD'};
   }
+`;
+
+const FlexColumn = styled.div`
+    display: flex;
 `;
 
 export default PlayheadFractal;
