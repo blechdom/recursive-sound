@@ -230,12 +230,6 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
               loop={fractalLoop}
               setLoop={setFractalLoop}
             />
-            <PlayheadOSCControls
-              name={fractal}
-              speed={fractalSpeed}
-              setSpeed={setFractalSpeed}
-              socket={socket}
-            />
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
                         setWindow={setFractalWindow}/>
