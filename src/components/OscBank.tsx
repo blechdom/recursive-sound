@@ -52,10 +52,7 @@ const OscBank: React.FC = () => {
       });
 
       const addMany = (ins: NodeRepr_t[]): NodeRepr_t => {
-        if (ins.length < 9) {
-          return el.add(...ins) as NodeRepr_t;
-        }
-        return el.add(...ins.slice(0, 7), addMany(ins.slice(8))) as NodeRepr_t;
+        return el.add(...ins) as NodeRepr_t;
       };
 
       return addMany(allVoices as NodeRepr_t[]);
