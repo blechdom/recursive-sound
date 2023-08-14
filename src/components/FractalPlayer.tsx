@@ -1,3 +1,4 @@
+import AudioEngine from "@/components/AudioEngine";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
 import PlayheadData from "@/components/PlayheadData";
@@ -6,8 +7,8 @@ import PlayheadSizes from "@/components/PlayheadSizes";
 import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
+import WebRenderer from "@elemaudio/web-renderer";
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import io, {Socket} from "socket.io-client";
 import styled from "styled-components";
 import {
   defaultJuliaPlane,
@@ -20,17 +21,32 @@ import {
   clearCanvas,
 } from "@/utils/fractalGenerator";
 
-let socket: Socket;
-
 type FractalPlayerProps = {
   fractal: string;
+  audioContext: AudioContext | null;
+  core: WebRenderer;
   cx?: number;
   cy?: number;
   setCx: (cx: number) => void;
   setCy: (cy: number) => void;
 }
 
-const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0.27015, setCx, setCy}) => {
+export type AudioParamsType = {
+  volume: number;
+  threshold: number;
+  interval: number;
+  lowest: number;
+}
+
+const FractalPlayer: React.FC<FractalPlayerProps> = ({
+                                                       fractal,
+                                                       cx = -0.7,
+                                                       cy = 0.27015,
+                                                       audioContext,
+                                                       core,
+                                                       setCx,
+                                                       setCy
+                                                     }) => {
   const maxIterations = 100;
   const lsmThreshold = 100;
 
@@ -46,7 +62,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
   const [currentFractalRow, setCurrentFractalRow] = useState<number[]>(Array(size).fill(0));
 
-  const [fractalSpeed, setFractalSpeed] = useState<number>(50);
+  const [fractalSpeed, setFractalSpeed] = useState<number>(500);
+  const [playing, setPlaying] = useState<boolean>(false);
 
   const [playType, setPlayType] = useState<string>('audio');
 
@@ -56,18 +73,15 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
   const [fractalPauseTimeElapsed, setFractalPauseTimeElapsed] = useState<number>(0);
   const [fractalLoop, setFractalLoop] = useState<boolean>(true);
 
+  const [audioParams, setAudioParams] = useState<AudioParamsType>({
+    volume: 0,
+    threshold: 0,
+    interval: 0.0001,
+    lowest: 0,
+  });
+
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fractalPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
-
-  const socketInitializer = async () => {
-    await fetch("/recursive-sound/api/socket");
-    socket = io();
-  };
-
-  useEffect(() => {
-    socketInitializer();
-  }, []);
 
   useEffect(() => {
     if (fractalPlayheadType === 'left' || fractalPlayheadType === 'right') {
@@ -87,10 +101,13 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
 
   useEffect(() => {
     if (fractalTransport === 'play') {
+      setPlaying(true);
       playFractal();
     } else if (fractalTransport === 'stop') {
+      setPlaying(false);
       stopFractal();
     } else if (fractalTransport === 'pause') {
+      setPlaying(false);
       pauseFractal();
     } else if (fractalTransport === 'replay') {
       setFractalTransport('play');
@@ -127,9 +144,9 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
     fractalTimeouts.forEach(async (timeoutId) => {
       await clearTimeout(timeoutId);
     });
-    socket?.emit("fractalMandelbrotRow", playheadFractalData[0].fill(0));
+    setCurrentFractalRow(Array(size).fill(0));
     if (fractalPlayheadCanvasRef.current) clearCanvas(fractalPlayheadCanvasRef.current);
-    setFractalPauseTimeElapsed(0);
+    //setFractalPauseTimeElapsed(0);
   }
 
   const pauseFractal = () => {
@@ -150,7 +167,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
           drawPlayhead(fractalPlayheadCanvasRef.current, fractalPlayheadType, index);
         }
         setCurrentFractalRow(playheadFractalData[index]);
-        socket?.emit("fractalMandelbrotRow", playheadFractalData[index]);
         if (i >= playheadFractalData.length - 1) {
           if (fractalLoop) {
             setFractalTransport('replay');
@@ -225,17 +241,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
             {playType === 'osc' ? (
               <PlayheadOSCControls
                 fractal={fractal}
-                socket={socket}
-                speed={fractalSpeed}
-                cx={cx}
-                cy={cy}
-                setCx={setCx}
-                setCy={setCy}
-                setSpeed={setFractalSpeed}
-              />
-            ) : (
-              <PlayheadAudioControls
-                fractal={fractal}
                 fractalRow={currentFractalRow}
                 speed={fractalSpeed}
                 cx={cx}
@@ -244,6 +249,27 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({fractal, cx = -0.7, cy = 0
                 setCy={setCy}
                 setSpeed={setFractalSpeed}
               />
+            ) : (<>
+                <PlayheadAudioControls
+                  fractal={fractal}
+                  cx={cx}
+                  cy={cy}
+                  speed={fractalSpeed}
+                  setCx={setCx}
+                  setCy={setCy}
+                  setSpeed={setFractalSpeed}
+                  setAudioParams={setAudioParams}
+                />
+                <AudioEngine
+                  fractal={fractal}
+                  fractalRow={currentFractalRow}
+                  audioContext={audioContext}
+                  core={core}
+                  playing={playing}
+                  audioParams={audioParams}
+                />
+
+              </>
             )}
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
@@ -320,17 +346,6 @@ export const ButtonContainer = styled.div`
   align-items: center;
 `;
 
-export const ButtonRow = styled.div`
-  margin: 1rem 0 0 0;
-  display: flex;
-  flex-direction: row;
-`;
-
-export const FlexRow = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
 export const ControlRows = styled.div`
   display: flex;
   flex-direction: column;
@@ -388,6 +403,12 @@ export const Label = styled.label`
   padding: .5rem;
   height: 100%;
   align-items: center;
+`;
+
+export const KnobRow = styled.div`
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: row;
 `;
 
 export default FractalPlayer;

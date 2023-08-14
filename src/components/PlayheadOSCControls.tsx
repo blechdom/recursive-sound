@@ -1,11 +1,18 @@
 import dynamic from "next/dynamic";
 import React, {useEffect, useState} from "react";
 import styled from "styled-components";
-import {Socket} from "socket.io-client";
+import io, {Socket} from "socket.io-client";
+import {KnobRow} from "@/components/FractalPlayer";
+
+const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
+  {ssr: false}
+)
+
+let socket: Socket;
 
 type PlayheadOSCControlsProps = {
   fractal: string;
-  socket: Socket;
+  fractalRow: number[];
   speed: number;
   cx?: number;
   cy?: number;
@@ -16,7 +23,7 @@ type PlayheadOSCControlsProps = {
 
 const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
                                                                    fractal,
-                                                                   socket,
+                                                                   fractalRow,
                                                                    speed,
                                                                    cx,
                                                                    cy,
@@ -27,31 +34,45 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
   const [volume, setVolume] = useState<number>(1.0);
   const [threshold, setThreshold] = useState<number>(0);
   const [interval, setInterval] = useState<number>(0);
-  const [range, setRange] = useState<number>(.75);
   const [lowest, setLowest] = useState<number>(.125);
+  const [range, setRange] = useState<number>(.75);
+
+  const socketInitializer = async () => {
+    await fetch("/recursive-sound/api/socket");
+    socket = io();
+  };
+
+  useEffect(() => {
+    socketInitializer();
+  }, []);
+
+  useEffect(() => {
+    socket?.emit("fractalMandelbrotRow", fractalRow);
+  }, [fractalRow]);
+
 
   useEffect(() => {
     socket?.emit("volume", volume);
-  }, [volume]);
+  }, [volume, socket]);
 
   useEffect(() => {
     socket?.emit("interval", interval);
-  }, [interval]);
+  }, [interval, socket]);
 
   useEffect(() => {
     socket?.emit("threshold", threshold);
-  }, [threshold]);
-
-  useEffect(() => {
-    socket?.emit("range", range);
-  }, [range]);
+  }, [threshold, socket]);
 
   useEffect(() => {
     socket?.emit("lowest", lowest);
-  }, [lowest]);
+  }, [lowest, socket]);
+
+  useEffect(() => {
+    socket?.emit("range", range);
+  }, [range, socket]);
 
   return (<>
-      <ButtonRow>
+      <KnobRow>
         <ControlKnob>
           <Knob
             id={`${fractal}-speed`}
@@ -96,19 +117,8 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
             onKnobInput={setInterval}
           />
         </ControlKnob>
-      </ButtonRow>
-      <ButtonRow>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-range`}
-            label={"Range (OSC)"}
-            knobValue={range}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setRange}
-          />
-        </ControlKnob>
+      </KnobRow>
+      <KnobRow>
         <ControlKnob>
           <Knob
             id={`${fractal}-lowest`}
@@ -118,6 +128,17 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
             min={0}
             max={1}
             onKnobInput={setLowest}
+          />
+        </ControlKnob>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-range`}
+            label={"Range (OSC)"}
+            knobValue={range}
+            step={0.01}
+            min={0}
+            max={1}
+            onKnobInput={setRange}
           />
         </ControlKnob>
         {fractal === 'julia' &&
@@ -146,23 +167,13 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
             </ControlKnob>
           </>
         }
-      </ButtonRow>
+      </KnobRow>
     </>
   );
 };
 
-const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
-  {ssr: false}
-)
-
 const ControlKnob = styled.div`
   margin: 0 0.4rem 0 0.4rem;
-`;
-
-export const ButtonRow = styled.div`
-  margin: 1rem 0 0 0;
-  display: flex;
-  flex-direction: row;
 `;
 
 export default PlayheadOSCControls;
