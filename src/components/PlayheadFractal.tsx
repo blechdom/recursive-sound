@@ -1,5 +1,4 @@
 import DataModal from "@/components/DataModal";
-import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadTypes from "@/components/PlayheadTypes";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
@@ -18,7 +17,6 @@ import {
   getScalingFactors,
   OptionType,
   renderOptions,
-  lsmAudioOptions,
   rotateMatrixCW90,
   clearCanvas,
 } from "@/utils/playheadFractals";

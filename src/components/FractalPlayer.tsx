@@ -62,7 +62,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
   const [currentFractalRow, setCurrentFractalRow] = useState<number[]>(Array(size).fill(0));
 
-  const [fractalSpeed, setFractalSpeed] = useState<number>(500);
+  const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [playing, setPlaying] = useState<boolean>(false);
 
   const [playType, setPlayType] = useState<string>('audio');
