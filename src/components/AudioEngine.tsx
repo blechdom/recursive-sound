@@ -29,8 +29,8 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
                                                    audioParams: {volume, threshold, interval, lowest}
                                                  }) => {
 
-  const [audioVizData, setAudioVizData] = useState<number[]>();
-  const [fftVizData, setFftVizData] = useState<number[]>();
+  const [audioVizData, setAudioVizData] = useState<any>();
+  const [fftVizData, setFftVizData] = useState<any>();
 
   useEffect(() => {
     const SignalSynth = (signal: NodeRepr_t) => {
