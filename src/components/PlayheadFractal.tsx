@@ -1,5 +1,5 @@
 import DataModal from "@/components/DataModal";
-import PlayheadControls from "@/components/PlayheadControls";
+import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadTypes from "@/components/PlayheadTypes";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
@@ -230,7 +230,7 @@ const PlayheadFractal: React.FC<PlayheadFractalProps> = ({fractal, cx = -0.7, cy
               loop={fractalLoop}
               setLoop={setFractalLoop}
             />
-            <PlayheadControls
+            <PlayheadOSCControls
               name={fractal}
               speed={fractalSpeed}
               setSpeed={setFractalSpeed}
