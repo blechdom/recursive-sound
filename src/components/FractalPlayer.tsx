@@ -18,7 +18,6 @@ import {
   FractalPlane,
   getScalingFactors,
   rotateMatrixCW90,
-  clearCanvas,
 } from "@/utils/fractalGenerator";
 
 type FractalPlayerProps = {
@@ -33,9 +32,9 @@ type FractalPlayerProps = {
 
 export type AudioParamsType = {
   volume: number;
-  threshold: number;
-  interval: number;
   lowest: number;
+  highest: number;
+  threshold: number;
   smoothing: number;
 }
 
@@ -61,7 +60,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [rawFractalData, setRawFractalData] = useState<number[][]>([]);
   const [audioFractalData, setAudioFractalData] = useState<number[][]>([]);
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
-  const [currentFractalRow, setCurrentFractalRow] = useState<number[]>(Array(size).fill(0));
+  const [rowIndex, setRowIndex] = useState<number>(-1);
+  const [playheadRowIndex, setPlayheadRowIndex] = useState<number>(-1);
 
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [playing, setPlaying] = useState<boolean>(false);
@@ -69,16 +69,12 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [playType, setPlayType] = useState<string>('audio');
 
   const [fractalPlayheadType, setFractalPlayheadType] = useState<string>('down');
-  const [fractalTransport, setFractalTransport] = useState<string>('stop');
-  const [fractalTimeouts, setFractalTimeouts] = useState<any[]>([]);
-  const [fractalPauseTimeElapsed, setFractalPauseTimeElapsed] = useState<number>(0);
-  const [fractalLoop, setFractalLoop] = useState<boolean>(true);
 
   const [audioParams, setAudioParams] = useState<AudioParamsType>({
     volume: 0,
-    threshold: 0,
-    interval: 0.0001,
     lowest: 0,
+    highest: 0,
+    threshold: 0,
     smoothing: 0,
   });
 
@@ -94,27 +90,9 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   }, [fractalPlayheadType, audioFractalData]);
 
   useEffect(() => {
-    setFractalTransport('stop');
-  }, [fractalPlayheadType, fractalLoop, program]);
-
-  useEffect(() => {
     getFractal();
   }, [cx, cy, size, fractalWindow, program]);
 
-  useEffect(() => {
-    if (fractalTransport === 'play') {
-      setPlaying(true);
-      playFractal();
-    } else if (fractalTransport === 'stop') {
-      setPlaying(false);
-      stopFractal();
-    } else if (fractalTransport === 'pause') {
-      setPlaying(false);
-      pauseFractal();
-    } else if (fractalTransport === 'replay') {
-      setFractalTransport('play');
-    }
-  }, [fractalTransport]);
 
   const getFractal = () => {
     if (fractalCanvasRef.current) {
@@ -142,45 +120,20 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
     }
   };
 
-  const stopFractal = () => {
-    fractalTimeouts.forEach(async (timeoutId) => {
-      await clearTimeout(timeoutId);
-    });
-    setCurrentFractalRow(Array(size).fill(0));
-    if (fractalPlayheadCanvasRef.current) clearCanvas(fractalPlayheadCanvasRef.current);
-    //setFractalPauseTimeElapsed(0);
-  }
-
-  const pauseFractal = () => {
-    console.log('pause Fractal');
-    setFractalTransport('stop');
-    // setFractalPauseTimeElapsed(fractalPauseTimeElapsed + timeSince);
-  }
-
-  const playFractal = async () => {
-    const timeoutIds: any[] = [];
-    for (let i = 0; i < playheadFractalData.length; i++) {
-      let index = i;
+  useEffect(() => {
+    if (rowIndex < 0) {
+      setPlayheadRowIndex(-1);
+    } else {
+      let index = rowIndex;
       if (fractalPlayheadType === 'up' || fractalPlayheadType === 'left' || fractalPlayheadType === 'in' || fractalPlayheadType === 'ccw') {
-        index = playheadFractalData.length - 1 - i;
+        index = playheadFractalData.length - 1 - rowIndex;
       }
-      const timeoutId = setTimeout(function () {
-        if (fractalPlayheadCanvasRef.current) {
-          drawPlayhead(fractalPlayheadCanvasRef.current, fractalPlayheadType, index);
-        }
-        setCurrentFractalRow(playheadFractalData[index]);
-        if (i >= playheadFractalData.length - 1) {
-          if (fractalLoop) {
-            setFractalTransport('replay');
-          } else {
-            setFractalTransport('stop');
-          }
-        }
-      }, (fractalSpeed * i) - fractalPauseTimeElapsed);
-      timeoutIds.push(timeoutId);
-      setFractalTimeouts(timeoutIds);
+      if (fractalPlayheadCanvasRef.current) {
+        drawPlayhead(fractalPlayheadCanvasRef.current, fractalPlayheadType, index);
+      }
+      setPlayheadRowIndex(index);
     }
-  };
+  }, [rowIndex, playheadFractalData, fractalPlayheadType, size]);
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
     setComplex(e);
@@ -235,15 +188,17 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
             />
             <Playheads playheadType={fractalPlayheadType} setPlayheadType={setFractalPlayheadType}/>
             <Transport
-              transport={fractalTransport}
-              setTransport={setFractalTransport}
-              loop={fractalLoop}
-              setLoop={setFractalLoop}
+              playing={playing}
+              rowIndex={rowIndex}
+              size={size}
+              speed={fractalSpeed}
+              setPlaying={setPlaying}
+              setRowIndex={setRowIndex}
             />
             {playType === 'osc' ? (
               <PlayheadOSCControls
                 fractal={fractal}
-                fractalRow={currentFractalRow}
+                fractalRow={playheadRowIndex === -1 ? Array(size).fill(0) : playheadFractalData[playheadRowIndex]}
                 speed={fractalSpeed}
                 cx={cx}
                 cy={cy}
@@ -264,7 +219,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                 />
                 <AudioEngine
                   fractal={fractal}
-                  fractalRow={currentFractalRow}
+                  rowIndex={playheadRowIndex}
+                  fractalRow={playheadRowIndex === -1 ? Array(size).fill(0) : playheadFractalData[playheadRowIndex]}
                   audioContext={audioContext}
                   core={core}
                   playing={playing}

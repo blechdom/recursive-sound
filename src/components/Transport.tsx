@@ -1,5 +1,6 @@
 import {ControlRow} from "@/components/FractalPlayer";
 import {ControlButton} from "@/components/FractalPlayer";
+import useInterval from "@/hooks/useInterval";
 import {
   faArrowsRotate,
   faPause,
@@ -7,33 +8,51 @@ import {
   faStop
 } from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import React from "react";
+import React, {useEffect, useState} from "react";
 
 type TransportProps = {
-  transport: string;
-  loop: boolean;
+  playing: boolean;
+  rowIndex: number;
+  size: number;
+  speed: number;
   height?: string;
   width?: string;
   color?: string;
   loopColor?: string;
-  setTransport: (transport: string) => void;
-  setLoop: (loop: boolean) => void;
+  setPlaying: (playing: boolean) => void;
+  setRowIndex: (rowIndex: number) => void;
 }
 
 const Transport: React.FC<TransportProps> = ({
-                                               transport,
-                                               loop,
-                                               setTransport,
-                                               setLoop,
+                                               playing,
+                                               rowIndex,
+                                               size,
+                                               speed,
                                                height = '2rem',
                                                width = '4rem',
                                                color = '#FF0000',
-                                               loopColor = '#000'
+                                               loopColor = '#000',
+                                               setPlaying,
+                                               setRowIndex
                                              }) => {
+
+  const [transport, setTransport] = useState<string>('stop');
+  const [loop, setLoop] = useState<boolean>(true);
+
+  useInterval(() => {
+    rowIndex === size - 1 && loop ? setRowIndex(0) : setRowIndex(rowIndex + 1);
+  }, playing ? speed : null);
+
+  useEffect(() => {
+    transport === 'play' ? setPlaying(true) : setPlaying(false);
+    transport === 'stop' && setRowIndex(-1);
+  }, [transport]);
+
+
   return (
     <>
       <ControlRow>
-        <ControlButton onClick={() => setTransport('play')} selected={(transport === 'play' || transport === 'replay')}
+        <ControlButton onClick={() => setTransport('play')} selected={(transport === 'play')}
                        bottom={true} height={height} width={width} color={color}>
           <FontAwesomeIcon icon={faPlay}/>
         </ControlButton>
