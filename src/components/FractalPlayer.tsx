@@ -36,6 +36,7 @@ export type AudioParamsType = {
   threshold: number;
   interval: number;
   lowest: number;
+  smoothing: number;
 }
 
 const FractalPlayer: React.FC<FractalPlayerProps> = ({
@@ -78,6 +79,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
     threshold: 0,
     interval: 0.0001,
     lowest: 0,
+    smoothing: 0,
   });
 
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);

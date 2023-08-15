@@ -26,7 +26,7 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
                                                    audioContext,
                                                    core,
                                                    playing,
-                                                   audioParams: {volume, threshold, interval, lowest}
+                                                   audioParams: {volume, threshold, interval, lowest, smoothing}
                                                  }) => {
 
   const [audioVizData, setAudioVizData] = useState<any>();
@@ -49,12 +49,16 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
       const Resynth = () => {
         let accum = 0;
         const allVoices = [...Array(fractalRow.length)].map((_, i) => {
+          const amplitude = fractalRow[i] > threshold ? fractalRow[i] : 0;
           const key = `osc-freq-${i}`;
           const freq = lowest * (2 ** ((i * interval) / 12));
           if (freq < audioContext.sampleRate / 2) {
-            accum += fractalRow[i];
-            const freqSignal = el.sm(el.const({key, value: freq}));
-            return el.mul(el.cycle(freqSignal), el.sm(el.const({key: `osc-amp-${i}`, value: fractalRow[i]})));
+            accum += amplitude;
+            const freqSignal = el.const({key, value: freq});
+            const ampSignal = el.const({key: `osc-amp-${i}`, value: amplitude});
+            const smoothFreqSignal = el.smooth(el.tau2pole(smoothing), freqSignal);
+            const smoothAmpSignal = el.smooth(el.tau2pole(smoothing), ampSignal);
+            return el.mul(el.cycle(smoothFreqSignal), smoothAmpSignal);
           } else {
             return el.const({key, value: 0});
           }

@@ -29,11 +29,12 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   const [volume, setVolume] = useState<number>(0);
   const [threshold, setThreshold] = useState<number>(0);
   const [interval, setInterval] = useState<number>(1);
-  const [lowest, setLowest] = useState<number>(75);
+  const [lowest, setLowest] = useState<number>(15);
+  const [smoothing, setSmoothing] = useState<number>(0.02);
 
   useEffect(() => {
-    setAudioParams({volume, threshold, interval, lowest});
-  }, [volume, threshold, interval, lowest, setAudioParams]);
+    setAudioParams({volume, threshold, interval, lowest, smoothing});
+  }, [volume, threshold, interval, lowest, smoothing, setAudioParams]);
 
   return (
     <>
@@ -93,6 +94,17 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
             min={0}
             max={500}
             onKnobInput={setLowest}
+          />
+        </ControlKnob>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-smoothing`}
+            label={"Smoothing"}
+            knobValue={smoothing}
+            step={0.01}
+            min={0}
+            max={4}
+            onKnobInput={setSmoothing}
           />
         </ControlKnob>
         {fractal === 'julia' &&
