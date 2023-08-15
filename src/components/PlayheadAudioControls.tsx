@@ -27,14 +27,14 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   }) => {
 
   const [volume, setVolume] = useState<number>(0);
-  const [threshold, setThreshold] = useState<number>(0);
-  const [interval, setInterval] = useState<number>(1);
-  const [lowest, setLowest] = useState<number>(15);
+  const [threshold, setThreshold] = useState<number>(0.09);
+  const [lowest, setLowest] = useState<number>(20);
+  const [highest, setHighest] = useState<number>(10000);
   const [smoothing, setSmoothing] = useState<number>(0.02);
 
   useEffect(() => {
-    setAudioParams({volume, threshold, interval, lowest, smoothing});
-  }, [volume, threshold, interval, lowest, smoothing, setAudioParams]);
+    setAudioParams({volume, lowest, highest, threshold, smoothing});
+  }, [volume, lowest, highest, threshold, smoothing, setAudioParams]);
 
   return (
     <>
@@ -63,30 +63,6 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
         </ControlKnob>
         <ControlKnob>
           <Knob
-            id={`${fractal}-threshold`}
-            label={"Threshold"}
-            knobValue={threshold}
-            step={0.001}
-            min={0}
-            max={1}
-            onKnobInput={setThreshold}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-interval`}
-            label={"Interval"}
-            knobValue={interval}
-            step={0.01}
-            min={0.01}
-            max={12}
-            onKnobInput={setInterval}
-          />
-        </ControlKnob>
-      </KnobRow>
-      <KnobRow>
-        <ControlKnob>
-          <Knob
             id={`${fractal}-lowest`}
             label={"Lowest"}
             knobValue={lowest}
@@ -94,6 +70,30 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
             min={0}
             max={500}
             onKnobInput={setLowest}
+          />
+        </ControlKnob>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-highest`}
+            label={"Highest"}
+            knobValue={highest}
+            step={0.01}
+            min={20}
+            max={20000}
+            onKnobInput={setHighest}
+          />
+        </ControlKnob>
+      </KnobRow>
+      <KnobRow>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-threshold`}
+            label={"Threshold"}
+            knobValue={threshold}
+            step={0.001}
+            min={0}
+            max={1}
+            onKnobInput={setThreshold}
           />
         </ControlKnob>
         <ControlKnob>

@@ -34,7 +34,7 @@ type FractalPlayerProps = {
 export type AudioParamsType = {
   volume: number;
   threshold: number;
-  interval: number;
+  highest: number;
   lowest: number;
   smoothing: number;
 }
@@ -71,13 +71,13 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [fractalPlayheadType, setFractalPlayheadType] = useState<string>('down');
   const [fractalTransport, setFractalTransport] = useState<string>('stop');
   const [fractalTimeouts, setFractalTimeouts] = useState<any[]>([]);
-  const [fractalPauseTimeElapsed, setFractalPauseTimeElapsed] = useState<number>(0);
+  const [rowIndex, setRowIndex] = useState<number>(0);
   const [fractalLoop, setFractalLoop] = useState<boolean>(true);
 
   const [audioParams, setAudioParams] = useState<AudioParamsType>({
     volume: 0,
     threshold: 0,
-    interval: 0.0001,
+    highest: 0,
     lowest: 0,
     smoothing: 0,
   });
@@ -146,7 +146,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
     fractalTimeouts.forEach(async (timeoutId) => {
       await clearTimeout(timeoutId);
     });
-    setCurrentFractalRow(Array(size).fill(0));
+    setRowIndex(-1);
+    //setCurrentFractalRow(Array(size).fill(0));
     if (fractalPlayheadCanvasRef.current) clearCanvas(fractalPlayheadCanvasRef.current);
     //setFractalPauseTimeElapsed(0);
   }
@@ -168,7 +169,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         if (fractalPlayheadCanvasRef.current) {
           drawPlayhead(fractalPlayheadCanvasRef.current, fractalPlayheadType, index);
         }
-        setCurrentFractalRow(playheadFractalData[index]);
+        setRowIndex(index);
+        //setCurrentFractalRow(playheadFractalData[index]);
         if (i >= playheadFractalData.length - 1) {
           if (fractalLoop) {
             setFractalTransport('replay');
@@ -176,7 +178,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
             setFractalTransport('stop');
           }
         }
-      }, (fractalSpeed * i) - fractalPauseTimeElapsed);
+      }, (fractalSpeed * i));
       timeoutIds.push(timeoutId);
       setFractalTimeouts(timeoutIds);
     }
@@ -243,7 +245,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
             {playType === 'osc' ? (
               <PlayheadOSCControls
                 fractal={fractal}
-                fractalRow={currentFractalRow}
+                fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
                 speed={fractalSpeed}
                 cx={cx}
                 cy={cy}
@@ -264,7 +266,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                 />
                 <AudioEngine
                   fractal={fractal}
-                  fractalRow={currentFractalRow}
+                  rowIndex={rowIndex}
+                  fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
                   audioContext={audioContext}
                   core={core}
                   playing={playing}

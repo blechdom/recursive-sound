@@ -12,6 +12,7 @@ require("events").EventEmitter.defaultMaxListeners = 0;
 
 type AudioEngineProps = {
   fractal: string;
+  rowIndex: number;
   fractalRow: number[];
   audioContext: AudioContext | null;
   core: WebRenderer;
@@ -22,15 +23,19 @@ type AudioEngineProps = {
 
 const AudioEngine: React.FC<AudioEngineProps> = ({
                                                    fractal,
+                                                   rowIndex,
                                                    fractalRow,
                                                    audioContext,
                                                    core,
                                                    playing,
-                                                   audioParams: {volume, threshold, interval, lowest, smoothing}
+                                                   audioParams: {volume, lowest, highest, threshold, smoothing}
                                                  }) => {
 
   const [audioVizData, setAudioVizData] = useState<any>();
   const [fftVizData, setFftVizData] = useState<any>();
+  const [minFreq, setMinFreq] = useState<number>(0);
+  const [maxFreq, setMaxFreq] = useState<number>(0);
+  const [ampScale, setAmpScale] = useState<number>(0);
 
   useEffect(() => {
     if (audioContext) {
@@ -48,10 +53,17 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
 
       const Resynth = () => {
         let accum = 0;
+        const linearRange = Math.log10(highest) - Math.log10(lowest);
+        const linearInterval = linearRange / fractalRow.length;
+
         const allVoices = [...Array(fractalRow.length)].map((_, i) => {
           const amplitude = fractalRow[i] > threshold ? fractalRow[i] : 0;
           const key = `osc-freq-${i}`;
-          const freq = lowest * (2 ** ((i * interval) / 12));
+          const linearFreq = Math.log10(lowest) + (i * linearInterval);
+          const freq = 10 ** linearFreq;
+
+          if (i === 0) setMinFreq(freq);
+          if (i === fractalRow.length - 1) setMaxFreq(freq);
           if (freq < audioContext.sampleRate / 2) {
             accum += amplitude;
             const freqSignal = el.const({key, value: freq});
@@ -68,21 +80,20 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
           return el.add(...ins) as NodeRepr_t;
         };
         const rowMult = accum !== 0 ? 1 / accum : 0;
-        console.log('rowMult', rowMult);
-        return el.mul(addMany(allVoices as NodeRepr_t[]), el.sm(el.const({
-          key: "row-gain",
-          value: rowMult
-        }))) as NodeRepr_t;
+        setAmpScale(rowMult);
+        const rowAmp = el.const({key: "row-gain", value: rowMult});
+        const smoothRowAmp = el.smooth(el.tau2pole(smoothing), rowAmp);
+        return el.mul(addMany(allVoices as NodeRepr_t[]), smoothRowAmp) as NodeRepr_t;
       }
 
       if (playing) {
         audioContext.resume();
-        SignalSynth(Resynth());
+        if (fractalRow?.length > 0) SignalSynth(Resynth());
       } else {
         audioContext.suspend();
       }
     }
-  }, [playing, volume, threshold, interval, lowest, fractalRow, audioContext, core]);
+  }, [playing, volume, lowest, highest, threshold, fractalRow, audioContext, core]);
 
   core?.on("scope", function (e) {
     if (e.source === `scope-${fractal}`) {
@@ -96,15 +107,21 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
     }
   });
 
-  return (<StyledOscilloscopeSpectrogram>
-      <OscilloscopeSpectrogram
-        audioVizData={audioVizData}
-        fftVizData={fftVizData}
-        width={256}
-        height={50}
-      />
-      <br/><br/><br/><br/><br/>
-    </StyledOscilloscopeSpectrogram>
+  return (
+    <>
+      <br/>
+      Row {rowIndex}: frequency-range: [{minFreq.toFixed(2)} = {maxFreq.toFixed(2)}]
+      amplitude-scale: {ampScale.toFixed(2)}
+      <StyledOscilloscopeSpectrogram>
+        <OscilloscopeSpectrogram
+          audioVizData={audioVizData}
+          fftVizData={fftVizData}
+          width={256}
+          height={50}
+        />
+        <br/><br/><br/><br/><br/>
+      </StyledOscilloscopeSpectrogram>
+    </>
   );
 };
 
