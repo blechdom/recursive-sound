@@ -61,9 +61,9 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [rawFractalData, setRawFractalData] = useState<number[][]>([]);
   const [audioFractalData, setAudioFractalData] = useState<number[][]>([]);
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
-  const [numShades, setNumShades] = useState<number>(2)
-  const [shadeOffset, setShadeOffset] = useState<number>(0)
-
+  const [numShades, setNumShades] = useState<number>(2);
+  const [shadeOffset, setShadeOffset] = useState<number>(0);
+  const [colorScheme, setColorScheme] = useState<string>('grayscale');
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [playing, setPlaying] = useState<boolean>(false);
 
@@ -100,7 +100,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
 
   useEffect(() => {
     getFractal();
-  }, [cx, cy, size, numShades, shadeOffset, fractalWindow, program]);
+  }, [cx, cy, size, numShades, shadeOffset, colorScheme, fractalWindow, program]);
 
   useEffect(() => {
     if (fractalTransport === 'play') {
@@ -135,6 +135,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         maxIterations,
         numShades,
         shadeOffset,
+        colorScheme,
         lsmThreshold, // or demThreshold
         cx,
         cy
@@ -228,6 +229,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                              width={'6rem'}>
                 <ButtonText>{playType}</ButtonText>
               </ControlButton>
+              <ControlButton onClick={() => setColorScheme(colorScheme === 'color' ? 'grayscale' : 'color')}
+                             height={'2rem'}
+                             width={'6rem'}>
+                <ButtonText>{colorScheme}</ButtonText>
+              </ControlButton>
             </ControlRow>
             <PlayheadSizes size={size} setSize={setSize} color={'#005dd7'} height={'2rem'}/>
             <PlayheadProgram
@@ -320,7 +326,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
       </ButtonContainer>
     </Page>
   );
-}
+};
 
 const Page = styled.div`
   display: flex;

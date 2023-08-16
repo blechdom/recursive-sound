@@ -110,6 +110,7 @@ function drawLSMBinary(
   iterations: number,
   numShades: number,
   shadeOffset: number,
+  colorScheme: string,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
 ): number {
@@ -119,8 +120,13 @@ function drawLSMBinary(
     ctx.fillStyle = "#000"
   } else {
     a = (iterations + shadeOffset) % numShades;
-    let shade = (a / (numShades - 1)) * 255;
-    ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+    if (colorScheme === "grayscale") {
+      const shade = Math.abs((a / numShades) - 0.5) * 2 * 255;
+      ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+    } else {
+      const shade = (a / (numShades - 1)) * 360;
+      ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
+    }
   }
   return a;
 }
@@ -209,6 +215,7 @@ export function generateFractal(
   maxIterations: number,
   numShades: number,
   shadeOffset: number,
+  colorScheme: string,
   threshold: number,
   cx: number,
   cy: number,
@@ -239,7 +246,7 @@ export function generateFractal(
         if (program === 'lsm-raw') {
           a = parseFloat(String((drawLSMRaw(i, maxIterations, ctx) + 0.001)).toString());
         } else if (program === 'lsm-binary') {
-          a = drawLSMBinary(i, numShades, shadeOffset, maxIterations, ctx);
+          a = drawLSMBinary(i, numShades, shadeOffset, colorScheme, maxIterations, ctx);
         } else if (program === 'lsm-outline') {
           a = generateLSMBinary(i, maxIterations);
         } else if (program === 'lsm-difference') {
