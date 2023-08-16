@@ -428,3 +428,5 @@ export function scaleFractal(fractalArray: number[][], min: number, max: number)
     })
   });
 }
+
+

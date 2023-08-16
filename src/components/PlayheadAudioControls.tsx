@@ -6,10 +6,14 @@ import {AudioParamsType, KnobRow} from "@/components/FractalPlayer";
 type PlayheadAudioControlsProps = {
   fractal: string;
   speed: number;
+  numShades: number;
+  shadeOffset: number;
   cx?: number;
   cy?: number;
   setCx?: (cx: number) => void;
   setCy?: (cy: number) => void;
+  setNumShades: (numShades: number) => void;
+  setShadeOffset: (shadeOffset: number) => void;
   setSpeed: (speed: number) => void;
   setAudioParams: (params: AudioParamsType) => void;
 }
@@ -17,11 +21,15 @@ type PlayheadAudioControlsProps = {
 const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   {
     fractal,
+    numShades,
+    shadeOffset,
     speed,
     cx,
     cy,
     setCx,
     setCy,
+    setNumShades,
+    setShadeOffset,
     setSpeed,
     setAudioParams
   }) => {
@@ -107,33 +115,57 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
             onKnobInput={setSmoothing}
           />
         </ControlKnob>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-numShades`}
+            label={"# Shades"}
+            knobValue={numShades}
+            step={1}
+            min={2}
+            max={32}
+            onKnobInput={setNumShades}
+          />
+        </ControlKnob>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-shadeOffset`}
+            label={"shadeOffset"}
+            knobValue={shadeOffset}
+            step={1}
+            min={0}
+            max={30}
+            onKnobInput={setShadeOffset}
+          />
+        </ControlKnob>
+      </KnobRow>
         {fractal === 'julia' &&
           <>
-            <ControlKnob>
-              <Knob
-                id={`${fractal}-cx`}
-                label={"Complex X"}
-                knobValue={cx}
-                step={0.00001}
-                min={-2}
-                max={2}
-                onKnobInput={setCx}
-              />
-            </ControlKnob>
-            <ControlKnob>
-              <Knob
-                id={`${fractal}-cy`}
-                label={"Complex Y"}
-                knobValue={cy}
-                step={0.00001}
-                min={-2}
-                max={2}
-                onKnobInput={setCy}
-              />
-            </ControlKnob>
+            <KnobRow>
+              <ControlKnob>
+                <Knob
+                  id={`${fractal}-cx`}
+                  label={"Complex X"}
+                  knobValue={cx}
+                  step={0.00001}
+                  min={-2}
+                  max={2}
+                  onKnobInput={setCx}
+                />
+              </ControlKnob>
+              <ControlKnob>
+                <Knob
+                  id={`${fractal}-cy`}
+                  label={"Complex Y"}
+                  knobValue={cy}
+                  step={0.00001}
+                  min={-2}
+                  max={2}
+                  onKnobInput={setCy}
+                />
+              </ControlKnob>
+            </KnobRow>
           </>
         }
-      </KnobRow>
     </>
   );
 };

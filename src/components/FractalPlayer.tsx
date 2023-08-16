@@ -61,7 +61,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [rawFractalData, setRawFractalData] = useState<number[][]>([]);
   const [audioFractalData, setAudioFractalData] = useState<number[][]>([]);
   const [playheadFractalData, setPlayheadFractalData] = useState<number[][]>([]);
-  const [currentFractalRow, setCurrentFractalRow] = useState<number[]>(Array(size).fill(0));
+  const [numShades, setNumShades] = useState<number>(2)
+  const [shadeOffset, setShadeOffset] = useState<number>(0)
 
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [playing, setPlaying] = useState<boolean>(false);
@@ -99,7 +100,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
 
   useEffect(() => {
     getFractal();
-  }, [cx, cy, size, fractalWindow, program]);
+  }, [cx, cy, size, numShades, shadeOffset, fractalWindow, program]);
 
   useEffect(() => {
     if (fractalTransport === 'play') {
@@ -132,6 +133,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         size,
         program,
         maxIterations,
+        numShades,
+        shadeOffset,
         lsmThreshold, // or demThreshold
         cx,
         cy
@@ -147,9 +150,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
       await clearTimeout(timeoutId);
     });
     setRowIndex(-1);
-    //setCurrentFractalRow(Array(size).fill(0));
     if (fractalPlayheadCanvasRef.current) clearCanvas(fractalPlayheadCanvasRef.current);
-    //setFractalPauseTimeElapsed(0);
   }
 
   const pauseFractal = () => {
@@ -258,9 +259,13 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                   fractal={fractal}
                   cx={cx}
                   cy={cy}
+                  numShades={numShades}
+                  shadeOffset={shadeOffset}
                   speed={fractalSpeed}
                   setCx={setCx}
                   setCy={setCy}
+                  setNumShades={setNumShades}
+                  setShadeOffset={setShadeOffset}
                   setSpeed={setFractalSpeed}
                   setAudioParams={setAudioParams}
                 />

@@ -108,6 +108,8 @@ function computePointJuliaDem(point: Point, cx: number, cy: number, maxIteration
 
 function drawLSMBinary(
   iterations: number,
+  numShades: number,
+  shadeOffset: number,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
 ): number {
@@ -116,8 +118,9 @@ function drawLSMBinary(
     a = 0;
     ctx.fillStyle = "#000"
   } else {
-    a = iterations % 2;
-    ctx.fillStyle = a === 0 ? "#000" : "#FFF";
+    a = (iterations + shadeOffset) % numShades;
+    let shade = (a / (numShades - 1)) * 255;
+    ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
   }
   return a;
 }
@@ -204,6 +207,8 @@ export function generateFractal(
   size: number,
   program: string,
   maxIterations: number,
+  numShades: number,
+  shadeOffset: number,
   threshold: number,
   cx: number,
   cy: number,
@@ -234,7 +239,7 @@ export function generateFractal(
         if (program === 'lsm-raw') {
           a = parseFloat(String((drawLSMRaw(i, maxIterations, ctx) + 0.001)).toString());
         } else if (program === 'lsm-binary') {
-          a = drawLSMBinary(i, maxIterations, ctx);
+          a = drawLSMBinary(i, numShades, shadeOffset, maxIterations, ctx);
         } else if (program === 'lsm-outline') {
           a = generateLSMBinary(i, maxIterations);
         } else if (program === 'lsm-difference') {
