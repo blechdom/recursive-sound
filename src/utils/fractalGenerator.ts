@@ -133,12 +133,21 @@ function drawLSMBinary(
 
 function drawLSMRaw(
   iterations: number,
+  colorScheme: string,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
 ): number {
   const value = iterations / maxIterations;
-  let shade = value * 255;
-  ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  //ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  if (colorScheme === "grayscale") {
+    let shade = value * 255;
+    //const shade = Math.abs((value / numShades) - 0.5) * 2 * 255;
+    ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  } else {
+    let shade = value * 360;
+    //const shade = (value / (numShades - 1)) * 360;
+    ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
+  }
   return value;
 }
 
@@ -244,7 +253,7 @@ export function generateFractal(
         let a = 0;
         i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
         if (program === 'lsm-raw') {
-          a = parseFloat(String((drawLSMRaw(i, maxIterations, ctx) + 0.001)).toString());
+          a = parseFloat(String((drawLSMRaw(i, colorScheme, maxIterations, ctx) + 0.001)).toString());
         } else if (program === 'lsm-binary') {
           a = drawLSMBinary(i, numShades, shadeOffset, colorScheme, maxIterations, ctx);
         } else if (program === 'lsm-outline') {
@@ -270,7 +279,7 @@ export function generateFractal(
       audioData = createOutlinesMatrix(audioYArray, ctx);
     }
     if (program === 'lsm-difference') {
-      audioData = createDifferencesMatrix(audioYArray, ctx);
+      audioData = createDifferencesMatrix(audioYArray, colorScheme, ctx);
     }
     return {
       fractalData: fractalYArray,
@@ -320,7 +329,7 @@ export function createOutlinesMatrix(matrix: number[][], ctx: CanvasRenderingCon
   return transformedMatrix;
 }
 
-export function createDifferencesMatrix(matrix: number[][], ctx: CanvasRenderingContext2D): number[][] {
+export function createDifferencesMatrix(matrix: number[][], colorScheme: string, ctx: CanvasRenderingContext2D): number[][] {
   const transformedMatrix = [matrix[0]];
   for (let i = 1; i < matrix.length - 1; i++) {
     const transformedRow = [];
@@ -328,7 +337,16 @@ export function createDifferencesMatrix(matrix: number[][], ctx: CanvasRendering
       const difference = matrix[i][j] - matrix[i - 1][j];
       const value = parseFloat((Math.sqrt(difference < 0 ? -difference : difference).toString()));
       transformedRow.push(value + 0.001);
-      ctx.fillStyle = `rgb(${value * 255}, ${value * 255}, ${value * 255})`
+      if (colorScheme === "grayscale") {
+        let shade = value * 255;
+        //const shade = Math.abs((value / numShades) - 0.5) * 2 * 255;
+        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+      } else {
+        let shade = value * 360;
+        //const shade = (value / (numShades - 1)) * 360;
+        ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
+      }
+      //ctx.fillStyle = `rgb(${value * 255}, ${value * 255}, ${value * 255})`
       ctx.fillRect(j, i, 1, 1);
     }
     transformedMatrix.push(transformedRow);
