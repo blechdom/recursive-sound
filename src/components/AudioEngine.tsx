@@ -38,6 +38,14 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
   const [ampScale, setAmpScale] = useState<number>(0);
 
   useEffect(() => {
+    return () => {
+      if (audioContext) {
+        audioContext.suspend();
+      }
+    }
+  }, []);
+  
+  useEffect(() => {
     if (audioContext) {
       const SignalSynth = (signal: NodeRepr_t) => {
         if (playing && signal && core) {

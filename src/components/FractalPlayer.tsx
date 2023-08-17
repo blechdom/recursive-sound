@@ -9,6 +9,7 @@ import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
 import WebRenderer from "@elemaudio/web-renderer";
+import {set} from "lodash";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {
@@ -97,7 +98,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
 
   useEffect(() => {
     setFractalTransport('stop');
-  }, [fractalPlayheadType, fractalLoop, program]);
+  }, [fractalPlayheadType, playType, fractalLoop, program]);
 
   useEffect(() => {
     getFractal();
@@ -158,7 +159,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const pauseFractal = () => {
     console.log('pause Fractal');
     setFractalTransport('stop');
-    // setFractalPauseTimeElapsed(fractalPauseTimeElapsed + timeSince);
   }
 
   const playFractal = async () => {
@@ -226,7 +226,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         <FractalContainer>
           <ControlRows>
             <ControlRow>
-              <ControlButton onClick={() => setPlayType(playType === 'osc' ? 'audio' : 'osc')} height={'2rem'}
+              <ControlButton onClick={() => setPlayType(playType === 'audio' ? 'osc' : 'audio')}
+                             height={'2rem'}
                              width={'6rem'}>
                 <ButtonText>{playType}</ButtonText>
               </ControlButton>
@@ -281,7 +282,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                   playing={playing}
                   audioParams={audioParams}
                 />
-
               </>
             )}
           </ControlRows>
