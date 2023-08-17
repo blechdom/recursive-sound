@@ -422,7 +422,7 @@ export const Label = styled.label`
 `;
 
 export const KnobRow = styled.div`
-  margin: 1rem 0 0 0;
+  margin: 0.5rem 0 0 0;
   display: flex;
   flex-direction: row;
 `;

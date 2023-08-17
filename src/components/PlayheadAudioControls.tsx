@@ -36,8 +36,8 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
 
   const [volume, setVolume] = useState<number>(0);
   const [threshold, setThreshold] = useState<number>(0.09);
-  const [lowest, setLowest] = useState<number>(20);
-  const [highest, setHighest] = useState<number>(10000);
+  const [lowest, setLowest] = useState<number>(200);
+  const [highest, setHighest] = useState<number>(6000);
   const [smoothing, setSmoothing] = useState<number>(0.02);
 
   useEffect(() => {
@@ -49,19 +49,12 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
       <KnobRow>
         <ControlKnob>
           <Knob
-            id={`${fractal}-speed`}
-            label={"Speed (ms)"}
-            knobValue={speed}
-            step={0.01}
-            min={1}
-            max={250}
-            onKnobInput={setSpeed}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
             id={`${fractal}-volume`}
-            label={"Volume"}
+            label={"volume"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"main volume of this sonified fractal"}
             knobValue={volume}
             step={0.01}
             min={0}
@@ -71,8 +64,27 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
         </ControlKnob>
         <ControlKnob>
           <Knob
+            id={`${fractal}-speed`}
+            label={"speed"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"speed of playback in milliseconds between rows"}
+            knobValue={speed}
+            step={0.01}
+            min={1}
+            max={250}
+            onKnobInput={setSpeed}
+          />
+        </ControlKnob>
+        <ControlKnob>
+          <Knob
             id={`${fractal}-lowest`}
-            label={"Lowest"}
+            label={"lowest"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"lowest frequency of the oscillator bank (hz)"}
             knobValue={lowest}
             step={0.01}
             min={0}
@@ -83,7 +95,11 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
         <ControlKnob>
           <Knob
             id={`${fractal}-highest`}
-            label={"Highest"}
+            label={"highest"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"highest frequency of the oscillator bank (hz)"}
             knobValue={highest}
             step={0.01}
             min={20}
@@ -96,7 +112,11 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
         <ControlKnob>
           <Knob
             id={`${fractal}-threshold`}
-            label={"Threshold"}
+            label={"thresh"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"values below this threshold will be ignored during playback"}
             knobValue={threshold}
             step={0.001}
             min={0}
@@ -107,18 +127,26 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
         <ControlKnob>
           <Knob
             id={`${fractal}-smoothing`}
-            label={"Smoothing"}
+            label={"smooth"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"smoothing of frequency when changing (0.02 = 20ms)"}
             knobValue={smoothing}
             step={0.01}
             min={0}
-            max={4}
+            max={0.5}
             onKnobInput={setSmoothing}
           />
         </ControlKnob>
         <ControlKnob>
           <Knob
             id={`${fractal}-numShades`}
-            label={"# Shades"}
+            label={"areas"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"number of value areas to divide the values into for coloring and sonifying (modulo)"}
             knobValue={numShades}
             step={1}
             min={2}
@@ -129,7 +157,11 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
         <ControlKnob>
           <Knob
             id={`${fractal}-shadeOffset`}
-            label={"shadeOffset"}
+            label={"offset"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"number to offset modulo by for animating the colors and sonification areas"}
             knobValue={shadeOffset}
             step={1}
             min={0}
@@ -138,34 +170,42 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
           />
         </ControlKnob>
       </KnobRow>
-        {fractal === 'julia' &&
-          <>
-            <KnobRow>
-              <ControlKnob>
-                <Knob
-                  id={`${fractal}-cx`}
-                  label={"Complex X"}
-                  knobValue={cx}
-                  step={0.00001}
-                  min={-2}
-                  max={2}
-                  onKnobInput={setCx}
-                />
-              </ControlKnob>
-              <ControlKnob>
-                <Knob
-                  id={`${fractal}-cy`}
-                  label={"Complex Y"}
-                  knobValue={cy}
-                  step={0.00001}
-                  min={-2}
-                  max={2}
-                  onKnobInput={setCy}
-                />
-              </ControlKnob>
-            </KnobRow>
-          </>
-        }
+      {fractal === 'julia' &&
+        <>
+          <KnobRow>
+            <ControlKnob>
+              <Knob
+                id={`${fractal}-cx`}
+                label={"Complex X"}
+                diameter={30}
+                labelWidth={30}
+                fontSize={11}
+                tooltip={"complex X for julia set"}
+                knobValue={cx}
+                step={0.00001}
+                min={-2}
+                max={2}
+                onKnobInput={setCx}
+              />
+            </ControlKnob>
+            <ControlKnob>
+              <Knob
+                id={`${fractal}-cy`}
+                label={"Complex Y"}
+                diameter={30}
+                labelWidth={30}
+                fontSize={10}
+                tooltip={"Complex Y for julia set"}
+                knobValue={cy}
+                step={0.00001}
+                min={-2}
+                max={2}
+                onKnobInput={setCy}
+              />
+            </ControlKnob>
+          </KnobRow>
+        </>
+      }
     </>
   );
 };
@@ -175,7 +215,7 @@ const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLab
 )
 
 const ControlKnob = styled.div`
-  margin: 0 0.4rem 0 0.4rem;
+  margin: 0 0.2rem 0 0.2rem;
 `;
 
 export default PlayheadAudioControls;

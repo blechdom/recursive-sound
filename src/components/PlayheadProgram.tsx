@@ -15,7 +15,7 @@ const PlayheadProgram: React.FC<TransportProps> = ({program, setProgram, color, 
       <ControlRow>
         <ControlButton onClick={() => setProgram('lsm-binary')} selected={program === 'lsm-binary'} color={color}
                        bottom={true} height={height}>
-          <ButtonText>Binary</ButtonText>
+          <ButtonText>Modulo</ButtonText>
         </ControlButton>
         <ControlButton onClick={() => setProgram('lsm-outline')} selected={program === 'lsm-outline'}
                        color={color}
@@ -30,7 +30,17 @@ const PlayheadProgram: React.FC<TransportProps> = ({program, setProgram, color, 
         <ControlButton onClick={() => setProgram('lsm-raw')} selected={program === 'lsm-raw'}
                        color={color}
                        bottom={true} height={height}>
-          <ButtonText>Greyscale</ButtonText>
+          <ButtonText>Gradient</ButtonText>
+        </ControlButton>
+        <ControlButton onClick={() => setProgram('dem')} selected={program === 'dem'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Dem</ButtonText>
+        </ControlButton>
+        <ControlButton onClick={() => setProgram('dem-raw')} selected={program === 'dem-raw'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Dem-Gradient</ButtonText>
         </ControlButton>
       </ControlRow>
     </>

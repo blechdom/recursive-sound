@@ -1,3 +1,5 @@
+import {colourPalettes} from "@/utils/fractal";
+
 export type FractalPlane = {
   x_min: number;
   y_min: number;
@@ -128,28 +130,66 @@ function drawLSMBinary(
       ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
     }
   }
+  return a / (numShades - 1);
+}
+
+function drawDem(
+  value: number,
+  delta: number,
+  numShades: number,
+  shadeOffset: number,
+  colorScheme: string,
+  ctx: CanvasRenderingContext2D,
+): number {
+  let a: number = 0;
+  if (value < delta) { // we are in the set
+    a = 0;
+    ctx.fillStyle = "#000"
+  } else {
+    const areas = 32 - (numShades - 2)
+    a = ((value * 16) + (30 - shadeOffset)) % areas;
+    if (colorScheme === "grayscale") {
+      const shade = Math.abs((a / areas) - 0.5) * 2 * 255;
+      ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+    } else {
+      const shade = (a / (areas - 1)) * 360;
+      ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
+    }
+  }
   return a;
 }
 
-function drawLSMRaw(
+function drawRaw(
+  value: number,
+  colorScheme: string,
+  ctx: CanvasRenderingContext2D,
+): number {
+  if (colorScheme === "grayscale") {
+    let shade = value * 255;
+    ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+  } else {
+    let shade = value * 360;
+    ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
+  }
+  return value;
+}
+
+/*function drawLSMRaw(
   iterations: number,
   colorScheme: string,
   maxIterations: number,
   ctx: CanvasRenderingContext2D,
 ): number {
   const value = iterations / maxIterations;
-  //ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
   if (colorScheme === "grayscale") {
     let shade = value * 255;
-    //const shade = Math.abs((value / numShades) - 0.5) * 2 * 255;
     ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
   } else {
     let shade = value * 360;
-    //const shade = (value / (numShades - 1)) * 360;
     ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
   }
   return value;
-}
+}*/
 
 function generateLSMBinary(
   iterations: number,
@@ -237,6 +277,7 @@ export function generateFractal(
     const scalingFactor = getScalingFactors(fractalWindow, size);
     const fractalYArray: number[][] = [];
     const audioYArray: number[][] = [];
+    const delta = 0.2 * scalingFactor.x;
     for (let iy = 0; iy < size; iy++) {
       const y = fractalWindow.y_min + iy * scalingFactor.y
       if (fractal === 'mandelbrot') cy = y;
@@ -251,19 +292,43 @@ export function generateFractal(
         } : {x: x, y: y};
         let i = 0;
         let a = 0;
-        i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
         if (program === 'lsm-raw') {
-          a = parseFloat(String((drawLSMRaw(i, colorScheme, maxIterations, ctx) + 0.001)).toString());
+          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
+          //a = parseFloat(String((drawLSMRaw(i, colorScheme, maxIterations, ctx) + 0.001)).toString());
+          a = parseFloat(String((drawRaw(i / maxIterations, colorScheme, ctx) + 0.001)).toString());
         } else if (program === 'lsm-binary') {
+          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
           a = drawLSMBinary(i, numShades, shadeOffset, colorScheme, maxIterations, ctx);
         } else if (program === 'lsm-outline') {
+          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
           a = generateLSMBinary(i, maxIterations);
         } else if (program === 'lsm-difference') {
+          i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
           a = i / maxIterations;
+        } else if (program === 'dem') {
+          if (fractal === 'mandelbrot') {
+            i = computePointDem(currentPoint, cx, cy, maxIterations, 100000000000);
+          } else {
+            i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+          }
+          a = drawDem(i, delta, numShades, shadeOffset, colorScheme, ctx);
+        } else if (program === 'dem-raw') {
+          if (fractal === 'mandelbrot') {
+            i = computePointDem(currentPoint, cx, cy, maxIterations, 100000000000);
+          } else {
+            i = computePointJuliaDem(currentPoint, cx, cy, maxIterations);
+          }
+          if (i < delta) {
+            ctx.fillStyle = "#000000"
+          } else {
+            let shade = (1 - i);
+            drawRaw(shade, colorScheme, ctx);
+          }
         }
         if (i > max) max = i;
         if (i < min) min = i;
         fractalXArray.push(i);
+        //if (program !== 'dem-raw')
         ctx.fillRect(ix, iy, 1, 1);
 
         if (a > aMax) aMax = a;
@@ -277,9 +342,10 @@ export function generateFractal(
     let audioData: number[][] = audioYArray;
     if (program === 'lsm-outline') {
       audioData = createOutlinesMatrix(audioYArray, ctx);
-    }
-    if (program === 'lsm-difference') {
+    } else if (program === 'lsm-difference') {
       audioData = createDifferencesMatrix(audioYArray, colorScheme, ctx);
+    } else if (program === 'dem' || program === 'dem-raw') {
+      audioData = scaleFractal(fractalYArray, min, max);
     }
     return {
       fractalData: fractalYArray,
@@ -339,14 +405,11 @@ export function createDifferencesMatrix(matrix: number[][], colorScheme: string,
       transformedRow.push(value + 0.001);
       if (colorScheme === "grayscale") {
         let shade = value * 255;
-        //const shade = Math.abs((value / numShades) - 0.5) * 2 * 255;
         ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
       } else {
         let shade = value * 360;
-        //const shade = (value / (numShades - 1)) * 360;
         ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
       }
-      //ctx.fillStyle = `rgb(${value * 255}, ${value * 255}, ${value * 255})`
       ctx.fillRect(j, i, 1, 1);
     }
     transformedMatrix.push(transformedRow);
