@@ -1,4 +1,5 @@
 import AudioEngine from "@/components/AudioEngine";
+import PlayheadDataControls from "@/PlayheadDataControls";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
 import PlayheadData from "@/components/PlayheadData";
@@ -53,7 +54,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
 
   const plane: FractalPlane = fractal === 'mandelbrot' ? defaultMandelbrotPlane : defaultJuliaPlane;
   const [size, setSize] = useState<number>(256);
-  const [program, setProgram] = useState<string>('lsm-binary');
+  const [program, setProgram] = useState<string>('lsm-modulo');
 
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
 
@@ -249,30 +250,26 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               loop={fractalLoop}
               setLoop={setFractalLoop}
             />
+            <PlayheadDataControls
+              fractal={fractal}
+              color={'#d70000'}
+              numShades={numShades}
+              shadeOffset={shadeOffset}
+              speed={fractalSpeed}
+              setCx={setCx}
+              setCy={setCy}
+              setNumShades={setNumShades}
+              setShadeOffset={setShadeOffset}
+              setSpeed={setFractalSpeed}
+            />
             {playType === 'osc' ? (
               <PlayheadOSCControls
                 fractal={fractal}
                 fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
-                speed={fractalSpeed}
-                cx={cx}
-                cy={cy}
-                setCx={setCx}
-                setCy={setCy}
-                setSpeed={setFractalSpeed}
               />
             ) : (<>
                 <PlayheadAudioControls
                   fractal={fractal}
-                  cx={cx}
-                  cy={cy}
-                  numShades={numShades}
-                  shadeOffset={shadeOffset}
-                  speed={fractalSpeed}
-                  setCx={setCx}
-                  setCy={setCy}
-                  setNumShades={setNumShades}
-                  setShadeOffset={setShadeOffset}
-                  setSpeed={setFractalSpeed}
                   setAudioParams={setAudioParams}
                 />
                 <AudioEngine
@@ -422,7 +419,7 @@ export const Label = styled.label`
 `;
 
 export const KnobRow = styled.div`
-  margin: 1rem 0 0 0;
+  margin: 0.5rem 0 0 0;
   display: flex;
   flex-direction: row;
 `;

@@ -13,9 +13,9 @@ const PlayheadProgram: React.FC<TransportProps> = ({program, setProgram, color, 
   return (
     <>
       <ControlRow>
-        <ControlButton onClick={() => setProgram('lsm-binary')} selected={program === 'lsm-binary'} color={color}
+        <ControlButton onClick={() => setProgram('lsm-modulo')} selected={program === 'lsm-modulo'} color={color}
                        bottom={true} height={height}>
-          <ButtonText>Binary</ButtonText>
+          <ButtonText>Modulo</ButtonText>
         </ControlButton>
         <ControlButton onClick={() => setProgram('lsm-outline')} selected={program === 'lsm-outline'}
                        color={color}
@@ -30,7 +30,29 @@ const PlayheadProgram: React.FC<TransportProps> = ({program, setProgram, color, 
         <ControlButton onClick={() => setProgram('lsm-raw')} selected={program === 'lsm-raw'}
                        color={color}
                        bottom={true} height={height}>
-          <ButtonText>Greyscale</ButtonText>
+          <ButtonText>Gradient</ButtonText>
+        </ControlButton>
+      </ControlRow>
+      <ControlRow>
+        <ControlButton onClick={() => setProgram('dem')} selected={program === 'dem'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Dem</ButtonText>
+        </ControlButton>
+        <ControlButton onClick={() => setProgram('dem-raw')} selected={program === 'dem-raw'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Dem-Raw</ButtonText>
+        </ControlButton>
+        <ControlButton onClick={() => setProgram('decomp1')} selected={program === 'decomp1'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Decomp 1</ButtonText>
+        </ControlButton>
+        <ControlButton onClick={() => setProgram('decomp2')} selected={program === 'decomp2'}
+                       color={color}
+                       bottom={true} height={height}>
+          <ButtonText>Decomp 2</ButtonText>
         </ControlButton>
       </ControlRow>
     </>

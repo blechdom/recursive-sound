@@ -5,39 +5,19 @@ import {AudioParamsType, KnobRow} from "@/components/FractalPlayer";
 
 type PlayheadAudioControlsProps = {
   fractal: string;
-  speed: number;
-  numShades: number;
-  shadeOffset: number;
-  cx?: number;
-  cy?: number;
-  setCx?: (cx: number) => void;
-  setCy?: (cy: number) => void;
-  setNumShades: (numShades: number) => void;
-  setShadeOffset: (shadeOffset: number) => void;
-  setSpeed: (speed: number) => void;
   setAudioParams: (params: AudioParamsType) => void;
 }
 
 const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   {
     fractal,
-    numShades,
-    shadeOffset,
-    speed,
-    cx,
-    cy,
-    setCx,
-    setCy,
-    setNumShades,
-    setShadeOffset,
-    setSpeed,
     setAudioParams
   }) => {
 
   const [volume, setVolume] = useState<number>(0);
   const [threshold, setThreshold] = useState<number>(0.09);
-  const [lowest, setLowest] = useState<number>(20);
-  const [highest, setHighest] = useState<number>(10000);
+  const [lowest, setLowest] = useState<number>(200);
+  const [highest, setHighest] = useState<number>(6000);
   const [smoothing, setSmoothing] = useState<number>(0.02);
 
   useEffect(() => {
@@ -45,128 +25,83 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   }, [volume, lowest, highest, threshold, smoothing, setAudioParams]);
 
   return (
-    <>
-      <KnobRow>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-speed`}
-            label={"Speed (ms)"}
-            knobValue={speed}
-            step={0.01}
-            min={1}
-            max={250}
-            onKnobInput={setSpeed}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-volume`}
-            label={"Volume"}
-            knobValue={volume}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setVolume}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-lowest`}
-            label={"Lowest"}
-            knobValue={lowest}
-            step={0.01}
-            min={0}
-            max={500}
-            onKnobInput={setLowest}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-highest`}
-            label={"Highest"}
-            knobValue={highest}
-            step={0.01}
-            min={20}
-            max={20000}
-            onKnobInput={setHighest}
-          />
-        </ControlKnob>
-      </KnobRow>
-      <KnobRow>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-threshold`}
-            label={"Threshold"}
-            knobValue={threshold}
-            step={0.001}
-            min={0}
-            max={1}
-            onKnobInput={setThreshold}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-smoothing`}
-            label={"Smoothing"}
-            knobValue={smoothing}
-            step={0.01}
-            min={0}
-            max={4}
-            onKnobInput={setSmoothing}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-numShades`}
-            label={"# Shades"}
-            knobValue={numShades}
-            step={1}
-            min={2}
-            max={32}
-            onKnobInput={setNumShades}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-shadeOffset`}
-            label={"shadeOffset"}
-            knobValue={shadeOffset}
-            step={1}
-            min={0}
-            max={30}
-            onKnobInput={setShadeOffset}
-          />
-        </ControlKnob>
-      </KnobRow>
-        {fractal === 'julia' &&
-          <>
-            <KnobRow>
-              <ControlKnob>
-                <Knob
-                  id={`${fractal}-cx`}
-                  label={"Complex X"}
-                  knobValue={cx}
-                  step={0.00001}
-                  min={-2}
-                  max={2}
-                  onKnobInput={setCx}
-                />
-              </ControlKnob>
-              <ControlKnob>
-                <Knob
-                  id={`${fractal}-cy`}
-                  label={"Complex Y"}
-                  knobValue={cy}
-                  step={0.00001}
-                  min={-2}
-                  max={2}
-                  onKnobInput={setCy}
-                />
-              </ControlKnob>
-            </KnobRow>
-          </>
-        }
-    </>
+    <KnobRow>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-volume`}
+          label={"volume"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"main volume of this sonified fractal"}
+          knobValue={volume}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setVolume}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-lowest`}
+          label={"lowest"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"lowest frequency of the oscillator bank (hz)"}
+          knobValue={lowest}
+          step={0.01}
+          min={0}
+          max={500}
+          onKnobInput={setLowest}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-highest`}
+          label={"highest"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"highest frequency of the oscillator bank (hz)"}
+          knobValue={highest}
+          step={0.01}
+          min={20}
+          max={20000}
+          onKnobInput={setHighest}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-threshold`}
+          label={"thresh"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"values below this threshold will be ignored during playback"}
+          knobValue={threshold}
+          step={0.001}
+          min={0}
+          max={1}
+          onKnobInput={setThreshold}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-smoothing`}
+          label={"smooth"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"smoothing of frequency when changing (0.02 = 20ms)"}
+          knobValue={smoothing}
+          step={0.01}
+          min={0}
+          max={0.5}
+          onKnobInput={setSmoothing}
+        />
+      </ControlKnob>
+    </KnobRow>
   );
 };
 
