@@ -13,23 +13,11 @@ let socket: Socket;
 type PlayheadOSCControlsProps = {
   fractal: string;
   fractalRow: number[];
-  speed: number;
-  cx?: number;
-  cy?: number;
-  setCx?: (cx: number) => void;
-  setCy?: (cy: number) => void;
-  setSpeed: (speed: number) => void;
 }
 
 const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
                                                                    fractal,
-                                                                   fractalRow,
-                                                                   speed,
-                                                                   cx,
-                                                                   cy,
-                                                                   setCx,
-                                                                   setCy,
-                                                                   setSpeed
+                                                                   fractalRow
                                                                  }) => {
   const [volume, setVolume] = useState<number>(1.0);
   const [threshold, setThreshold] = useState<number>(0);
@@ -71,104 +59,84 @@ const PlayheadOSCControls: React.FC<PlayheadOSCControlsProps> = ({
     socket?.emit("range", range);
   }, [range, socket]);
 
-  return (<>
-      <KnobRow>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-speed`}
-            label={"Speed (ms)"}
-            knobValue={speed}
-            step={0.01}
-            min={1}
-            max={250}
-            onKnobInput={setSpeed}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-volume`}
-            label={"Volume (OSC)"}
-            knobValue={volume}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setVolume}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-threshold`}
-            label={"Threshold (OSC)"}
-            knobValue={threshold}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setThreshold}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-interval`}
-            label={"Interval (OSC)"}
-            knobValue={interval}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setInterval}
-          />
-        </ControlKnob>
-      </KnobRow>
-      <KnobRow>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-lowest`}
-            label={"Lowest (OSC)"}
-            knobValue={lowest}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setLowest}
-          />
-        </ControlKnob>
-        <ControlKnob>
-          <Knob
-            id={`${fractal}-range`}
-            label={"Range (OSC)"}
-            knobValue={range}
-            step={0.01}
-            min={0}
-            max={1}
-            onKnobInput={setRange}
-          />
-        </ControlKnob>
-        {fractal === 'julia' &&
-          <>
-            <ControlKnob>
-              <Knob
-                id={`${fractal}-cx`}
-                label={"Complex X"}
-                knobValue={cx}
-                step={0.00001}
-                min={-2}
-                max={2}
-                onKnobInput={setCx}
-              />
-            </ControlKnob>
-            <ControlKnob>
-              <Knob
-                id={`${fractal}-cy`}
-                label={"Complex Y"}
-                knobValue={cy}
-                step={0.00001}
-                min={-2}
-                max={2}
-                onKnobInput={setCy}
-              />
-            </ControlKnob>
-          </>
-        }
-      </KnobRow>
-    </>
+  return (
+    <KnobRow>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-volume`}
+          label={"volume"}
+          knobValue={volume}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"OSC: main volume of this sonified fractal"}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setVolume}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-threshold`}
+          label={"thresh"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"OSC: values below this threshold will be ignored during playback"}
+          knobValue={threshold}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setThreshold}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-interval`}
+          label={"interval"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"OSC: Interval Between Frequencies in Oscillator Bank"}
+          knobValue={interval}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setInterval}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-lowest`}
+          label={"lowest"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"OSC: lowest frequency of the oscillator bank (hz)"}
+          knobValue={lowest}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setLowest}
+        />
+      </ControlKnob>
+      <ControlKnob>
+        <Knob
+          id={`${fractal}-range`}
+          label={"range"}
+          diameter={30}
+          labelWidth={30}
+          fontSize={11}
+          tooltip={"OSC: range from lowest to highest frequency of the oscillator bank"}
+          knobValue={range}
+          step={0.01}
+          min={0}
+          max={1}
+          onKnobInput={setRange}
+        />
+      </ControlKnob>
+    </KnobRow>
   );
 };
 
