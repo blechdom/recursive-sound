@@ -1,20 +1,24 @@
 import dynamic from "next/dynamic";
 import React from "react";
 import styled from "styled-components";
-import {KnobRow} from "@/components/FractalPlayer";
+import {ButtonText, ControlButton, KnobRow} from "@/components/FractalPlayer";
 
 type PlayheadAudioControlsProps = {
   fractal: string;
   color: string;
+  colorScheme: string;
+  size: number;
   speed: number;
   numShades: number;
   shadeOffset: number;
+  setColorScheme: (colorScheme: string) => void;
   cx?: number;
   cy?: number;
   setCx?: (cx: number) => void;
   setCy?: (cy: number) => void;
   setNumShades: (numShades: number) => void;
   setShadeOffset: (shadeOffset: number) => void;
+  setSize: (size: number) => void;
   setSpeed: (speed: number) => void;
 }
 
@@ -22,21 +26,46 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   {
     fractal,
     color,
+    colorScheme,
     numShades,
     shadeOffset,
+    size,
     speed,
     cx,
     cy,
+    setColorScheme,
     setCx,
     setCy,
     setNumShades,
     setShadeOffset,
     setSpeed,
+    setSize
   }) => {
 
   return (
     <>
       <KnobRow>
+        <ControlButton onClick={() => setColorScheme(colorScheme === 'color' ? 'grayscale' : 'color')}
+                       height={'2rem'}
+                       width={'50px'}>
+          <ButtonText>{colorScheme}</ButtonText>
+        </ControlButton>
+        <ControlKnob>
+          <Knob
+            id={`${fractal}-size`}
+            label={"size"}
+            color={color}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"size of width and height of generated fractal data"}
+            knobValue={size}
+            step={1}
+            min={32}
+            max={384}
+            onKnobInput={setSize}
+          />
+        </ControlKnob>
         <ControlKnob>
           <Knob
             id={`${fractal}-speed`}

@@ -7,7 +7,6 @@ import styled from "styled-components";
 
 const OscilloscopeSpectrogram = dynamic(() => import('el-vis-audio').then((mod) => mod.OscilloscopeSpectrogram), {ssr: false});
 
-
 require("events").EventEmitter.defaultMaxListeners = 0;
 
 type AudioEngineProps = {
@@ -19,7 +18,6 @@ type AudioEngineProps = {
   playing: boolean;
   audioParams: AudioParamsType;
 }
-
 
 const AudioEngine: React.FC<AudioEngineProps> = ({
                                                    fractal,
@@ -33,8 +31,6 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
 
   const [audioVizData, setAudioVizData] = useState<any>();
   const [fftVizData, setFftVizData] = useState<any>();
-  const [minFreq, setMinFreq] = useState<number>(0);
-  const [maxFreq, setMaxFreq] = useState<number>(0);
   const [ampScale, setAmpScale] = useState<number>(0);
 
   useEffect(() => {
@@ -43,8 +39,8 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
         audioContext.suspend();
       }
     }
-  }, []);
-  
+  }, [audioContext]);
+
   useEffect(() => {
     if (audioContext) {
       const SignalSynth = (signal: NodeRepr_t) => {
@@ -70,8 +66,6 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
           const linearFreq = Math.log10(lowest) + (i * linearInterval);
           const freq = 10 ** linearFreq;
 
-          if (i === 0) setMinFreq(freq);
-          if (i === fractalRow.length - 1) setMaxFreq(freq);
           if (freq < audioContext.sampleRate / 2) {
             accum += amplitude;
             const freqSignal = el.const({key, value: freq});
@@ -101,7 +95,7 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
         audioContext.suspend();
       }
     }
-  }, [playing, volume, lowest, highest, threshold, fractalRow, audioContext, core]);
+  }, [playing, volume, lowest, highest, threshold, fractalRow, audioContext, core, fractal, smoothing]);
 
   core?.on("scope", function (e) {
     if (e.source === `scope-${fractal}`) {
@@ -116,28 +110,33 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
   });
 
   return (
-    <>
-      <br/>
-      Row {rowIndex}: frequency-range: [{minFreq.toFixed(2)} = {maxFreq.toFixed(2)}]
-      amplitude-scale: {ampScale.toFixed(2)}
+    <FlexColumn>
+      Row {rowIndex} - amp * {ampScale.toFixed(2)}
       <StyledOscilloscopeSpectrogram>
         <OscilloscopeSpectrogram
           audioVizData={audioVizData}
           fftVizData={fftVizData}
-          width={256}
-          height={50}
+          width={156}
+          height={38}
         />
         <br/><br/><br/><br/><br/>
       </StyledOscilloscopeSpectrogram>
-    </>
+    </FlexColumn>
   );
 };
 
+const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 0.5rem;
+`;
+
 const StyledOscilloscopeSpectrogram = styled.div`
-  border: 1px solid #FF0000;
+  outline: 1px solid #000000;
   font-size: 1.5rem;
-  width: 256px;
-  height: 50px;
+  width: 156px;
+  height: 38px;
   cursor: pointer;
 `;
 export default AudioEngine;
