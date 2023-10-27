@@ -1,5 +1,5 @@
-import ColoringAlgorithm from "@/components/ColoringAlgorithm";
 import PlottingAlgorithm from "@/components/PlottingAlgorithm";
+import ColoringAlgorithm from "@/components/ColoringAlgorithm";
 import PlayheadDataControls from "@/PlayheadDataControls";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
@@ -234,15 +234,17 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
             />
             <PlottingAlgorithm
               plottingAlgorithm={plottingAlgorithm}
-              setPlottingAlgorithm={setPlottingAlgorithm}
               color={'#FF9E3D'}
-              height={'2rem'}
+              height={'1.5rem'}
+              setPlottingAlgorithm={setPlottingAlgorithm}
             />
             <ColoringAlgorithm
               coloringAlgorithm={coloringAlgorithm}
+              color={'#EA4AFF'}
+              colorScheme={colorScheme}
+              height={'1.5rem'}
               setColoringAlgorithm={setColoringAlgorithm}
-              color={'#ea4aff'}
-              height={'2rem'}
+              setColorScheme={setColorScheme}
             />
             <Playheads playheadType={fractalPlayheadType} setPlayheadType={setFractalPlayheadType}/>
             <Transport
@@ -275,6 +277,13 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
                         setWindow={setFractalWindow}/>
           <Label>generate julia: click and drag over mandelbrot</Label>
+          <ControlRows>
+            <ControlRow>
+              <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
+              <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
+              <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
+            </ControlRow>
+          </ControlRows>
           <CanvasContainer>
             <Canvas
               ref={fractalCanvasRef}
@@ -299,13 +308,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               />
             )}
           </CanvasContainer>
-          <ControlRows>
-            <ControlRow>
-              <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
-              <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
-              <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
-            </ControlRow>
-          </ControlRows>
         </FractalContainer>
       </ButtonContainer>
     </Page>

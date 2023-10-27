@@ -4,38 +4,30 @@ import React from "react";
 
 type TransportProps = {
   plottingAlgorithm: string;
-  setPlottingAlgorithm: (plottingAlgorithm: string) => void;
   color: string;
   height?: string;
+  width?: string;
+  setPlottingAlgorithm: (plottingAlgorithm: string) => void;
 }
 
 const PlottingAlgorithm: React.FC<TransportProps> = ({
                                                        plottingAlgorithm,
-                                                       setPlottingAlgorithm,
                                                        color,
-                                                       height = '4rem'
+                                                       height = '1.5rem',
+                                                       width = '8rem',
+                                                       setPlottingAlgorithm,
                                                      }) => {
   return (
     <ControlRow>
       <ControlButton onClick={() => setPlottingAlgorithm('escape')} selected={plottingAlgorithm === 'escape'}
                      color={color}
-                     bottom={true} height={height}>
+                     bottom={true} height={height} width={width}>
         <ButtonText>escape</ButtonText>
       </ControlButton>
       <ControlButton onClick={() => setPlottingAlgorithm('distance')} selected={plottingAlgorithm === 'distance'}
                      color={color}
-                     bottom={true} height={height}>
+                     bottom={true} height={height} width={width}>
         <ButtonText>distance</ButtonText>
-      </ControlButton>
-      <ControlButton onClick={() => setPlottingAlgorithm('decomp1')} selected={plottingAlgorithm === 'decomp1'}
-                     color={color}
-                     bottom={true} height={height}>
-        <ButtonText>decomp 1</ButtonText>
-      </ControlButton>
-      <ControlButton onClick={() => setPlottingAlgorithm('decomp2')} selected={plottingAlgorithm === 'decomp2'}
-                     color={color}
-                     bottom={true} height={height}>
-        <ButtonText>decomp 2</ButtonText>
       </ControlButton>
     </ControlRow>
   );

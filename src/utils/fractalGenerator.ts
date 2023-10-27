@@ -1,24 +1,34 @@
 /*
-                      Initialize Fractal (Size, Type, MaxIterations, Threshold, Overflow)
+                    Initialize Fractal (Size, Type, MaxIterations, Threshold, Overflow)
                                |
-                   Select Generation Method (LSM, DEM)
+                    Select Plotting Method (Escape (LSM), Distance (DEM))
                                |
-                      Generate Fractal Data (Zoom, Traverse)
+                    Generate Fractal Data (Zoom-Window Parameters, Julia-Cx/Cy): plotData
                                |
-                Select Coloring/Sonifying Scheme(s) (Modulo, Outline, Difference, Raw, Decomp1, Decomp2)
+                   Select Point Coloring Scheme (Modulo, Raw, Decomp1, Decomp2): colorData (generated at the point level)
+                                |
+                Select Transform Scheme(s) (Outline, Outlines, Difference, Density, Inverse, Log, Scale): transformData (generated at the row or matrix level)
                     /                   \
-              Draw Fractal        Generate Audio Data  (Scale to 0 - 1.0)
+              Draw Fractal        Generate Audio Data  (Scale to 0 - 1.0) --> audioData
           (Greyscale & Color)             |
-                                   Select Playhead  (Up, Down, Left, Right, In, Out, Random, All-At-Once, Border-Follower)
+              drawData            Select Playhead  (Up, Down, Left, Right, In, Out, Random, All-At-Once, Border-Follower)
                                           |
                                   Generate Playhead Data  (Rotation, Transform, Scale to 0 - 1.0)
                                           |
                                   Play Audio / OSC  (OscillatorBanks, Filters, Effects, Rhythms, RissetResynth, etc)
                                           |
-                                Manipulate Playback in real-time
+                                  Manipulate Playback in real-time
                                           |
                                   Program Animations (Animate Zooms, Rotations, Timings)
+
+
+                                  **** TODO ****
+                                  * Convert to class
+                                  * Add data input field for copy/pasting any 2d array in and sonifying
+                                  * Isolate Data Ranges or Areas to be assigned to different types of interpretations
  */
+
+import {colourPalettes} from "@/utils/fractal";
 
 export const enum FractalType {
   Mandelbrot = "mandelbrot",
@@ -206,7 +216,9 @@ function transformOutline(
   colorScheme: string,
   size: number,
   canvas: HTMLCanvasElement,
+  variation: boolean,
 ): { audioData: number[][], aMin: number, aMax: number } | undefined {
+  console.log('VARIATION', variation);
   let tMax: number = 0, tMin: number = 0, tempArray: number[][] = [];
   for (let iy = 0; iy < size; iy++) {
     const tempRow: number[] = [];
@@ -231,8 +243,8 @@ function transformOutline(
         const right = tempArray[i + 1][j];
         const above = tempArray[i][j - 1];
         const below = tempArray[i][j + 1];
-        const a = (tempArray[i][j] === left && tempArray[i][j] === right && tempArray[i][j] === above && tempArray[i][j] === below) ? 0 : tempArray[i][j];
-
+        const defaultValue: number = variation ? tempArray[i][j] : 1;
+        const a = (tempArray[i][j] === left && tempArray[i][j] === right && tempArray[i][j] === above && tempArray[i][j] === below) ? 0 : defaultValue;
         if (colorScheme === "grayscale") {
           const shade = 255 - (a * 255);
           ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
@@ -293,36 +305,91 @@ function transformDifference(
 }
 
 function transformRaw(
-  data: { fractalData: number[][], min: number, max: number },
-  numShades: number,
-  shadeOffset: number,
+  fractalData: number[][],
+  min: number,
+  max: number,
   colorScheme: string,
   size: number,
   canvas: HTMLCanvasElement,
 ): { audioData: number[][], aMin: number, aMax: number } | undefined {
+  console.log("min ", min, "max ", max);
   const ctx = canvas.getContext("2d");
   if (ctx !== null) {
     // @ts-ignore
     ctx.reset();
-    let a: number = 0, aMax: number = 0, aMin: number = 0, audioArray: number[][] = [];
+    let aMax: number = 0, aMin: number = 0, audioArray: number[][] = [];
     for (let iy = 0; iy < size; iy++) {
       const audioRow: number[] = [];
       for (let ix = 0; ix < size; ix++) {
-        let a = data.fractalData[iy][ix];
-        if (a === 0) {
+        let value = fractalData[iy][ix];
+        let a = (value - min) / (max - min);
+        if (value === 0) {
           ctx.fillStyle = "#000";
         } else {
-          a = (a + shadeOffset) % numShades;
           if (colorScheme === "grayscale") {
-            const shade = Math.abs((a / numShades) - 0.5) * 2 * 255;
+            const shade = (1 - a) * 255;
             ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
           } else {
-            const shade = (a / (numShades - 1)) * 360;
+            const shade = (1 - a) * 360;
             ctx.fillStyle = `hsl(${shade}, 100%, 50%)`;
           }
         }
-        audioRow.push(a / (numShades - 1)); // scale to [0, 1] and push
+        if (a > aMax) aMax = a;
+        if (a < aMin) aMin = a;
+        audioRow.push(a);
+        ctx.fillRect(ix, iy, 1, 1);
       }
+
+      audioArray.push(audioRow);
+    }
+    return {audioData: audioArray, aMin, aMax};
+  }
+}
+
+function transformDecomp(
+  fractalData: number[][],
+  pointsData: Point[][],
+  min: number,
+  max: number,
+  colorScheme: string,
+  size: number,
+  canvas: HTMLCanvasElement,
+  coloringAlgorithm: string,
+): { audioData: number[][], aMin: number, aMax: number } | undefined {
+  console.log("min ", min, "max ", max);
+  const ctx = canvas.getContext("2d");
+  if (ctx !== null) {
+    // @ts-ignore
+    ctx.reset();
+    let aMax: number = 0, aMin: number = 0, audioArray: number[][] = [];
+    for (let iy = 0; iy < size; iy++) {
+      const audioRow: number[] = [];
+      for (let ix = 0; ix < size; ix++) {
+        let a = fractalData[iy][ix];
+        let point = pointsData[iy][ix];
+        let alpha = Math.atan2(point.y, point.x);
+        if (coloringAlgorithm === 'decomp1') {
+          if ((alpha >= 0) && (alpha < 2 * Math.PI)) {
+            a = 0;
+            ctx.fillStyle = "#000"
+          } else {
+            a = 1;
+            ctx.fillStyle = "#fff"
+          }
+        } else {
+          const alpha = Math.atan(Math.abs(point.y))
+          if ((alpha > 0) && (alpha <= 1.5)) {
+            ctx.fillStyle = '#000'
+          } else {
+            ctx.fillStyle = '#fff'
+          }
+        }
+        if (a > aMax) aMax = a;
+        if (a < aMin) aMin = a;
+        audioRow.push(a);
+        ctx.fillRect(ix, iy, 1, 1);
+      }
+
       audioArray.push(audioRow);
     }
     return {audioData: audioArray, aMin, aMax};
@@ -530,11 +597,12 @@ function generateEscape(
   fractalWindow: FractalPlane,
   maxIterations: number,
   threshold: number
-): { fractalData: number[][], min: number, max: number } {
-  let max: number = 0, min: number = 0, fractalYArray: number[][] = [];
+): { fractalData: number[][], pointsData: Point[][], min: number, max: number } {
+  let max: number = 0, min: number = 0, fractalArray: number[][] = [], pointsArray: Point[][] = [];
   const scalingFactor = getScalingFactors(fractalWindow, size);
   for (let iy = 0; iy < size; iy++) {
-    const fractalXArray: number[] = [];
+    const pointsRow: Point[] = [];
+    const fractalRow: number[] = [];
     const y = fractalWindow.y_min + iy * scalingFactor.y
     if (fractal === 'mandelbrot') cy = y;
     for (let ix = 0; ix < size; ix++) {
@@ -544,14 +612,16 @@ function generateEscape(
         x: 0.0,
         y: 0.0
       } : {x: x, y: y};
+      pointsRow.push(currentPoint);
       let i = computePoint(currentPoint, cx, cy, maxIterations, threshold);
       if (i > max) max = i;
       if (i < min) min = i;
-      fractalXArray.push(i === maxIterations ? 0 : i);
+      fractalRow.push(i === maxIterations ? 0 : i);
     }
-    fractalYArray.push(fractalXArray);
+    pointsArray.push(pointsRow);
+    fractalArray.push(fractalRow);
   }
-  return {fractalData: fractalYArray, min: min, max: max};
+  return {fractalData: fractalArray, pointsData: pointsArray, min: min, max: max};
 }
 
 function generateDistance(
@@ -561,12 +631,13 @@ function generateDistance(
   size: number,
   fractalWindow: FractalPlane,
   maxIterations: number
-): { fractalData: number[][], min: number, max: number } {
-  let max: number = 0, min: number = 0, fractalYArray: number[][] = [];
+): { fractalData: number[][], pointsData: Point[][], min: number, max: number } {
+  let max: number = 0, min: number = 0, fractalArray: number[][] = [], pointsArray: Point[][] = [];
   const scalingFactor = getScalingFactors(fractalWindow, size);
   const delta = 0.2 * scalingFactor.x;
   for (let iy = 0; iy < size; iy++) {
-    const fractalXArray: number[] = [];
+    const fractalRow: number[] = [];
+    const pointsRow: Point[] = [];
     const y = fractalWindow.y_min + iy * scalingFactor.y
     if (fractal === 'mandelbrot') cy = y;
     for (let ix = 0; ix < size; ix++) {
@@ -577,6 +648,7 @@ function generateDistance(
         y: 0.0
       } : {x: x, y: y};
       let i: number;
+      pointsRow.push(currentPoint);
       if (fractal === 'mandelbrot') {
         i = computePointDem(currentPoint, cx, cy, maxIterations, 100000000000);
       } else {
@@ -584,11 +656,12 @@ function generateDistance(
       }
       if (i > max) max = i;
       if (i < min) min = i;
-      fractalXArray.push(i < delta ? 0 : i);
+      fractalRow.push(i < delta ? 0 : i);
     }
-    fractalYArray.push(fractalXArray);
+    pointsArray.push(pointsRow);
+    fractalArray.push(fractalRow);
   }
-  return {fractalData: fractalYArray, min: min, max: max};
+  return {fractalData: fractalArray, pointsData: pointsArray, min: min, max: max};
 }
 
 function generateDecomp1(fractal: string, cx: number, cy: number, size: number, fractalWindow: FractalPlane, maxIterations: number, threshold: number): {
@@ -665,49 +738,36 @@ export function generateFractal(
   cy: number,
 ): { fractalData: number[][], audioData: number[][], min: number, max: number, aMin: number, aMax: number } {
 
-  let data: { fractalData: number[][], min: number, max: number } | undefined = undefined;
+  let data: { fractalData: number[][], pointsData: Point[][], min: number, max: number } | undefined = undefined;
   switch (plottingAlgorithm) {
-    case 'escape': {
+    case 'escape':
       data = generateEscape(fractal, cx, cy, size, fractalWindow, maxIterations, threshold);
       break;
-    }
-    case 'distance': {
+    case 'distance':
       data = generateDistance(fractal, cx, cy, size, fractalWindow, maxIterations);
       break;
-    }
-    case 'decomp1': {
-      data = generateDecomp1(fractal, cx, cy, size, fractalWindow, maxIterations, threshold);
-      break;
-    }
-    case 'decomp2': {
-      data = generateDecomp2(fractal, cx, cy, size, fractalWindow, maxIterations, threshold);
-      break;
-    }
   }
   let audioData: { audioData: number[][], aMin: number, aMax: number } | undefined = undefined;
   if (data && data.fractalData !== undefined) {
-    const {fractalData} = data ?? undefined;
+    const {fractalData, pointsData, min, max} = data ?? undefined;
     switch (coloringAlgorithm) {
-      case 'modulo': {
+      case 'modulo':
         audioData = transformModulo(fractalData, numShades, shadeOffset, colorScheme, size, canvas);
         break;
-      }
-      case 'outline': {
-        audioData = transformOutline(fractalData, numShades, shadeOffset, colorScheme, size, canvas);
+      case 'outline':
+      case 'outlines':
+        audioData = transformOutline(fractalData, numShades, shadeOffset, colorScheme, size, canvas, coloringAlgorithm !== 'outline');
         break;
-      }
-      /*  case 'outline': {
-          audioData = transformOutline(fractalData, numShades, shadeOffset, colorScheme, size, canvas);
-          break;
-        }
-        case 'difference': {
-          audioData = transformDifference(fractalData, numShades, shadeOffset, colorScheme, size, canvas);
-          break;
-        }
-        case 'raw': {
-          audioData = transformRaw(fractalData, numShades, shadeOffset, colorScheme, size, canvas);
-          break;
-        }*/
+      case 'difference':
+        //audioData = transformDifference(fractalData, numShades, shadeOffset, colorScheme, size, canvas);
+        break;
+      case 'raw':
+        audioData = transformRaw(fractalData, min, max, colorScheme, size, canvas);
+        break;
+      case 'decomp1':
+      case 'decomp2':
+        audioData = transformDecomp(fractalData, pointsData, min, max, colorScheme, size, canvas, coloringAlgorithm);
+        break;
     }
   }
   return {

@@ -45,11 +45,6 @@ const PlayheadAudioControls: React.FC<PlayheadAudioControlsProps> = (
   return (
     <>
       <KnobRow>
-        <ControlButton onClick={() => setColorScheme(colorScheme === 'color' ? 'grayscale' : 'color')}
-                       height={'2rem'}
-                       width={'50px'}>
-          <ButtonText>{colorScheme}</ButtonText>
-        </ControlButton>
         <ControlKnob>
           <Knob
             id={`${fractal}-size`}
