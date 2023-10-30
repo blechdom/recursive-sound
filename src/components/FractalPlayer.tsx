@@ -1,15 +1,13 @@
-import AudioEngine from "@/components/AudioEngine";
+import PlottingAlgorithm from "@/components/PlottingAlgorithm";
+import ColoringAlgorithm from "@/components/ColoringAlgorithm";
 import PlayheadDataControls from "@/PlayheadDataControls";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
 import PlayheadData from "@/components/PlayheadData";
-import PlayheadProgram from "@/components/PlayheadProgram";
-import PlayheadSizes from "@/components/PlayheadSizes";
 import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
 import WebRenderer from "@elemaudio/web-renderer";
-import {set} from "lodash";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {
@@ -55,8 +53,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
 
   const plane: FractalPlane = fractal === 'mandelbrot' ? defaultMandelbrotPlane : defaultJuliaPlane;
   const [size, setSize] = useState<number>(256);
-  const [program, setProgram] = useState<string>('lsm-modulo');
-
+  const [plottingAlgorithm, setPlottingAlgorithm] = useState<string>('escape');
+  const [coloringAlgorithm, setColoringAlgorithm] = useState<string>('modulo');
   const [mandelbrotMouseDown, setMandelbrotMouseDown] = useState<boolean>(false);
 
   const [fractalWindow, setFractalWindow] = useState<FractalPlane>(plane)
@@ -77,14 +75,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [rowIndex, setRowIndex] = useState<number>(0);
   const [fractalLoop, setFractalLoop] = useState<boolean>(true);
 
-  const [audioParams, setAudioParams] = useState<AudioParamsType>({
-    volume: 0,
-    threshold: 0,
-    highest: 0,
-    lowest: 0,
-    smoothing: 0,
-  });
-
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fractalPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -98,11 +88,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
 
   useEffect(() => {
     setFractalTransport('stop');
-  }, [fractalPlayheadType, playType, fractalLoop, program]);
+  }, [fractalPlayheadType, playType, fractalLoop, plottingAlgorithm, coloringAlgorithm]);
 
   useEffect(() => {
     getFractal();
-  }, [cx, cy, size, numShades, shadeOffset, colorScheme, fractalWindow, program]);
+  }, [cx, cy, size, numShades, shadeOffset, colorScheme, fractalWindow, plottingAlgorithm, coloringAlgorithm]);
 
   useEffect(() => {
     if (fractalTransport === 'play') {
@@ -133,7 +123,8 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         fractalCanvasRef.current,
         fractalWindow,
         size,
-        program,
+        plottingAlgorithm,
+        coloringAlgorithm,
         maxIterations,
         numShades,
         shadeOffset,
@@ -225,24 +216,35 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
       <ButtonContainer>
         <FractalContainer>
           <ControlRows>
-            <ControlRow>
-              <ControlButton onClick={() => setPlayType(playType === 'audio' ? 'osc' : 'audio')}
-                             height={'2rem'}
-                             width={'6rem'}>
-                <ButtonText>{playType}</ButtonText>
-              </ControlButton>
-              <ControlButton onClick={() => setColorScheme(colorScheme === 'color' ? 'grayscale' : 'color')}
-                             height={'2rem'}
-                             width={'6rem'}>
-                <ButtonText>{colorScheme}</ButtonText>
-              </ControlButton>
-            </ControlRow>
-            <PlayheadSizes size={size} setSize={setSize} color={'#005dd7'} height={'2rem'}/>
-            <PlayheadProgram
-              program={program}
-              setProgram={setProgram}
-              color={'#3d8c40'}
-              height={'2rem'}
+            <PlayheadDataControls
+              fractal={fractal}
+              color={'#d70000'}
+              colorScheme={colorScheme}
+              numShades={numShades}
+              shadeOffset={shadeOffset}
+              size={size}
+              speed={fractalSpeed}
+              setColorScheme={setColorScheme}
+              setCx={setCx}
+              setCy={setCy}
+              setNumShades={setNumShades}
+              setShadeOffset={setShadeOffset}
+              setSize={setSize}
+              setSpeed={setFractalSpeed}
+            />
+            <PlottingAlgorithm
+              plottingAlgorithm={plottingAlgorithm}
+              color={'#FF9E3D'}
+              height={'1.5rem'}
+              setPlottingAlgorithm={setPlottingAlgorithm}
+            />
+            <ColoringAlgorithm
+              coloringAlgorithm={coloringAlgorithm}
+              color={'#EA4AFF'}
+              colorScheme={colorScheme}
+              height={'1.5rem'}
+              setColoringAlgorithm={setColoringAlgorithm}
+              setColorScheme={setColorScheme}
             />
             <Playheads playheadType={fractalPlayheadType} setPlayheadType={setFractalPlayheadType}/>
             <Transport
@@ -251,36 +253,23 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               loop={fractalLoop}
               setLoop={setFractalLoop}
             />
-            <PlayheadDataControls
-              fractal={fractal}
-              color={'#d70000'}
-              numShades={numShades}
-              shadeOffset={shadeOffset}
-              speed={fractalSpeed}
-              setCx={setCx}
-              setCy={setCy}
-              setNumShades={setNumShades}
-              setShadeOffset={setShadeOffset}
-              setSpeed={setFractalSpeed}
-            />
             {playType === 'osc' ? (
               <PlayheadOSCControls
                 fractal={fractal}
                 fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
+                playType={playType}
+                setPlayType={setPlayType}
               />
             ) : (<>
                 <PlayheadAudioControls
                   fractal={fractal}
-                  setAudioParams={setAudioParams}
-                />
-                <AudioEngine
-                  fractal={fractal}
+                  playType={playType}
                   rowIndex={rowIndex}
                   fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
                   audioContext={audioContext}
                   core={core}
                   playing={playing}
-                  audioParams={audioParams}
+                  setPlayType={setPlayType}
                 />
               </>
             )}
@@ -288,6 +277,13 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
                         setWindow={setFractalWindow}/>
           <Label>generate julia: click and drag over mandelbrot</Label>
+          <ControlRows>
+            <ControlRow>
+              <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
+              <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
+              <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
+            </ControlRow>
+          </ControlRows>
           <CanvasContainer>
             <Canvas
               ref={fractalCanvasRef}
@@ -312,13 +308,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               />
             )}
           </CanvasContainer>
-          <ControlRows>
-            <ControlRow>
-              <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
-              <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
-              <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
-            </ControlRow>
-          </ControlRows>
         </FractalContainer>
       </ButtonContainer>
     </Page>
