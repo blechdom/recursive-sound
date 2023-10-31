@@ -17,7 +17,7 @@ const ContourCanvas: React.FC<ContourCanvasProps> = ({matrixData}) => {
     }
   }, []);
 
-  return <canvas ref={canvasRef} width={1200} height={1200}></canvas>;
+  return <canvas ref={canvasRef} width={matrixData.length} height={matrixData.length}></canvas>;
 };
 
 export default ContourCanvas;
