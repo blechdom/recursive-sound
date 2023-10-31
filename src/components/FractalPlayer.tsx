@@ -1,5 +1,6 @@
 import PlottingAlgorithm from "@/components/PlottingAlgorithm";
 import ColoringAlgorithm from "@/components/ColoringAlgorithm";
+import ContourData from "@/components/ContourData";
 import PlayheadDataControls from "@/PlayheadDataControls";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
@@ -278,6 +279,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                         setWindow={setFractalWindow}/>
           <Label>generate julia: click and drag over mandelbrot</Label>
           <ControlRows>
+            {fractal === 'julia' && (
+              <ControlRow>
+                <ContourData title={"Trace Contour into Coord Wav File"} matrixData={rawFractalData}/>
+              </ControlRow>
+            )}
             <ControlRow>
               <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
               <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
