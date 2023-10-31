@@ -5,15 +5,11 @@ type ContourCanvasProps = {
   matrixData: number[] | number[][];
 }
 
-
 const ContourCanvas: React.FC<ContourCanvasProps> = ({matrixData}) => {
   let canvasRef = useRef<HTMLCanvasElement | null>(null);
   let canvasCtxRef = React.useRef<CanvasRenderingContext2D | null>(null);
 
-  console.log("in contourData ", matrixData);
-
   useEffect(() => {
-    // Initialize
     if (canvasRef.current) {
       canvasCtxRef.current = canvasRef.current.getContext('2d');
       let ctx = canvasCtxRef.current;

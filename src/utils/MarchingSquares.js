@@ -1,10 +1,7 @@
 export class MarchingSquares {
   constructor(context, args = {}) {
-    //this.main_canvas = canvasId;
-    //console.log("canvasId: ", canvasId);
     this.ctx = context;
-    console.log('this context: ', this.ctx);
-    this.inputValues = args.inputValues; //juliaDataMid; // juliaDataBig (1024x1024) juliaDataMid (512x512) or juliaData (256x256)
+    this.inputValues = args.inputValues;
     this.contour = [];
     this.contourX = [];
     this.contourY = [];
@@ -13,14 +10,33 @@ export class MarchingSquares {
       y: Math.floor(this.inputValues?.length / 2)
     };
 
-    // let rect = this.main_canvas?.getBoundingClientRect();
-    // this.main_canvas.width = rect?.width;
-    // this.main_canvas.height = rect?.height;
-    //this.ctx.font = "1px Arial";
-    //this.ctx.lineWidth = 1;
+    this.generateContour = (() => {
+      try {
+        let tracePoint = this.startingPoint;
+        let whileFlag = false;
 
-    this.generateContour = (async () => {
-      await this.traceContour(this.startingPoint.x, this.startingPoint.y);
+        while (!whileFlag) {
+
+          const {nextPoint, pointToWrite} = this.traceContour(tracePoint.x, tracePoint.y);
+
+          if (!nextPoint || (nextPoint.y > this.inputValues.length || nextPoint.x > this.inputValues[0].length || nextPoint.x < 0 || nextPoint.y < 0)) whileFlag = true;
+          if (JSON.stringify(pointToWrite) === JSON.stringify(this.contour[0])) whileFlag = true;
+          if (pointToWrite !== null) {
+            this.contour.push(pointToWrite);
+            let newX = (pointToWrite.x / (this.inputValues[0].length / 2)) - 1.0;
+            this.contourX.push(newX);
+            let newY = (pointToWrite.y / (this.inputValues.length / 2)) - 1.0;
+            this.contourY.push(newY);
+            this.ctx?.stroke();
+          }
+          tracePoint = nextPoint;
+        }
+
+      } catch (err) {
+        console.log('error: ', err);
+        console.log("current contour: ", this.contour);
+        console.log("current contour length: ", this.contour.length);
+      }
 
       let audioContext = new AudioContext();
       let audioBuffer = audioContext.createBuffer(2, this.contourX.length, 44100);
@@ -43,8 +59,6 @@ export class MarchingSquares {
 
     console.log(
       "initialized MarchingSquares class for",
-      this.main_canvas,
-      "with arguments",
       args
     );
 
@@ -193,17 +207,21 @@ export class MarchingSquares {
       default:
         break;
     }
-    if (!nextPoint || (nextPoint.y > this.inputValues.length || nextPoint.x > this.inputValues[0].length || nextPoint.x < 0 || nextPoint.y < 0)) return;
-    if (JSON.stringify(pointToWrite) === JSON.stringify(this.contour[0])) return;
-    if (pointToWrite !== null) {
-      this.contour.push(pointToWrite);
-      let newX = (pointToWrite.x / (this.inputValues[0].length / 2)) - 1.0;
-      this.contourX.push(newX);
-      let newY = (pointToWrite.y / (this.inputValues.length / 2)) - 1.0;
-      this.contourY.push(newY);
-      this.ctx?.stroke();
+    /*  if (!nextPoint || (nextPoint.y > this.inputValues.length || nextPoint.x > this.inputValues[0].length || nextPoint.x < 0 || nextPoint.y < 0)) return;
+      if (JSON.stringify(pointToWrite) === JSON.stringify(this.contour[0])) return;
+      if (pointToWrite !== null) {
+        this.contour.push(pointToWrite);
+        let newX = (pointToWrite.x / (this.inputValues[0].length / 2)) - 1.0;
+        this.contourX.push(newX);
+        let newY = (pointToWrite.y / (this.inputValues.length / 2)) - 1.0;
+        this.contourY.push(newY);
+        this.ctx?.stroke();
+      }
+      this.traceContour(nextPoint.x, nextPoint.y);*/
+    return {
+      nextPoint,
+      pointToWrite
     }
-    this.traceContour(nextPoint.x, nextPoint.y);
   }
 }
 
