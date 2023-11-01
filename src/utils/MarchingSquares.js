@@ -53,7 +53,13 @@ export class MarchingSquares {
       console.log('contour: ', JSON.stringify(this.contour));
       console.log('stereo data audio buffer: ', src.buffer);
 
-      make_download(src.buffer, 44100 * audioBuffer.duration);
+      try {
+        makeDownload(src.buffer, 44100 * this.contourX.length);
+      } catch (err) {
+        console.log('make download error: ', err);
+        let download_link = document.getElementById("download_link");
+        download_link.innerText = 'Make WAV File Error: ' + err;
+      }
 
     });
 
@@ -207,17 +213,6 @@ export class MarchingSquares {
       default:
         break;
     }
-    /*  if (!nextPoint || (nextPoint.y > this.inputValues.length || nextPoint.x > this.inputValues[0].length || nextPoint.x < 0 || nextPoint.y < 0)) return;
-      if (JSON.stringify(pointToWrite) === JSON.stringify(this.contour[0])) return;
-      if (pointToWrite !== null) {
-        this.contour.push(pointToWrite);
-        let newX = (pointToWrite.x / (this.inputValues[0].length / 2)) - 1.0;
-        this.contourX.push(newX);
-        let newY = (pointToWrite.y / (this.inputValues.length / 2)) - 1.0;
-        this.contourY.push(newY);
-        this.ctx?.stroke();
-      }
-      this.traceContour(nextPoint.x, nextPoint.y);*/
     return {
       nextPoint,
       pointToWrite
@@ -231,13 +226,13 @@ function binaryToType(nw, ne, se, sw) {
 }
 
 function bufferToWave(abuffer, len) {
-  let numOfChan = abuffer.numberOfChannels,
-    length = len * numOfChan * 2 + 44,
-    buffer = new ArrayBuffer(length),
-    view = new DataView(buffer),
-    channels = [], i, sample,
-    offset = 0,
-    pos = 0;
+  let numOfChan = abuffer.numberOfChannels;
+  let length = len * numOfChan * 2 + 44;
+  let buffer = new ArrayBuffer(length);
+  let view = new DataView(buffer);
+  let channels = [], i, sample;
+  let offset = 0;
+  let pos = 0;
 
   // write WAVE header
   setUint32(0x46464952);                         // "RIFF"
@@ -260,7 +255,7 @@ function bufferToWave(abuffer, len) {
   for (i = 0; i < abuffer.numberOfChannels; i++)
     channels.push(abuffer.getChannelData(i));
 
-  while (pos < length) {
+  while (pos < length && offset < len) {
     for (i = 0; i < numOfChan; i++) {             // interleave channels
       sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
       sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // scale to 16-bit signed int
@@ -284,7 +279,7 @@ function bufferToWave(abuffer, len) {
   }
 }
 
-function make_download(abuffer, total_samples) {
+function makeDownload(abuffer, total_samples) {
   let new_file = URL.createObjectURL(bufferToWave(abuffer, total_samples));
   let download_link = document.getElementById("download_link");
   download_link.href = new_file;
