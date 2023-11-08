@@ -284,13 +284,13 @@ function binaryToType(nw, ne, se, sw) {
 }
 
 function bufferToWave(abuffer, len) {
-  let numOfChan = abuffer.numberOfChannels,
-    length = len * numOfChan * 2 + 44,
-    buffer = new ArrayBuffer(length),
-    view = new DataView(buffer),
-    channels = [], i, sample,
-    offset = 0,
-    pos = 0;
+  let numOfChan = abuffer.numberOfChannels;
+  let length = len * numOfChan * 2 + 44;
+  let buffer = new ArrayBuffer(length);
+  let view = new DataView(buffer);
+  let channels = [], i, sample;
+  let offset = 0;
+  let pos = 0;
 
   // write WAVE header
   setUint32(0x46464952);                         // "RIFF"
@@ -313,7 +313,7 @@ function bufferToWave(abuffer, len) {
   for (i = 0; i < abuffer.numberOfChannels; i++)
     channels.push(abuffer.getChannelData(i));
 
-  while (pos < length) {
+  while (pos < length && offset < len) {
     for (i = 0; i < numOfChan; i++) {             // interleave channels
       sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
       sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // scale to 16-bit signed int
