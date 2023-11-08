@@ -281,7 +281,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
           <ControlRows>
             {fractal === 'julia' && (
               <ControlRow>
-                <ContourData title={"Trace Contour into Coord Wav File"} matrixData={rawFractalData}/>
+                <ContourData title={"Contour Tracer"} matrixData={rawFractalData} cx={cx} cy={cy}/>
               </ControlRow>
             )}
             <ControlRow>
@@ -290,7 +290,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
             </ControlRow>
           </ControlRows>
-          <CanvasContainer>
+          <CanvasContainer size={size}>
             <Canvas
               ref={fractalCanvasRef}
               width={size}
@@ -336,15 +336,17 @@ const FractalContainer = styled.div`
   padding: 1rem;
 `;
 
-const CanvasContainer = styled.div`
-  width: 256px;
-  height: 256px;
+const CanvasContainer = styled.div<{
+  size: number;
+}>`
+  width: ${props => props.size ?? 256}px;
+  height: ${props => props.size ?? 256}px;
   position: relative;
 `;
 
 const Canvas = styled.canvas`
   position: absolute;
-  margin: -0.25rem 0.5rem 0 0;
+  margin: 0.05rem 0.5rem 0 -0.1rem;
   border: 1px solid #DDDDDD;
 `;
 
