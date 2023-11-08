@@ -29,7 +29,7 @@ const ContourData: React.FC<ContourDataProps> = ({title, matrixData, cx, cy, col
       setTolerance(0);
     }
   }, [showDataModal]);
-  
+
   return (
     <>
       <ControlButton onClick={() => setShowDataModal(true)} selected={showDataModal} width={"16rem"} height={"2rem"}
@@ -59,9 +59,9 @@ const ContourData: React.FC<ContourDataProps> = ({title, matrixData, cx, cy, col
             fontSize={11}
             tooltip={"tolerance of contour smoothing"}
             knobValue={tolerance}
-            step={0.01}
+            step={0.1}
             min={0}
-            max={1}
+            max={10}
             onKnobInput={setTolerance}
           /><br/><br/>
           <a id="download_link">download link</a>

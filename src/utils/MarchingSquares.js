@@ -54,14 +54,11 @@ export class MarchingSquares {
       let src = audioContext.createBufferSource();
       src.buffer = audioBuffer;
 
-      //console.log('contour: ', JSON.stringify(this.contour.length));
-      // this.drawContour(this.contour, "red");
       const simplified = simplify(this.contour, this.tolerance, true);
       const directionList = this.calculateDirectionList(simplified);
       console.log("directionList ", directionList);
       console.log('redrawing with tolerance', this.tolerance);
-      //this.ctx?.clearRect(0, 0, this.inputValues.length, this.inputValues.length);
-      if (this.ctx) this.drawContour(this.ctx, simplified, "blue");
+      if (this.ctx) this.drawContour(this.ctx, simplified);
 
 
       console.log('simplified contour length: ', simplified.length);
@@ -91,45 +88,73 @@ export class MarchingSquares {
   calculateDirectionList(coords) {
     let directions = [];
     coords.forEach((coord, index) => {
-      if (index < coords.length - 2) {
-        directions.push(this.calcDir(coord, coords[index + 1], coords[index + 2]));
-      } else if (index === coords.length - 2) {
-        directions.push(this.calcDir(coord, coords[index + 1], coords[0]));
+      if (index === 0) {
+        directions.push(this.calcDir(coords[coords.length - 1], coord, coords[index + 1]));
+      } else if (index <= coords.length - 2) {
+        directions.push(this.calcDir(coords[index - 1], coord, coords[index + 1]));
       } else if (index === coords.length - 1) {
-        directions.push(this.calcDir(coord, coords[0], coords[1]));
+        directions.push(this.calcDir(coords[index - 1], coord, coords[0]));
       }
     });
     return directions;
   }
 
-  calcDir(p0, p1, p2) {
-    return (Math.atan2(p2.y - p0.y, p2.x - p0.x) - Math.atan2(p1.y - p0.y, p1.x - p0.x)) * 180 / Math.PI;
+  calcDir(a, b, c) {
+    let angle = (Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x)) * 180 / Math.PI;
+    console.log("angle ", angle);
+    return angle;
+    /*let vector_b_to_a = {x: a.x - b.x, y: a.y - b.y};
+    let vector_b_to_c = {x: c.x - b.x, y: b.y - b.y};
+    let length_b_to_a = Math.sqrt(vector_b_to_a.x * vector_b_to_a.x + vector_b_to_a.y * vector_b_to_a.y);
+    let length_b_to_c = Math.sqrt(vector_b_to_c.x * vector_b_to_c.x + vector_b_to_c.y * vector_b_to_c.y);
+    let dot_product = vector_b_to_a.x * vector_b_to_c.x + vector_b_to_a.y * vector_b_to_c.y;
+    let angle = Math.acos(dot_product / (length_b_to_a * length_b_to_c));
+    console.log("angle ", angle);
+    return angle * 180 / Math.PI;*/
+    /*const AB = Math.sqrt(Math.pow(B.x - A.x, 2) + Math.pow(B.y - A.y, 2));
+    const BC = Math.sqrt(Math.pow(B.x - C.x, 2) + Math.pow(B.y - C.y, 2));
+    const AC = Math.sqrt(Math.pow(C.x - A.x, 2) + Math.pow(C.y - A.y, 2));
+    const angle = Math.acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB));
+    console.log("angle ", angle * 180 / Math.PI);
+    return angle * 180 / Math.PI;*/
+    /*const crossproduct = (c.x - b.x) * (b.y - a.y) - (c.y - b.y) * (b.x - a.x)
+    const dotproduct = (c.x - b.x) * (b.x - a.x) + (c.y - b.y) * (b.y - a.y)
+    const angle = Math.atan2(crossproduct, dotproduct)
+    console.log("angle", angle * 180 / Math.PI);
+    return angle * 180 / Math.PI;*/
   }
 
-  drawContour(ctx, pointList, color) {
-    //this.ctx?.clearRect(0, 0, this.inputValues.length, this.inputValues.length);
+  drawContour(ctx, pointList) {
     ctx.beginPath();
     ctx.lineWidth = 1;
-    //ctx.strokeStyle = color;
     console.log('pointList: ', pointList.length);
     pointList.forEach((point, index) => {
-      if (index < pointList.length - 2) {
-        let shade = 0;
-        const rawShade = this.calcDir(point, pointList[index + 1], pointList[index + 2]);
-        console.log('shade: ', rawShade);
-        if (rawShade < 0) {
-          shade = rawShade / 2 + 180;
-        } else {
-          shade = rawShade / 2;
-        }
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = `hsl(${shade}, 100%, 50%)`;
-        this.line(ctx, point, pointList[index + 1]);
-      } else if (index === pointList.length - 1) this.line(ctx, point, pointList[0]);
+      let a, c;
+      let b = point;
+      if (index === 0) {
+        a = pointList[pointList.length - 1];
+        c = pointList[index + 1];
+      } else if (index <= pointList.length - 2) {
+        a = pointList[index - 1];
+        c = pointList[index + 1];
+      } else if (index === pointList.length - 1) {
+        a = pointList[index - 1];
+        c = pointList[0];
+      }
+      const angle = this.calcDir(a, b, c);
+      const shade = this.getColorFromAngle(angle);
+      ctx.beginPath();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `hsl(${shade}, 100%, 50%)`;
+      this.line(ctx, b, c);
       ctx.stroke();
     });
 
+  }
+
+  getColorFromAngle(angle) {
+    //return angle < 0 ? angle / 2 + 180 : angle / 2;
+    return angle + 360 / 2;
   }
 
   traceContour(x, y) {
