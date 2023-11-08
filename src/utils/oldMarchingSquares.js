@@ -32,6 +32,7 @@ export class MarchingSquares {
             this.contourX.push(newX);
             let newY = (pointToWrite.y / (this.inputValues.length / 2)) - 1.0;
             this.contourY.push(newY);
+            this.ctx?.stroke();
           }
           tracePoint = nextPoint;
         }
@@ -57,17 +58,16 @@ export class MarchingSquares {
       //console.log('contour: ', JSON.stringify(this.contour.length));
       // this.drawContour(this.contour, "red");
       const simplified = simplify(this.contour, this.tolerance, true);
-      const directionList = this.calculateDirectionList(simplified);
-      console.log("directionList ", directionList);
+
       console.log('redrawing with tolerance', this.tolerance);
       //this.ctx?.clearRect(0, 0, this.inputValues.length, this.inputValues.length);
       if (this.ctx) this.drawContour(this.ctx, simplified, "blue");
 
-
+      //console.log('simplified contour: ', JSON.stringify(simplified));
       console.log('simplified contour length: ', simplified.length);
       console.log('stereo data audio buffer: ', src.buffer);
 
-      make_download(src.buffer, 44100 * audioBuffer.duration, this.cx, this.cy, this.inputValues.length);
+      make_download(src.buffer, 44100 * audioBuffer.duration);
 
     });
 
@@ -88,51 +88,22 @@ export class MarchingSquares {
     //  if (this.ctx) this.ctx.strokeStyle = "blue";
   }
 
-  calculateDirectionList(coords) {
-    let directions = [];
-    coords.forEach((coord, index) => {
-      if (index < coords.length - 2) {
-        directions.push(this.calcDir(coord, coords[index + 1], coords[index + 2]));
-      } else if (index === coords.length - 2) {
-        directions.push(this.calcDir(coord, coords[index + 1], coords[0]));
-      } else if (index === coords.length - 1) {
-        directions.push(this.calcDir(coord, coords[0], coords[1]));
-      }
-    });
-    return directions;
-  }
-
-  calcDir(p0, p1, p2) {
-    return (Math.atan2(p2.y - p0.y, p2.x - p0.x) - Math.atan2(p1.y - p0.y, p1.x - p0.x)) * 180 / Math.PI;
-  }
-
   drawContour(ctx, pointList, color) {
     //this.ctx?.clearRect(0, 0, this.inputValues.length, this.inputValues.length);
     ctx.beginPath();
     ctx.lineWidth = 1;
-    //ctx.strokeStyle = color;
+    ctx.strokeStyle = color;
     console.log('pointList: ', pointList.length);
     pointList.forEach((point, index) => {
-      if (index < pointList.length - 2) {
-        let shade = 0;
-        const rawShade = this.calcDir(point, pointList[index + 1], pointList[index + 2]);
-        console.log('shade: ', rawShade);
-        if (rawShade < 0) {
-          shade = rawShade / 2 + 180;
-        } else {
-          shade = rawShade / 2;
-        }
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = `hsl(${shade}, 100%, 50%)`;
+      if (index <= pointList.length - 2)
         this.line(ctx, point, pointList[index + 1]);
-      } else if (index === pointList.length - 1) this.line(ctx, point, pointList[0]);
-      ctx.stroke();
     });
-
   }
 
   traceContour(x, y) {
+    //this.ctx?.beginPath();
+    //if (this.ctx) this.ctx.lineWidth = 1;
+    //if (this.ctx) this.ctx.strokeStyle = "blue";
 
     /*
           A
@@ -141,6 +112,26 @@ export class MarchingSquares {
        o --- o
           C
      */
+
+    /*
+
+
+    let a = {x: x + 0.5, y: y - 1};
+    let b = {x: x + 1, y: y - 0.5};
+    let c = {x: x + 0.5, y};
+    let d = {x, y: y - 0.5};
+
+    if (interpolate) {
+      a = [x + lerp(1, nw, ne), y];
+      b = [x + 1, y + lerp(1, ne, se)];
+      c = [x + lerp(1, sw, se), y + 1];
+      d = [x, y + lerp(1, nw, sw)];
+    }
+
+    let up = {x, y: y - 1};
+    let down = {x, y: y + 1};
+    let left = {x: x - 1, y};
+    let right = {x: x + 1, y};*/
 
     let nw = this.inputValues[y][x];
     let ne = this.inputValues[y][x + 1];
@@ -151,6 +142,13 @@ export class MarchingSquares {
     let b = {x: x + 1, y: y - 0.5};
     let c = {x: x + 0.5, y};
     let d = {x, y: y - 0.5};
+
+    /*if (interpolate) {
+      a = {x: x + lerp(1, nw, ne), y};
+      b = {x: x + 1, y: y + lerp(1, ne, se)};
+      c = {x: x + lerp(1, sw, se), y: y + 1};
+      d = {x, y: y + lerp(1, nw, sw)};
+    }*/
 
     let up = {x, y: y - 1};
     let down = {x, y: y + 1};
@@ -172,22 +170,22 @@ export class MarchingSquares {
         nextPoint = right;
         break;
       case 1: // DOWN: 	D -> C
-              //this.line(d, c);
+        //this.line(d, c);
         pointToWrite = c;
         nextPoint = down;
         break;
       case 2: // RIGHT: 	C -> B
-              //this.line(c, b);
+        //this.line(c, b);
         pointToWrite = b;
         nextPoint = right;
         break;
       case 3: // RIGHT: 	D -> B
-              //this.line(d, b);
+        //this.line(d, b);
         pointToWrite = b;
         nextPoint = right;
         break;
       case 4: // UP:			B -> A
-              //this.line(b, a);
+        //this.line(b, a);
         pointToWrite = a;
         nextPoint = up;
         break;
@@ -209,22 +207,22 @@ export class MarchingSquares {
         }
         break;
       case 6: // UP:			C -> A
-              //this.line(c, a);
+        //this.line(c, a);
         pointToWrite = a;
         nextPoint = up;
         break;
       case 7: // UP:			D -> A
-              //this.line(d, a);
+        //this.line(d, a);
         pointToWrite = a;
         nextPoint = up;
         break;
       case 8: // LEFT:	  A -> D
-              //this.line(a, d);
+        //this.line(a, d);
         pointToWrite = d;
         nextPoint = left;
         break;
       case 9: // DOWN:		A -> C
-              //this.line(a, c);
+        //this.line(a, c);
         pointToWrite = c;
         nextPoint = down;
         break;
@@ -278,19 +276,27 @@ export class MarchingSquares {
   }
 }
 
+function lerp(x, x0, x1, y0 = 0, y1 = 1) {
+  if (x0 === x1) {
+    return null;
+  }
+
+  return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+}
+
 function binaryToType(nw, ne, se, sw) {
   let a = [nw, ne, se, sw];
   return a.reduce((res, x) => (res << 1) | x);
 }
 
 function bufferToWave(abuffer, len) {
-  let numOfChan = abuffer.numberOfChannels;
-  let length = len * numOfChan * 2 + 44;
-  let buffer = new ArrayBuffer(length);
-  let view = new DataView(buffer);
-  let channels = [], i, sample;
-  let offset = 0;
-  let pos = 0;
+  let numOfChan = abuffer.numberOfChannels,
+    length = len * numOfChan * 2 + 44,
+    buffer = new ArrayBuffer(length),
+    view = new DataView(buffer),
+    channels = [], i, sample,
+    offset = 0,
+    pos = 0;
 
   // write WAVE header
   setUint32(0x46464952);                         // "RIFF"
@@ -313,7 +319,7 @@ function bufferToWave(abuffer, len) {
   for (i = 0; i < abuffer.numberOfChannels; i++)
     channels.push(abuffer.getChannelData(i));
 
-  while (pos < length && offset < len) {
+  while (pos < length) {
     for (i = 0; i < numOfChan; i++) {             // interleave channels
       sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
       sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // scale to 16-bit signed int

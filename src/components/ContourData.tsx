@@ -6,16 +6,30 @@ import ContourCanvas from "@/components/ContourCanvas";
 
 const Button = dynamic(() => import("el-vis-audio").then((mod) => mod.Button), {ssr: false});
 const Modal = dynamic(() => import("el-vis-audio").then((mod) => mod.Modal), {ssr: false});
+const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
+  {ssr: false}
+)
 
 type ContourDataProps = {
   title: string;
   matrixData: number[] | number[][];
+  cx: number;
+  cy: number;
   color?: string;
 }
 
-const ContourData: React.FC<ContourDataProps> = ({title, matrixData, color}) => {
+const ContourData: React.FC<ContourDataProps> = ({title, matrixData, cx, cy, color}) => {
 
   const [showDataModal, setShowDataModal] = useState<boolean>(false);
+  const [tolerance, setTolerance] = useState<number>(0);
+
+  useEffect(() => {
+    if (!showDataModal) setTolerance(0);
+    return () => {
+      setTolerance(0);
+    }
+  }, [showDataModal]);
+  
   return (
     <>
       <ControlButton onClick={() => setShowDataModal(true)} selected={showDataModal} width={"16rem"} height={"2rem"}
@@ -33,9 +47,27 @@ const ContourData: React.FC<ContourDataProps> = ({title, matrixData, color}) => 
           />
         }
       >
-        <h3><a id="download_link">download link</a></h3><br/>
+        <h2>
+          cx: {cx}<br/>
+          cy: {cy}<br/>
+          size: {matrixData.length}<br/><br/>
+          <Knob
+            id={`tolerance`}
+            label={"tolerance"}
+            diameter={30}
+            labelWidth={30}
+            fontSize={11}
+            tooltip={"tolerance of contour smoothing"}
+            knobValue={tolerance}
+            step={0.01}
+            min={0}
+            max={1}
+            onKnobInput={setTolerance}
+          /><br/><br/>
+          <a id="download_link">download link</a>
+        </h2>
         <DataContainer>
-          <ContourCanvas matrixData={matrixData}/>
+          <ContourCanvas matrixData={matrixData} tolerance={tolerance} cx={cx} cy={cy}/>
         </DataContainer>
       </Modal>
     </>);
