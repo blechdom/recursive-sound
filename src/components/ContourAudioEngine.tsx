@@ -80,17 +80,6 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
           setFrequency(freq);
         }, elapsedTime);
       });
-
-      // start setIntervals
-      //let freq = frequency;
-      //const i = 0;
-      //const intervalId = setInterval(() => {
-
-      //setFrequency(freq);
-      //freq += (contour[i].angle - 180);
-      //i++;
-      //}, contour[i].duration * 500);
-      //setSequencerId(intervalId);
     }
   }, [playing, contour]);
 
