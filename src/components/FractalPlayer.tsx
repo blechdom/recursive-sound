@@ -41,10 +41,12 @@ type FractalPlayerProps = {
 
 export type AudioParamsType = {
   volume: number;
-  threshold: number;
-  highest: number;
-  freqScaling: number;
-  duration: number;
+  threshold?: number;
+  highest?: number;
+  lowest?: number;
+  smoothing?: number;
+  freqScaling?: number;
+  duration?: number;
 }
 
 const FractalPlayer: React.FC<FractalPlayerProps> = ({
