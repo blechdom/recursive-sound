@@ -776,17 +776,6 @@ export function generateFractal(
   };
 }
 
-/*return {
-  fractalData: [],
-  audioData: [],
-  min: 0,
-  max: 0,
-  aMin: 0,
-  aMax: 0,
-};*/
-
-//}
-
 export function scaleFractal(fractalArray: number[][], min: number, max: number): number[][] {
   return fractalArray.map((row) => {
     return row.map((value) => {

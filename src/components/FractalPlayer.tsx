@@ -1,6 +1,5 @@
 import PlottingAlgorithm from "@/components/PlottingAlgorithm";
 import ColoringAlgorithm from "@/components/ColoringAlgorithm";
-import ContourData from "@/components/ContourData";
 import PlayheadDataControls from "@/PlayheadDataControls";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
@@ -9,6 +8,7 @@ import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
 import WindowZoomer from "@/components/WindowZoomer";
 import WebRenderer from "@elemaudio/web-renderer";
+import dynamic from "next/dynamic";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {
@@ -21,6 +21,12 @@ import {
   rotateMatrixCW90,
   clearCanvas,
 } from "@/utils/fractalGenerator";
+
+import {MarchingSquares} from "@/utils/MarchingSquares";
+
+const Knob = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel),
+  {ssr: false}
+)
 
 type FractalPlayerProps = {
   fractal: string;
@@ -67,6 +73,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [colorScheme, setColorScheme] = useState<string>('grayscale');
   const [fractalSpeed, setFractalSpeed] = useState<number>(50);
   const [playing, setPlaying] = useState<boolean>(false);
+  const [showContour, setShowContour] = useState<boolean>(false);
 
   const [playType, setPlayType] = useState<string>('audio');
 
@@ -75,9 +82,12 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [fractalTimeouts, setFractalTimeouts] = useState<any[]>([]);
   const [rowIndex, setRowIndex] = useState<number>(0);
   const [fractalLoop, setFractalLoop] = useState<boolean>(true);
+  const [tolerance, setTolerance] = useState<number>(0);
 
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fractalContourCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fractalPlayheadCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasCtxRef = React.useRef<CanvasRenderingContext2D | null>(null);
 
   useEffect(() => {
     if (fractalPlayheadType === 'left' || fractalPlayheadType === 'right') {
@@ -88,12 +98,23 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   }, [fractalPlayheadType, audioFractalData]);
 
   useEffect(() => {
+    if (showContour) {
+      if (fractalContourCanvasRef.current) {
+        canvasCtxRef.current = fractalContourCanvasRef.current.getContext('2d');
+        let ctx = canvasCtxRef.current;
+        if (ctx && rawFractalData.length) new MarchingSquares(ctx, {inputValues: rawFractalData, tolerance, cx, cy});
+      }
+      console.log("marching squares");
+    }
+  }, [tolerance, rawFractalData, showContour]);
+
+  useEffect(() => {
     setFractalTransport('stop');
   }, [fractalPlayheadType, playType, fractalLoop, plottingAlgorithm, coloringAlgorithm]);
 
   useEffect(() => {
     getFractal();
-  }, [cx, cy, size, numShades, shadeOffset, colorScheme, fractalWindow, plottingAlgorithm, coloringAlgorithm]);
+  }, [cx, cy, size, numShades, shadeOffset, colorScheme, fractalWindow, plottingAlgorithm, coloringAlgorithm, showContour]);
 
   useEffect(() => {
     if (fractalTransport === 'play') {
@@ -134,6 +155,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         cx,
         cy
       );
+      console.log('rawfractaldata');
       setRawFractalData(fractalArray.fractalData);
       setAudioFractalData(fractalArray.audioData);
       setPlayheadFractalData(fractalArray.audioData);
@@ -279,40 +301,79 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                         setWindow={setFractalWindow}/>
           <Label>generate julia: click and drag over mandelbrot</Label>
           <ControlRows>
-            {fractal === 'julia' && (
-              <ControlRow>
-                <ContourData title={"Contour Tracer"} matrixData={rawFractalData} cx={cx} cy={cy}/>
-              </ControlRow>
-            )}
             <ControlRow>
               <PlayheadData title={"Fractal Data"} matrixData={rawFractalData}/>
               <PlayheadData title={"Audio Data"} matrixData={audioFractalData}/>
               <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
             </ControlRow>
+            {fractal === 'julia' && (
+              <ControlRow>
+                <ControlButton onClick={() => setShowContour(!showContour)} selected={showContour} width={"8rem"}
+                               height={"3rem"}
+                               color={'#0066FF'}>
+                  <ButtonText>{showContour ? "Hide" : "Show"} Contour Tracer</ButtonText>
+                </ControlButton>
+                {showContour &&
+                  <>
+                    <ButtonContent width={"3rem"} height={"3rem"}>
+                      <Knob
+                        id={`tolerance`}
+                        label={"tolerance"}
+                        diameter={20}
+                        labelWidth={20}
+                        fontSize={8}
+                        tooltip={"tolerance of contour smoothing"}
+                        knobValue={tolerance}
+                        step={0.1}
+                        min={0}
+                        max={5}
+                        onKnobInput={setTolerance}
+                      />
+                    </ButtonContent>
+                    <ButtonContent width={"5rem"} height={"3rem"}>
+                      <h4>cx: {cx}<br/>
+                        cy: {cy}<br/>
+                        <a id="download_link">download link</a>
+                      </h4></ButtonContent></>
+                }
+              </ControlRow>
+            )}
           </ControlRows>
           <CanvasContainer size={size}>
-            <Canvas
-              ref={fractalCanvasRef}
-              width={size}
-              height={size}
-            />
-            {fractal === 'mandelbrot' ? (
+            <>
               <Canvas
-                ref={fractalPlayheadCanvasRef}
-                width={size}
-                height={size}
-                onMouseDown={setDownForMandelbrotMouseDown}
-                onMouseUp={setUpForMandelbrotMouseDown}
-                onMouseMove={setJuliaComplexNumber}
-                onClick={setJuliaComplexNumberByClick}
-              />
-            ) : (
-              <Canvas
-                ref={fractalPlayheadCanvasRef}
+                ref={fractalCanvasRef}
+                hidden={showContour}
                 width={size}
                 height={size}
               />
-            )}
+              {fractal === 'mandelbrot' ? (
+                <Canvas
+                  ref={fractalPlayheadCanvasRef}
+                  width={size}
+                  height={size}
+                  onMouseDown={setDownForMandelbrotMouseDown}
+                  onMouseUp={setUpForMandelbrotMouseDown}
+                  onMouseMove={setJuliaComplexNumber}
+                  onClick={setJuliaComplexNumberByClick}
+                />
+              ) : (
+                <>
+                  {showContour && (
+                    <Canvas
+                      ref={fractalContourCanvasRef}
+                      width={size}
+                      height={size}
+                    />
+                  )}
+                  <Canvas
+                    ref={fractalPlayheadCanvasRef}
+                    width={size}
+                    height={size}
+                  />
+                </>
+              )}
+            </>
           </CanvasContainer>
         </FractalContainer>
       </ButtonContainer>
@@ -334,6 +395,15 @@ const FractalContainer = styled.div`
   align-items: flex-start;
   margin: 1rem;
   padding: 1rem;
+`;
+
+const ButtonContent = styled.div<{
+  width?: string;
+  height?: string;
+}>`
+  width: ${props => props.width ?? '3rem'};
+  height: ${props => props.height ?? '3rem'};
+  padding: 0.25rem;
 `;
 
 const CanvasContainer = styled.div<{

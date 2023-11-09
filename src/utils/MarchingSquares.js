@@ -35,43 +35,44 @@ export class MarchingSquares {
           }
           tracePoint = nextPoint;
         }
+        let simplifiedX = [];
+        let simplifiedY = [];
+        const simplified = simplify(this.contour, this.tolerance, true);
+        const directionList = this.calculateDirectionList(simplified);
+
+        simplified.forEach((point, index) => {
+          simplifiedX.push((point.x / (this.inputValues[0].length / 2)) - 1.0);
+          simplifiedY.push((point.y / (this.inputValues.length / 2)) - 1.0);
+        });
+
+
+        let audioContext = new AudioContext();
+        let audioBuffer = audioContext.createBuffer(2, simplified.length, 44100);
+        let xArray = audioBuffer.getChannelData(0);
+        let yArray = audioBuffer.getChannelData(1);
+        for (let i = 0; i < simplifiedX.length; i++) {
+          xArray[i] = simplifiedX[i];
+          yArray[i] = simplifiedY[i];
+        }
+
+        let src = audioContext.createBufferSource();
+        src.buffer = audioBuffer;
+
+        if (this.ctx) this.drawContour(this.ctx, simplified);
+
+        make_download(src.buffer, 44100 * audioBuffer.duration, this.cx, this.cy, this.inputValues.length, this.tolerance);
 
       } catch (err) {
         console.log('error: ', err);
         console.log("current contour: ", this.contour);
         console.log("current contour length: ", this.contour.length);
       }
-
-      let audioContext = new AudioContext();
-      let audioBuffer = audioContext.createBuffer(2, this.contourX.length, 44100);
-      let xArray = audioBuffer.getChannelData(0);
-      let yArray = audioBuffer.getChannelData(1);
-      for (let i = 0; i < this.contourX.length; i++) {
-        xArray[i] = this.contourX[i];
-        yArray[i] = this.contourY[i];
-      }
-
-      let src = audioContext.createBufferSource();
-      src.buffer = audioBuffer;
-
-      const simplified = simplify(this.contour, this.tolerance, true);
-      const directionList = this.calculateDirectionList(simplified);
-      console.log("directionList ", directionList);
-      console.log('redrawing with tolerance', this.tolerance);
-      if (this.ctx) this.drawContour(this.ctx, simplified);
-
-
-      console.log('simplified contour length: ', simplified.length);
-      console.log('stereo data audio buffer: ', src.buffer);
-
-      make_download(src.buffer, 44100 * audioBuffer.duration, this.cx, this.cy, this.inputValues.length);
-
     });
 
-    console.log(
+    /*console.log(
       "initialized MarchingSquares class for",
       args
-    );
+    );*/
     this.ctx?.clearRect(0, 0, this.inputValues.length, this.inputValues.length);
     this.generateContour();
   }
@@ -79,10 +80,6 @@ export class MarchingSquares {
   line(ctx, from, to) {
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    // const vert = to.x - from.x;
-    // const slope = vert !== 0 ? (to.y - from.y) / vert : undefined;
-    // console.log('slope: ', slope);
-    //  if (this.ctx) this.ctx.strokeStyle = "blue";
   }
 
   calculateDirectionList(coords) {
@@ -100,28 +97,7 @@ export class MarchingSquares {
   }
 
   calcDir(a, b, c) {
-    let angle = (Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x)) * 180 / Math.PI;
-    console.log("angle ", angle);
-    return angle;
-    /*let vector_b_to_a = {x: a.x - b.x, y: a.y - b.y};
-    let vector_b_to_c = {x: c.x - b.x, y: b.y - b.y};
-    let length_b_to_a = Math.sqrt(vector_b_to_a.x * vector_b_to_a.x + vector_b_to_a.y * vector_b_to_a.y);
-    let length_b_to_c = Math.sqrt(vector_b_to_c.x * vector_b_to_c.x + vector_b_to_c.y * vector_b_to_c.y);
-    let dot_product = vector_b_to_a.x * vector_b_to_c.x + vector_b_to_a.y * vector_b_to_c.y;
-    let angle = Math.acos(dot_product / (length_b_to_a * length_b_to_c));
-    console.log("angle ", angle);
-    return angle * 180 / Math.PI;*/
-    /*const AB = Math.sqrt(Math.pow(B.x - A.x, 2) + Math.pow(B.y - A.y, 2));
-    const BC = Math.sqrt(Math.pow(B.x - C.x, 2) + Math.pow(B.y - C.y, 2));
-    const AC = Math.sqrt(Math.pow(C.x - A.x, 2) + Math.pow(C.y - A.y, 2));
-    const angle = Math.acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB));
-    console.log("angle ", angle * 180 / Math.PI);
-    return angle * 180 / Math.PI;*/
-    /*const crossproduct = (c.x - b.x) * (b.y - a.y) - (c.y - b.y) * (b.x - a.x)
-    const dotproduct = (c.x - b.x) * (b.x - a.x) + (c.y - b.y) * (b.y - a.y)
-    const angle = Math.atan2(crossproduct, dotproduct)
-    console.log("angle", angle * 180 / Math.PI);
-    return angle * 180 / Math.PI;*/
+    return (Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x)) * 180 / Math.PI;
   }
 
   drawContour(ctx, pointList) {
@@ -362,9 +338,13 @@ function bufferToWave(abuffer, len) {
   }
 }
 
-function make_download(abuffer, total_samples, cx, cy, size) {
-  let new_file = URL.createObjectURL(bufferToWave(abuffer, total_samples));
-  let download_link = document.getElementById("download_link");
-  download_link.href = new_file;
-  download_link.download = 'julia-contour-cx_' + cx + '_cy_' + cy + '_size_' + size + '.wav';
+function make_download(abuffer, total_samples, cx, cy, size, tolerance) {
+  try {
+    let new_file = URL.createObjectURL(bufferToWave(abuffer, total_samples));
+    let download_link = document.getElementById("download_link");
+    download_link.href = new_file;
+    download_link.download = 'julia-contour-cx_' + cx + '_cy_' + cy + '_size_' + size + '_tolerance_' + tolerance + '.wav';
+  } catch (err) {
+    console.log('error: ', err);
+  }
 }
