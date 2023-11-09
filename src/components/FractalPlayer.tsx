@@ -43,8 +43,8 @@ export type AudioParamsType = {
   volume: number;
   threshold: number;
   highest: number;
-  lowest: number;
-  smoothing: number;
+  freqScaling: number;
+  duration: number;
 }
 
 const FractalPlayer: React.FC<FractalPlayerProps> = ({
@@ -110,7 +110,6 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
           setContour(newContour.soundControlList);
         }
       }
-      console.log("marching squares");
     }
   }, [tolerance, rawFractalData, showContour]);
 
@@ -362,7 +361,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                       diameter={30}
                       labelWidth={30}
                       fontSize={11}
-                      tooltip={"tolerance of contour smoothing"}
+                      tooltip={"tolerance of contour duration"}
                       knobValue={tolerance}
                       step={0.1}
                       min={0}
@@ -370,8 +369,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                       onKnobInput={setTolerance}
                     />
                     <ContourAudioControls
-                      rowIndex={rowIndex}
-                      fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
+                      contour={contour}
                       audioContext={audioContext}
                       core={core}
                       playing={playing}

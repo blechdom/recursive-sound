@@ -6,8 +6,7 @@ import styled from "styled-components";
 import {AudioParamsType, KnobRow} from "@/components/FractalPlayer";
 
 type ContourAudioControlsProps = {
-  rowIndex: number;
-  fractalRow: number[];
+  contour: { angle: number; duration: number }[];
   audioContext: AudioContext | null;
   core: WebRenderer;
   playing: boolean;
@@ -15,8 +14,7 @@ type ContourAudioControlsProps = {
 
 const ContourAudioControls: React.FC<ContourAudioControlsProps> = (
   {
-    rowIndex,
-    fractalRow,
+    contour,
     audioContext,
     core,
     playing,
@@ -24,26 +22,25 @@ const ContourAudioControls: React.FC<ContourAudioControlsProps> = (
 
   const [volume, setVolume] = useState<number>(0);
   const [threshold, setThreshold] = useState<number>(0.09);
-  const [lowest, setLowest] = useState<number>(200);
+  const [freqScaling, setFreqScaling] = useState<number>(1);
   const [highest, setHighest] = useState<number>(6000);
-  const [smoothing, setSmoothing] = useState<number>(0.02);
+  const [duration, setDuration] = useState<number>(5);
   const [audioParams, setAudioParams] = useState<AudioParamsType>({
     volume: 0,
     threshold: 0,
     highest: 0,
-    lowest: 0,
-    smoothing: 0,
+    freqScaling: 0,
+    duration: 0,
   });
 
   useEffect(() => {
-    setAudioParams({volume, lowest, highest, threshold, smoothing});
-  }, [volume, lowest, highest, threshold, smoothing, setAudioParams]);
+    setAudioParams({volume, freqScaling, highest, threshold, duration});
+  }, [volume, freqScaling, highest, threshold, duration, setAudioParams]);
 
   return (<>
       <KnobRow>
         <ContourAudioEngine
-          rowIndex={rowIndex}
-          fractalRow={fractalRow}
+          contour={contour}
           audioContext={audioContext}
           core={core}
           playing={playing}
@@ -68,20 +65,20 @@ const ContourAudioControls: React.FC<ContourAudioControlsProps> = (
       <KnobRow>
         <ControlKnob>
           <Knob
-            id={`contour-lowest`}
-            label={"lowest"}
+            id={`freqScaling`}
+            label={"freqScale"}
             diameter={30}
             labelWidth={30}
             fontSize={11}
-            tooltip={"lowest frequency of the oscillator bank (hz)"}
-            knobValue={lowest}
+            tooltip={"scale Frequency by this value"}
+            knobValue={freqScaling}
             step={0.01}
             min={0}
-            max={500}
-            onKnobInput={setLowest}
+            max={10}
+            onKnobInput={setFreqScaling}
           />
         </ControlKnob>
-        <ControlKnob>
+        {/*<ControlKnob>
           <Knob
             id={`contour-highest`}
             label={"highest"}
@@ -110,20 +107,20 @@ const ContourAudioControls: React.FC<ContourAudioControlsProps> = (
             max={1}
             onKnobInput={setThreshold}
           />
-        </ControlKnob>
+        </ControlKnob>*/}
         <ControlKnob>
           <Knob
-            id={`contour-smoothing`}
-            label={"smooth"}
+            id={`contour-duration`}
+            label={"durScale"}
             diameter={30}
             labelWidth={30}
             fontSize={11}
-            tooltip={"smoothing of frequency when changing (0.02 = 20ms)"}
-            knobValue={smoothing}
-            step={0.01}
+            tooltip={"duration of frequency when changing (0.02 = 20ms)"}
+            knobValue={duration}
+            step={0.1}
             min={0}
-            max={0.5}
-            onKnobInput={setSmoothing}
+            max={100}
+            onKnobInput={setDuration}
           />
         </ControlKnob>
       </KnobRow>

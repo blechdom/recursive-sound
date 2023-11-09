@@ -1,6 +1,6 @@
 import {AudioParamsType} from "@/components/FractalPlayer";
 import dynamic from "next/dynamic";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {el, NodeRepr_t} from "@elemaudio/core";
 import WebRenderer from "@elemaudio/web-renderer";
 import styled from "styled-components";
@@ -10,8 +10,7 @@ const OscilloscopeSpectrogram = dynamic(() => import('el-vis-audio').then((mod) 
 require("events").EventEmitter.defaultMaxListeners = 0;
 
 type AudioEngineProps = {
-  rowIndex: number;
-  fractalRow: number[];
+  contour: { angle: number; duration: number }[];
   audioContext: AudioContext | null;
   core: WebRenderer;
   playing: boolean;
@@ -19,17 +18,18 @@ type AudioEngineProps = {
 }
 
 const AudioEngine: React.FC<AudioEngineProps> = ({
-                                                   rowIndex,
-                                                   fractalRow,
+                                                   contour,
                                                    audioContext,
                                                    core,
                                                    playing,
-                                                   audioParams: {volume, lowest, highest, threshold, smoothing}
+                                                   audioParams: {volume, freqScaling, highest, threshold, duration}
                                                  }) => {
 
   const [audioVizData, setAudioVizData] = useState<any>();
   const [fftVizData, setFftVizData] = useState<any>();
-  const [ampScale, setAmpScale] = useState<number>(0);
+  const [frequency, setFrequency] = useState<number>(220);
+  const [contourStarted, setContourStarted] = useState<boolean>(false);
+  const [sequencerId, setSequencerId] = useState<any>();
 
   useEffect(() => {
     return () => {
@@ -40,6 +40,7 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
   }, [audioContext]);
 
   useEffect(() => {
+    if (!contourStarted) startContour();
     if (audioContext) {
       const SignalSynth = (signal: NodeRepr_t) => {
         if (playing && signal && core) {
@@ -52,48 +53,47 @@ const AudioEngine: React.FC<AudioEngineProps> = ({
           core.render(synth, synth);
         }
       };
-
-      const Resynth = () => {
-        let accum = 0;
-        const linearRange = Math.log10(highest) - Math.log10(lowest);
-        const linearInterval = linearRange / fractalRow.length;
-
-        const allVoices = [...Array(fractalRow.length)].map((_, i) => {
-          const amplitude = fractalRow[i] > threshold ? fractalRow[i] : 0;
-          const key = `osc-freq-${i}`;
-          const linearFreq = Math.log10(lowest) + (i * linearInterval);
-          const freq = 10 ** linearFreq;
-
-          if (freq < audioContext.sampleRate / 2) {
-            accum += amplitude;
-            const freqSignal = el.const({key, value: freq});
-            const ampSignal = el.const({key: `osc-amp-${i}`, value: amplitude});
-            const smoothFreqSignal = el.smooth(el.tau2pole(smoothing), freqSignal);
-            const smoothAmpSignal = el.smooth(el.tau2pole(smoothing), ampSignal);
-            return el.mul(el.cycle(smoothFreqSignal), smoothAmpSignal);
-          } else {
-            return el.const({key, value: 0});
-          }
-        });
-
-        const addMany = (ins: NodeRepr_t[]): NodeRepr_t => {
-          return el.add(...ins) as NodeRepr_t;
-        };
-        const rowMult = accum !== 0 ? 1 / accum : 0;
-        setAmpScale(rowMult);
-        const rowAmp = el.const({key: "row-gain", value: rowMult});
-        const smoothRowAmp = el.smooth(el.tau2pole(smoothing), rowAmp);
-        return el.mul(addMany(allVoices as NodeRepr_t[]), smoothRowAmp) as NodeRepr_t;
-      }
-
+      const ContourSynth = el.cycle(el.sm(el.const({key: 'ex2:mix', value: frequency})));
       if (playing) {
         audioContext.resume();
-        if (fractalRow?.length > 0) SignalSynth(Resynth());
+        SignalSynth(ContourSynth);
       } else {
+        setContourStarted(false);
+        setFrequency(200);
         audioContext.suspend();
       }
     }
-  }, [playing, volume, lowest, highest, threshold, fractalRow, audioContext, core, smoothing]);
+  }, [playing, volume, freqScaling, highest, threshold, contour, audioContext, core, frequency]);
+
+  const startContour = useCallback(() => {
+    if (!playing) {
+      clearInterval(sequencerId)
+      setContourStarted(false);
+    } else {
+      setContourStarted(true);
+      let elapsedTime = 0;
+      let freq = frequency;
+      contour.forEach((segment, i) => {
+        elapsedTime += (segment.duration * duration);
+        setTimeout(() => {
+          freq += ((segment.angle - 180) * freqScaling);
+          setFrequency(freq);
+        }, elapsedTime);
+      });
+
+      // start setIntervals
+      //let freq = frequency;
+      //const i = 0;
+      //const intervalId = setInterval(() => {
+
+      //setFrequency(freq);
+      //freq += (contour[i].angle - 180);
+      //i++;
+      //}, contour[i].duration * 500);
+      //setSequencerId(intervalId);
+    }
+  }, [playing, contour]);
+
 
   core?.on("scope", function (e) {
     if (e.source === `scope-contour`) {
