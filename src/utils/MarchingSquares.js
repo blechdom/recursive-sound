@@ -106,7 +106,6 @@ export class MarchingSquares {
       }
       const radians = this.calcDir(a, b, c);
       const angle = 180 / Math.PI * (radians < 0 ? radians + (2 * Math.PI) : radians);
-      console.log('a: ', a, " b: ", b, " c: ", c);
       controlList.push({angle, duration: this.calcLength(b, c)});
       ctx.beginPath();
       ctx.lineWidth = 1;
@@ -157,22 +156,22 @@ export class MarchingSquares {
         nextPoint = right;
         break;
       case 1: // DOWN: 	D -> C
-              //this.line(d, c);
+        //this.line(d, c);
         pointToWrite = c;
         nextPoint = down;
         break;
       case 2: // RIGHT: 	C -> B
-              //this.line(c, b);
+        //this.line(c, b);
         pointToWrite = b;
         nextPoint = right;
         break;
       case 3: // RIGHT: 	D -> B
-              //this.line(d, b);
+        //this.line(d, b);
         pointToWrite = b;
         nextPoint = right;
         break;
       case 4: // UP:			B -> A
-              //this.line(b, a);
+        //this.line(b, a);
         pointToWrite = a;
         nextPoint = up;
         break;
@@ -194,22 +193,22 @@ export class MarchingSquares {
         }
         break;
       case 6: // UP:			C -> A
-              //this.line(c, a);
+        //this.line(c, a);
         pointToWrite = a;
         nextPoint = up;
         break;
       case 7: // UP:			D -> A
-              //this.line(d, a);
+        //this.line(d, a);
         pointToWrite = a;
         nextPoint = up;
         break;
       case 8: // LEFT:	  A -> D
-              //this.line(a, d);
+        //this.line(a, d);
         pointToWrite = d;
         nextPoint = left;
         break;
       case 9: // DOWN:		A -> C
-              //this.line(a, c);
+        //this.line(a, c);
         pointToWrite = c;
         nextPoint = down;
         break;
