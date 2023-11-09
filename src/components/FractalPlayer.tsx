@@ -3,6 +3,7 @@ import ColoringAlgorithm from "@/components/ColoringAlgorithm";
 import PlayheadDataControls from "@/PlayheadDataControls";
 import PlayheadOSCControls from "@/components/PlayheadOSCControls";
 import PlayheadAudioControls from "@/components/PlayheadAudioControls";
+import ContourAudioControls from "@/components/ContourAudioControls";
 import PlayheadData from "@/components/PlayheadData";
 import Playheads from "@/components/Playheads";
 import Transport from "@/components/Transport";
@@ -83,6 +84,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   const [rowIndex, setRowIndex] = useState<number>(0);
   const [fractalLoop, setFractalLoop] = useState<boolean>(true);
   const [tolerance, setTolerance] = useState<number>(0);
+  const [contour, setContour] = useState<{ angle: number; duration: number; }[]>([]);
 
   const fractalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fractalContourCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,7 +104,11 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
       if (fractalContourCanvasRef.current) {
         canvasCtxRef.current = fractalContourCanvasRef.current.getContext('2d');
         let ctx = canvasCtxRef.current;
-        if (ctx && rawFractalData.length) new MarchingSquares(ctx, {inputValues: rawFractalData, tolerance, cx, cy});
+        if (ctx && rawFractalData.length) {
+          const newContour = new MarchingSquares(ctx, {inputValues: rawFractalData, tolerance, cx, cy});
+          console.log('newContour', newContour.soundControlList);
+          setContour(newContour.soundControlList);
+        }
       }
       console.log("marching squares");
     }
@@ -119,13 +125,25 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
   useEffect(() => {
     if (fractalTransport === 'play') {
       setPlaying(true);
-      playFractal();
+      if (fractal === 'julia' && showContour) {
+        playContour();
+      } else {
+        playFractal();
+      }
     } else if (fractalTransport === 'stop') {
       setPlaying(false);
-      stopFractal();
+      if (fractal === 'julia' && showContour) {
+        // stopContour();
+      } else {
+        stopFractal();
+      }
     } else if (fractalTransport === 'pause') {
       setPlaying(false);
-      pauseFractal();
+      if (fractal === 'julia' && showContour) {
+        // pauseContour();
+      } else {
+        pauseFractal();
+      }
     } else if (fractalTransport === 'replay') {
       setFractalTransport('play');
     }
@@ -200,6 +218,18 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
       setFractalTimeouts(timeoutIds);
     }
   };
+
+  const playContour = async () => {
+    for (let i = 0; i < contour.length; i++) {
+      setTimeout(function () {
+
+        // play sine wave and adjust freq according to the countour[i].angle
+
+
+      }, (fractalSpeed * contour[i].duration));
+    }
+  };
+
 
   const setJuliaComplexNumberByClick = useCallback((e: any) => {
     setComplex(e);
@@ -276,14 +306,15 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               loop={fractalLoop}
               setLoop={setFractalLoop}
             />
-            {playType === 'osc' ? (
-              <PlayheadOSCControls
-                fractal={fractal}
-                fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
-                playType={playType}
-                setPlayType={setPlayType}
-              />
-            ) : (<>
+            {!showContour && (
+              (playType === 'osc') ? (
+                <PlayheadOSCControls
+                  fractal={fractal}
+                  fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
+                  playType={playType}
+                  setPlayType={setPlayType}
+                />
+              ) : (
                 <PlayheadAudioControls
                   fractal={fractal}
                   playType={playType}
@@ -294,7 +325,7 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
                   playing={playing}
                   setPlayType={setPlayType}
                 />
-              </>
+              )
             )}
           </ControlRows>
           <WindowZoomer name={fractal} window={fractalWindow} defaultWindow={plane}
@@ -307,36 +338,47 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
               <PlayheadData title={"Playhead Data"} matrixData={playheadFractalData}/>
             </ControlRow>
             {fractal === 'julia' && (
-              <ControlRow>
-                <ControlButton onClick={() => setShowContour(!showContour)} selected={showContour} width={"8rem"}
-                               height={"3rem"}
-                               color={'#0066FF'}>
-                  <ButtonText>{showContour ? "Hide" : "Show"} Contour Tracer</ButtonText>
-                </ControlButton>
-                {showContour &&
-                  <>
-                    <ButtonContent width={"3rem"} height={"3rem"}>
-                      <Knob
-                        id={`tolerance`}
-                        label={"tolerance"}
-                        diameter={20}
-                        labelWidth={20}
-                        fontSize={8}
-                        tooltip={"tolerance of contour smoothing"}
-                        knobValue={tolerance}
-                        step={0.1}
-                        min={0}
-                        max={5}
-                        onKnobInput={setTolerance}
-                      />
-                    </ButtonContent>
-                    <ButtonContent width={"5rem"} height={"3rem"}>
-                      <h4>cx: {cx}<br/>
-                        cy: {cy}<br/>
-                        <a id="download_link">download link</a>
-                      </h4></ButtonContent></>
-                }
-              </ControlRow>
+              <>
+                <ControlRow>
+                  <ControlButton onClick={() => setShowContour(!showContour)} selected={showContour} width={"8rem"}
+                                 height={"3rem"}
+                                 color={'#0066FF'}>
+                    <ButtonText>{showContour ? "Hide" : "Show"} Contour Tracer</ButtonText>
+                  </ControlButton>
+                  {showContour &&
+                    <>
+                      <ButtonContent width={"8rem"} height={"3rem"}>
+                        <h4>cx: {cx}<br/>
+                          cy: {cy}<br/>
+                          <a id="download_link">download link</a>
+                        </h4></ButtonContent></>
+                  }
+                </ControlRow>
+                {showContour && (
+                  <ControlRow>
+                    <Knob
+                      id={`tolerance`}
+                      label={"tolerance"}
+                      diameter={30}
+                      labelWidth={30}
+                      fontSize={11}
+                      tooltip={"tolerance of contour smoothing"}
+                      knobValue={tolerance}
+                      step={0.1}
+                      min={0}
+                      max={5}
+                      onKnobInput={setTolerance}
+                    />
+                    <ContourAudioControls
+                      rowIndex={rowIndex}
+                      fractalRow={rowIndex === -1 ? Array(size).fill(0) : playheadFractalData[rowIndex]}
+                      audioContext={audioContext}
+                      core={core}
+                      playing={playing}
+                    />
+                  </ControlRow>
+                )}
+              </>
             )}
           </ControlRows>
           <CanvasContainer size={size}>
@@ -486,6 +528,7 @@ export const Label = styled.label`
 `;
 
 export const KnobRow = styled.div`
+  display: flex;
   margin: 0.5rem 0 0 0;
   display: flex;
   flex-direction: row;
