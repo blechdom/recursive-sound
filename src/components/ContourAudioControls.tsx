@@ -3,7 +3,7 @@ import WebRenderer from "@elemaudio/web-renderer";
 import dynamic from "next/dynamic";
 import React, {useEffect, useState} from "react";
 import styled from "styled-components";
-import {AudioParamsType, KnobRow} from "@/components/FractalPlayer";
+import {ContourAudioParamsType, KnobRow} from "@/components/FractalPlayer";
 
 type ContourAudioControlsProps = {
   contour: { angle: number; duration: number }[];
@@ -25,7 +25,7 @@ const ContourAudioControls: React.FC<ContourAudioControlsProps> = (
   const [freqScaling, setFreqScaling] = useState<number>(1);
   const [highest, setHighest] = useState<number>(6000);
   const [duration, setDuration] = useState<number>(5);
-  const [audioParams, setAudioParams] = useState<AudioParamsType>({
+  const [audioParams, setAudioParams] = useState<ContourAudioParamsType>({
     volume: 0,
     threshold: 0,
     highest: 0,

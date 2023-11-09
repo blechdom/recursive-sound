@@ -1,4 +1,4 @@
-import {AudioParamsType} from "@/components/FractalPlayer";
+import {ContourAudioParamsType} from "@/components/FractalPlayer";
 import dynamic from "next/dynamic";
 import React, {useCallback, useEffect, useState} from "react";
 import {el, NodeRepr_t} from "@elemaudio/core";
@@ -14,7 +14,7 @@ type AudioEngineProps = {
   audioContext: AudioContext | null;
   core: WebRenderer;
   playing: boolean;
-  audioParams: AudioParamsType;
+  audioParams: ContourAudioParamsType;
 }
 
 const AudioEngine: React.FC<AudioEngineProps> = ({
