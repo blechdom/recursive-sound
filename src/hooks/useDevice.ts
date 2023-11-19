@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from "react"
 
-const useDevice = () => {
+const useDevice = (): any => {
     const [adapter, setAdapter] = useState<GPUAdapter>()
     const [device, setDevice] = useState<GPUDevice>()
 
