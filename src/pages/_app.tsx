@@ -3,6 +3,7 @@ import {AppProps} from "next/app";
 import {Goldman, Itim, Varela_Round} from "next/font/google";
 import {config} from '@fortawesome/fontawesome-svg-core'
 import '@fortawesome/fontawesome-svg-core/styles.css'
+import '../react-dat-gui.css';
 
 config.autoAddCss = false
 

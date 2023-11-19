@@ -61,7 +61,7 @@ export class MarchingSquares {
 
         if (this.ctx) this.drawContour(this.ctx, simplified);
 
-        make_download(src.buffer, 44100 * audioBuffer.duration, this.cx, this.cy, this.inputValues.length, this.tolerance);
+        //make_download(src.buffer, 44100 * audioBuffer.duration, this.cx, this.cy, this.inputValues.length, this.tolerance);
 
       } catch (err) {
         console.log('error: ', err);
@@ -156,22 +156,22 @@ export class MarchingSquares {
         nextPoint = right;
         break;
       case 1: // DOWN: 	D -> C
-        //this.line(d, c);
+              //this.line(d, c);
         pointToWrite = c;
         nextPoint = down;
         break;
       case 2: // RIGHT: 	C -> B
-        //this.line(c, b);
+              //this.line(c, b);
         pointToWrite = b;
         nextPoint = right;
         break;
       case 3: // RIGHT: 	D -> B
-        //this.line(d, b);
+              //this.line(d, b);
         pointToWrite = b;
         nextPoint = right;
         break;
       case 4: // UP:			B -> A
-        //this.line(b, a);
+              //this.line(b, a);
         pointToWrite = a;
         nextPoint = up;
         break;
@@ -193,22 +193,22 @@ export class MarchingSquares {
         }
         break;
       case 6: // UP:			C -> A
-        //this.line(c, a);
+              //this.line(c, a);
         pointToWrite = a;
         nextPoint = up;
         break;
       case 7: // UP:			D -> A
-        //this.line(d, a);
+              //this.line(d, a);
         pointToWrite = a;
         nextPoint = up;
         break;
       case 8: // LEFT:	  A -> D
-        //this.line(a, d);
+              //this.line(a, d);
         pointToWrite = d;
         nextPoint = left;
         break;
       case 9: // DOWN:		A -> C
-        //this.line(a, c);
+              //this.line(a, c);
         pointToWrite = c;
         nextPoint = down;
         break;

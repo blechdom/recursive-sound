@@ -115,6 +115,14 @@ const FractalPlayer: React.FC<FractalPlayerProps> = ({
         if (ctx && rawFractalData.length) {
           const newContour = new MarchingSquares(ctx, {inputValues: rawFractalData, tolerance, cx, cy});
           console.log('newContour', newContour.soundControlList);
+          const angles: number[] = [];
+          const durations: number[] = [];
+          newContour.soundControlList.forEach((item) => {
+            angles.push(item.angle);
+            durations.push(item.duration);
+          });
+          console.log("angles", JSON.stringify(angles));
+          console.log("durations", JSON.stringify(durations));
           setContour(newContour.soundControlList);
         }
       }
