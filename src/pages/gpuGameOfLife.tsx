@@ -5,7 +5,7 @@ const GameOfLife = dynamic(
   {ssr: false}
 )
 
-export default function ChaoticFM2() {
+export default function gpuGameOfLife() {
 
   return <GameOfLife/>;
 }
