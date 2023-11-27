@@ -15,8 +15,7 @@ const useWebGPU = (canvas: HTMLCanvasElement | null | undefined) => {
         if (context === null) return
         setContext(context)
 
-        //const preferredFormat = context.getPreferredFormat(adapter) //已废弃
-        setFormat(gpu.getPreferredCanvasFormat()) // bgra8unorm
+        setFormat(gpu.getPreferredCanvasFormat())
 
     }, [canvas, adapter, gpu])
 

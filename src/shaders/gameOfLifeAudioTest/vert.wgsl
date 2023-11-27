@@ -20,7 +20,7 @@ fn vertexMain(@location(0) pos: vec2f,
 
     let cellOffset = cell / grid * 2;
     let gridPos = (pos*state+1) / grid - 1 + cellOffset;
-    var output: VertexOutput;
+var output: VertexOutput;
     output.pos = vec4f(gridPos, 0, 1);
     output.cell = cell;
     return output;

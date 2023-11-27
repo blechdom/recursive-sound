@@ -7,7 +7,7 @@ import styled from "styled-components";
 const AudioTest = () => {
   const [playing, setPlaying] = useState(false);
   const {adapter, device, gpu} = useDevice()
-  //const shaderModuleDescriptor = {code: compute};
+  //const audioShaderModuleDescriptor = {code: compute};
   useEffect(() => {
     if (!audioContext || !adapter || !device) return;
     const audioCtx = audioContext;
@@ -50,14 +50,14 @@ const AudioTest = () => {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
       });
 
-      const shaderModule = device.createShaderModule({
-        label: "Life simulation shader",
+      const audioShaderModule = device.createShaderModule({
+        label: "Audio shader",
         code: compute
       });
       const pipeline = device.createComputePipeline({
         layout: 'auto',
         compute: {
-          module: shaderModule,
+          module: audioShaderModule,
           entryPoint: 'synthezise',
           constants: {
             SAMPLING_RATE: audioCtx.sampleRate,
