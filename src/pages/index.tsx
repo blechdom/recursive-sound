@@ -9,6 +9,12 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico"/>
       </Head>
       <h1>MORPHISMA</h1>
+      <h2>WebGPU Expiriments</h2>
+      * requires chrome://flags/#enable-unsafe-webgpu flag to be enabled
+      <ul>
+        <li><Link href={"./conwayGameAudio"}>Conway Game Audio</Link></li>
+        <li><Link href={"./threeOhThree"}>303 acid jam ported from shadertoy sound</Link></li>
+      </ul>
       <h2>Recursive Sounds, WebAudio Experiments, and other Works-In-Progress...</h2>
       <ul>
         <li><Link href={"./recursiveFM"}>Recursive FM</Link></li>
