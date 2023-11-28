@@ -55,13 +55,8 @@ fn song(time: f32, freq: f32) -> vec2<f32> {
     var sig = 0.0;
 
     for (var n = 0u; n < MAX_HARMONICS; n += 1) {
-        // amplitude for each harmonic
         let a_n: f32 = ((2. * h * L * L) / (PI * PI * d * (L - d) * f32(n+1u) * f32(n+1u))) * sin((f32(n+1u) * PI * d) / L );
-
-        // frequency for each harmonic
         let f_n = f32(n+1u) * freq * sqrt(1. + b * b * f32(n+1u) * f32(n+1u));
-
-        // add value to total sound signal, with exponential falloff
         sig += a_n * sin(TAU * f_n * time) * exp(-f32(n+1u) * GAMMA * freq/200.0 * time);
     }
     //}

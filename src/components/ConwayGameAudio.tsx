@@ -30,7 +30,7 @@ const maxBufferedChunks = 1; // was 5
 
 const squareVertices = new Uint32Array([0, 0, 0, 1, 1, 0, 1, 1]);
 
-const ConwaysLifeAudio = () => {
+const ConwayGameAudio = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const {device, context, format} = useWebGPU(canvasRef.current)
   const [playing, setPlaying] = useState(false);
@@ -505,4 +505,4 @@ export const DataDiv = styled.div`
   width: 1024px;
 `;
 
-export default ConwaysLifeAudio;
+export default ConwayGameAudio;
