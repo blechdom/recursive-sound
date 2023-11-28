@@ -9,7 +9,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico"/>
       </Head>
       <h1>MORPHISMA</h1>
-      <h2>WebGPU Expiriments</h2>
+      <h2>WebGPU Experiments</h2>
       * requires chrome://flags/#enable-unsafe-webgpu flag to be enabled
       <ul>
         <li><Link href={"./conwayGameAudio"}>Conway Game Audio</Link></li>
