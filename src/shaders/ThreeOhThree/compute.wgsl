@@ -21,7 +21,7 @@ fn synthesize(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let t = f32(sample) / SAMPLING_RATE;
 
-    song_chunk[sample] = song(time_info.offset + t);
+    song_chunk[sample] = mainSound(time_info.offset + t);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -217,16 +217,26 @@ fn synth1_echo(tb: f32, time: f32) -> vec2<f32> {
 }
 
 fn mainSound(time: f32) -> vec2<f32> {
-    let mx: vec2<f32> = vec2(0.0);
-    return mx;
+    var mx: vec2<f32> = vec2(0.0);
+    var tb: f32 = (time * 9.0)%16.0;
+    mx = synth1_echo(tb, time) * 0.8 * smoothstep(0.0, 0.01, abs(((time * 9.0)%256.0) + 8.0 - 128.0) - 8.0);
+    var hi: f32 = 1.0;
+    var ki: f32 = smoothstep(0.01, 0.0, abs(((time * 9.0)%256.0) - 64.0 - 128.0) - 64.0);
+    var s2i: f32 = 1.0 - smoothstep(0.01, 0.0, abs(((time * 9.0)%256.0) - 64.0 - 128.0) - 64.0);
+    hi = ki;
+    mx += vec2(synth2_echo(time, tb)) * 0.2 * s2i;
+
+    mx = mix(mx, mx * (1.0 - fract(tb / 4.0) * 0.5), ki);
+  	var sc: f32 = sin(pi2 * tb) * 0.4 + 0.6;
+
+  	mx = distVec(mx, 1.00);
+
+  	return vec2(mx);
 }
     /*
 fn mainSound(time: f32) -> vec2<f32>
 {
 	vec2 mx = vec2(0.0);
-	return mx;
-	}
-
 
 	float tb = mod(time * 9.0, 16.0);
 
