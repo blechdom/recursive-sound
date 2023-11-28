@@ -10,7 +10,7 @@ export default function Home() {
       </Head>
       <h1>MORPHISMA</h1>
       <h2>WebGPU Experiments</h2>
-      * requires chrome://flags/#enable-unsafe-webgpu flag to be enabled
+      * requires <Link href={"chrome://flags/#enable-webgpu-developer-features"}>chrome://flags/#enable-webgpu-developer-features</Link> flag to be enabled
       <ul>
         <li><Link href={"./conwayGameAudio"}>Conway Game Audio</Link></li>
         <li><Link href={"./threeOhThree"}>303 acid jam ported from shadertoy sound</Link></li>
