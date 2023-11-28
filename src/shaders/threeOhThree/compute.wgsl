@@ -24,10 +24,6 @@ fn synthesize(@builtin(global_invocation_id) global_id: vec3<u32>) {
     song_chunk[sample] = mainSound(time_info.offset + t);
 }
 
-// -------------------------------------------------------------------------------------------------
-// The rest of the shader is copied & ported from https://www.shadertoy.com/view/7lyfWR
-// -------------------------------------------------------------------------------------------------
-
 const PI: f32 = 3.141592654;
 const TAU: f32 = 6.283185307179586476925286766559;
 
