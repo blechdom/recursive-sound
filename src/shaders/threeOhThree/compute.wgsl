@@ -12,6 +12,10 @@ struct AudioParam {
     timeScale: f32,
     gain: f32,
     dist: f32,
+    dur: f32,
+    ratio: f32,
+    sampOffset: f32,
+    fundamental: f32
 }
 
 @group(0) @binding(0) var<uniform> time_info: TimeInfo;
@@ -49,28 +53,28 @@ fn nse(x: f32) -> f32 {
 	return fract(sin(x * 110.082) * 19871.8972);
 }
 
-fn ntof(n: f32) -> f32 {
-	return 440.0 * pow(2.0, (n - 69.0) / 12.0);
+fn ntof(n: f32, fundamental: f32) -> f32 {
+	return fundamental * pow(2.0, (n - 69.0) / 12.0);
 }
 
 fn synth(tseq: f32, t: f32, audio_param: AudioParam) -> vec2<f32> {
     var v: vec2<f32> = vec2(0.0);
     let tnote: f32 = fract(tseq);
-    let dr: f32 = 0.26;
+    let dr: f32 = audio_param.dur;
     let amp: f32 = smoothstep(0.05, 0.0, abs(tnote - dr - 0.05) - dr) * exp(tnote * -1.0);
     let seqn: f32 = nse(floor(tseq));
-    let n: f32 = 20.0 + floor(seqn * 38.0);
-    let f: f32 = ntof(n);
-    let sqr: f32 = smoothstep(0.0, 0.01, abs((t*9.0)%64.0 - 20.0) - 20.0);
-    let base: f32 = f * audio_param.frequency;
+    let n: f32 = 20.0 + floor(seqn * audio_param.frequency);
+    let f: f32 = ntof(n, audio_param.fundamental);
+    let sqr: f32 = smoothstep(0.0, 0.01, abs((t*audio_param.timeScale)%(audio_param.timeMod * 4.0) - 20.0) - 20.0);
+    let base: f32 = f;
     let flt: f32 = exp(tnote * -1.5) * 50.0 + pow(cos(t * 1.0) * 0.5 + 0.5, 4.0) * 80.0 - 0.0;
 
     for (var i = 0u; i < u32(audio_param.partials); i += 1) {
-        var h: f32 = f32(i + 1);
+        var h: f32 = f32(i + u32(audio_param.sampOffset));
         var inten: f32 = 1.0 / h;
 
-        inten = mix(inten, inten * (h%2.0), sqr);
-        inten *= exp(-1.0 * max(2.0 - h, 0.0));
+        inten = mix(inten, inten * (h%audio_param.ratio), sqr);
+        inten *= exp(-1.0 * max(audio_param.ratio - h, 0.0));
         inten *= _filter(h, flt, 4.0);
 
         var vx = v.x + (inten * sin((PI2 + 0.01) * (t * base * h)));

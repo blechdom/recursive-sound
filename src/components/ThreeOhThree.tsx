@@ -7,7 +7,7 @@ import styled from "styled-components";
 
 const KnobParamLabel = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel), {ssr: false});
 
-const chunkDurationSeconds = 0.1;
+const chunkDurationSeconds = 0.15;
 const numChannels = 2; // currently only two channels allowed (shader uses vec2)
 const workgroupSize = 256;
 const maxBufferedChunks = 1;
@@ -16,12 +16,29 @@ const ThreeOhThree = () => {
   const [playing, setPlaying] = useState(false);
   const [audioParamBuffer, setAudioParamBuffer] = useState<GPUBuffer>();
   const [partials, setPartials] = useState(256);
-  const [frequency, setFrequency] = useState(1);
+  const [frequency, setFrequency] = useState(38);
   const [timeMod, setTimeMod] = useState(16);
   const [timeScale, setTimeScale] = useState(9);
   const [gain, setGain] = useState(0.7);
   const [dist, setDist] = useState(0.5);
+  const [dur, setDur] = useState(0.26);
+  const [ratio, setRatio] = useState(2);
+  const [sampOffset, setSampOffset] = useState(1);
+  const [fundamental, setFundamental] = useState(440);
   const {adapter, device} = useDevice()
+
+  function handleReset() {
+    setPartials(256);
+    setFrequency(38);
+    setTimeMod(16);
+    setTimeScale(9);
+    setGain(0.7);
+    setDist(0.5);
+    setDur(0.26);
+    setRatio(2);
+    setSampOffset(1);
+    setFundamental(440);
+  }
 
   if (numChannels !== 2) {
     throw new Error('Currently the number of channels has to be 2, sorry :/');
@@ -52,7 +69,7 @@ const ThreeOhThree = () => {
       });
 
       const audioParamBuffer = device.createBuffer({
-        size: Float32Array.BYTES_PER_ELEMENT * 6,
+        size: Float32Array.BYTES_PER_ELEMENT * 10,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
       });
 
@@ -93,11 +110,9 @@ const ThreeOhThree = () => {
         if (numBufferedChunks > maxBufferedChunks) {
           const timeout = chunkDurationSeconds * 0.9;
           setTimeout(createSongChunk, timeout * 1000.0);
-          console.log(`buffered chunks ${numBufferedChunks} (${bufferedSeconds} seconds), next chunk creation starts in ${timeout} seconds`);
           return;
         }
 
-        console.log('writing nextChunkOffset', nextChunkOffset);
         device.queue.writeBuffer(timeInfoBuffer, 0, new Float32Array([nextChunkOffset]));
 
         const commandEncoder = device.createCommandEncoder();
@@ -143,8 +158,6 @@ const ThreeOhThree = () => {
 
         audioSource.start(nextChunkOffset);
 
-        console.log(`created new chunk, starts at ${startTime + nextChunkOffset}`);
-
         nextChunkOffset += audioSource.buffer.duration;
         await createSongChunk();
       }
@@ -163,8 +176,8 @@ const ThreeOhThree = () => {
 
   useEffect(() => {
     if (!audioParamBuffer || !device) return;
-    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale, gain, dist]));
-  }, [device, audioParamBuffer, partials, frequency, timeScale, timeMod, gain, dist]);
+    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale, gain, dist, dur, ratio, sampOffset, fundamental]));
+  }, [device, audioParamBuffer, partials, frequency, timeScale, timeMod, gain, dist, dur, ratio, sampOffset, fundamental]);
 
   return (
     <>
@@ -180,12 +193,21 @@ const ThreeOhThree = () => {
           onKnobInput={setGain}
         />
         <KnobParamLabel
+          id={"fundamental"}
+          label={"fundamental"}
+          knobValue={fundamental}
+          step={0.01}
+          min={1}
+          max={1000}
+          onKnobInput={setFundamental}
+        />
+        <KnobParamLabel
           id={"frequencyScale"}
           label={"frequencyScale"}
           knobValue={frequency}
           step={0.01}
           min={.2}
-          max={4}
+          max={100}
           onKnobInput={setFrequency}
         />
         <KnobParamLabel
@@ -198,6 +220,24 @@ const ThreeOhThree = () => {
           onKnobInput={setPartials}
         />
         <KnobParamLabel
+          id={"ratio"}
+          label={"ratio"}
+          knobValue={ratio}
+          step={0.1}
+          min={1}
+          max={32}
+          onKnobInput={setRatio}
+        />
+        <KnobParamLabel
+          id={"sampOffset"}
+          label={"sampOffset"}
+          knobValue={sampOffset}
+          step={1}
+          min={1}
+          max={32}
+          onKnobInput={setSampOffset}
+        />
+        <KnobParamLabel
           id={"dist"}
           label={"dist"}
           knobValue={dist}
@@ -207,11 +247,20 @@ const ThreeOhThree = () => {
           onKnobInput={setDist}
         />
         <KnobParamLabel
+          id={"dur"}
+          label={"dur"}
+          knobValue={dur}
+          step={0.001}
+          min={0.001}
+          max={2}
+          onKnobInput={setDur}
+        />
+        <KnobParamLabel
           id={"timeScale"}
           label={"timeScale"}
           knobValue={timeScale}
-          step={1}
-          min={1}
+          step={0.01}
+          min={0.01}
           max={24}
           onKnobInput={setTimeScale}
         />
@@ -225,6 +274,8 @@ const ThreeOhThree = () => {
           onKnobInput={setTimeMod}
         />
       </KnobsFlexBox>
+      <br/>
+      <button onClick={handleReset}>RESET PARAMS</button>
     </>
   )
 }
