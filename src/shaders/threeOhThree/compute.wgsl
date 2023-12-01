@@ -5,7 +5,14 @@ override WORKGROUP_SIZE: u32 = 256;
 override SAMPLING_RATE: f32 = 44100.0;
 
 struct TimeInfo { offset: f32 }
-struct AudioParam { partials: f32, frequency: f32, timeMod: f32, timeScale: f32 }
+struct AudioParam {
+    partials: f32,
+    frequency: f32,
+    timeMod: f32,
+    timeScale: f32,
+    gain: f32,
+    dist: f32,
+}
 
 @group(0) @binding(0) var<uniform> time_info: TimeInfo;
 @group(0) @binding(1) var<storage, read_write> song_chunk: array<vec2<f32>>; // 2 channel pcm data
@@ -46,7 +53,7 @@ fn ntof(n: f32) -> f32 {
 	return 440.0 * pow(2.0, (n - 69.0) / 12.0);
 }
 
-fn synth(tseq: f32, t: f32, partials: f32, frequency: f32) -> vec2<f32> {
+fn synth(tseq: f32, t: f32, audio_param: AudioParam) -> vec2<f32> {
     var v: vec2<f32> = vec2(0.0);
     let tnote: f32 = fract(tseq);
     let dr: f32 = 0.26;
@@ -55,10 +62,10 @@ fn synth(tseq: f32, t: f32, partials: f32, frequency: f32) -> vec2<f32> {
     let n: f32 = 20.0 + floor(seqn * 38.0);
     let f: f32 = ntof(n);
     let sqr: f32 = smoothstep(0.0, 0.01, abs((t*9.0)%64.0 - 20.0) - 20.0);
-    let base: f32 = f * frequency;
+    let base: f32 = f * audio_param.frequency;
     let flt: f32 = exp(tnote * -1.5) * 50.0 + pow(cos(t * 1.0) * 0.5 + 0.5, 4.0) * 80.0 - 0.0;
 
-    for (var i = 0u; i < u32(partials); i += 1) {
+    for (var i = 0u; i < u32(audio_param.partials); i += 1) {
         var h: f32 = f32(i + 1);
         var inten: f32 = 1.0 / h;
 
@@ -73,13 +80,13 @@ fn synth(tseq: f32, t: f32, partials: f32, frequency: f32) -> vec2<f32> {
 
     let o: f32 = v.x * amp;
 
-    return vec2(dist(v * amp, 0.5));
+    return vec2(dist(v * amp, audio_param.dist));
 }
 
 fn mainSound(time: f32, audio_param: AudioParam) -> vec2<f32> {
 
     var tb: f32 = (time * audio_param.timeScale)%audio_param.timeMod;
-    var mx: vec2<f32> = synth(tb, time, audio_param.partials, audio_param.frequency) * 0.8 * smoothstep(0.0, 0.01, abs(((time * 9.0)%256.0) + 8.0 - 128.0) - 8.0);
+    var mx: vec2<f32> = synth(tb, time, audio_param) * audio_param.gain;
 
   	return vec2(mx);
 }

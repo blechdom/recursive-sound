@@ -19,6 +19,8 @@ const ThreeOhThree = () => {
   const [frequency, setFrequency] = useState(1);
   const [timeMod, setTimeMod] = useState(16);
   const [timeScale, setTimeScale] = useState(9);
+  const [gain, setGain] = useState(0.7);
+  const [dist, setDist] = useState(0.5);
   const {adapter, device} = useDevice()
 
   if (numChannels !== 2) {
@@ -50,7 +52,7 @@ const ThreeOhThree = () => {
       });
 
       const audioParamBuffer = device.createBuffer({
-        size: Float32Array.BYTES_PER_ELEMENT * 4,
+        size: Float32Array.BYTES_PER_ELEMENT * 6,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
       });
 
@@ -161,13 +163,22 @@ const ThreeOhThree = () => {
 
   useEffect(() => {
     if (!audioParamBuffer || !device) return;
-    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale]));
-  }, [audioParamBuffer, partials, frequency, timeScale, timeMod, device]);
+    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale, gain, dist]));
+  }, [device, audioParamBuffer, partials, frequency, timeScale, timeMod, gain, dist]);
 
   return (
     <>
       <button onClick={() => setPlaying(!playing)}>{playing ? "STOP" : "PLAY"} 303 EMULATOR FROM WEBGPU</button>
       <KnobsFlexBox>
+        <KnobParamLabel
+          id={"gain"}
+          label={"gain"}
+          knobValue={gain}
+          step={0.01}
+          min={0.0}
+          max={1.0}
+          onKnobInput={setGain}
+        />
         <KnobParamLabel
           id={"frequencyScale"}
           label={"frequencyScale"}
@@ -185,6 +196,15 @@ const ThreeOhThree = () => {
           min={1}
           max={256}
           onKnobInput={setPartials}
+        />
+        <KnobParamLabel
+          id={"dist"}
+          label={"dist"}
+          knobValue={dist}
+          step={0.01}
+          min={0.01}
+          max={5}
+          onKnobInput={setDist}
         />
         <KnobParamLabel
           id={"timeScale"}
