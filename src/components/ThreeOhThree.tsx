@@ -1,26 +1,35 @@
 import useDevice from "@/hooks/useDevice";
-import {useEffect, useState} from "react";
+import dynamic from "next/dynamic";
+import React, {useEffect, useState} from "react";
 import compute from "@/shaders/threeOhThree/compute.wgsl";
 import {audioContext} from "@/utils/audio/audioTools";
 import styled from "styled-components";
 
+const KnobParamLabel = dynamic(() => import("el-vis-audio").then((mod) => mod.KnobParamLabel), {ssr: false});
+
+const chunkDurationSeconds = 0.1;
+const numChannels = 2; // currently only two channels allowed (shader uses vec2)
+const workgroupSize = 256;
+const maxBufferedChunks = 1;
+
 const ThreeOhThree = () => {
   const [playing, setPlaying] = useState(false);
-  const {adapter, device, gpu} = useDevice()
-  //const audioShaderModuleDescriptor = {code: compute};
+  const [audioParamBuffer, setAudioParamBuffer] = useState<GPUBuffer>();
+  const [partials, setPartials] = useState(256);
+  const [frequency, setFrequency] = useState(1);
+  const [timeMod, setTimeMod] = useState(16);
+  const [timeScale, setTimeScale] = useState(9);
+  const {adapter, device} = useDevice()
+
+  if (numChannels !== 2) {
+    throw new Error('Currently the number of channels has to be 2, sorry :/');
+  }
+
   useEffect(() => {
     if (!audioContext || !adapter || !device) return;
     const audioCtx = audioContext;
-    async function playSound() {
-      // CONFIG STUFF
-      const chunkDurationSeconds = 1;
-      const numChannels = 2; // currently only two channels allowed (shader uses vec2)
-      const workgroupSize = 256;
-      const maxBufferedChunks = 5;
 
-      if (numChannels !== 2) {
-        throw new Error('Currently the number of channels has to be 2, sorry :/');
-      }
+    async function playSound() {
 
       const chunkNumSamplesPerChannel = audioCtx.sampleRate * chunkDurationSeconds;
       const chunkNumSamples = numChannels * chunkNumSamplesPerChannel;
@@ -40,10 +49,16 @@ const ThreeOhThree = () => {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
       });
 
+      const audioParamBuffer = device.createBuffer({
+        size: Float32Array.BYTES_PER_ELEMENT * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+      });
+
       const audioShaderModule = device.createShaderModule({
         label: "Audio shader",
         code: compute
       });
+
       const pipeline = device.createComputePipeline({
         layout: 'auto',
         compute: {
@@ -61,19 +76,16 @@ const ThreeOhThree = () => {
         entries: [
           {binding: 0, resource: {buffer: timeInfoBuffer}},
           {binding: 1, resource: {buffer: chunkBuffer}},
+          {binding: 2, resource: {buffer: audioParamBuffer}},
         ]
       });
 
+      setAudioParamBuffer(audioParamBuffer);
 
-      // CHUNK CREATION
-
-      // state tracking
       const startTime = performance.now() / 1000.0;
       let nextChunkOffset = 0.0;
 
-      // create sound data on the GPU, read back to CPU and schedule for playback
       async function createSongChunk() {
-        // if we've already scheduled `maxBufferedChunks` of sound data for playback, reschedule sound data creation for later
         const bufferedSeconds = (startTime + nextChunkOffset) - (performance.now() / 1000.0);
         const numBufferedChunks = Math.floor(bufferedSeconds / chunkDurationSeconds);
         if (numBufferedChunks > maxBufferedChunks) {
@@ -83,13 +95,11 @@ const ThreeOhThree = () => {
           return;
         }
 
-        // update uniform buffer: set the new chunk's offset in seconds from t = 0
         console.log('writing nextChunkOffset', nextChunkOffset);
         device.queue.writeBuffer(timeInfoBuffer, 0, new Float32Array([nextChunkOffset]));
 
         const commandEncoder = device.createCommandEncoder();
 
-        // encode compute pass, i.e., sound chunk creation
         const pass = commandEncoder.beginComputePass();
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, bindGroup);
@@ -98,27 +108,16 @@ const ThreeOhThree = () => {
         );
         pass.end();
 
-        // copy sound chunk to map buffer
         commandEncoder.copyBufferToBuffer(chunkBuffer, 0, chunkMapBuffer, 0, chunkBufferSize);
 
         device.queue.submit([commandEncoder.finish()]);
 
-        // after submitting(!) chunk creation & copy commands, map chunkMapBuffer's memory to CPU memory for reading
-        // Note: a mapped buffer is not allowed to be used in a command encoder.
-        // To avoid an illegal use of the map buffer in a command encoder (i.e., when copying the data from the storage buffer),
-        // we wait for the buffer's memory to be mapped.
-        // In this case, this is okay, because we have a couple of seconds of sound data cached in the audio context's destination,
-        // so we can easily afford to wait for the GPU commands to finish and the buffer to be mapped.
-        // However, doing this within the render loop of a real-time renderer is usually a bad idea, since it forces a CPU-GPU sync.
-        // In such cases, it might be a good idea to have a ring buffer of map-buffers to not use the same map buffer in each frame.
         await chunkMapBuffer.mapAsync(GPUMapMode.READ, 0, chunkBufferSize);
 
-        // when the buffer's memory is mapped, copy it to a JavaScript array and unmap the buffer
         const chunkData = new Float32Array(chunkNumSamples);
         chunkData.set(new Float32Array(chunkMapBuffer.getMappedRange()));
         chunkMapBuffer.unmap();
 
-        // copy chunk data to audio buffer
         const audioBuffer = audioCtx.createBuffer(
           numChannels,
           chunkNumSamplesPerChannel,
@@ -136,16 +135,14 @@ const ThreeOhThree = () => {
           }
         }
 
-        // create new audio source from audio buffer and schedule for execution
         const audioSource = audioCtx.createBufferSource();
         audioSource.buffer = audioBuffer;
         audioSource.connect(audioCtx.destination);
-        // (there is some issue with the second chunk's offset - no idea why, music's hard I guess)
+
         audioSource.start(nextChunkOffset);
 
         console.log(`created new chunk, starts at ${startTime + nextChunkOffset}`);
 
-        // schedule next chunk creation
         nextChunkOffset += audioSource.buffer.duration;
         await createSongChunk();
       }
@@ -160,18 +157,65 @@ const ThreeOhThree = () => {
       audioCtx.suspend();
     }
 
-
   }, [audioContext, device, adapter, playing])
+
+  useEffect(() => {
+    if (!audioParamBuffer || !device) return;
+    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale]));
+  }, [audioParamBuffer, partials, frequency, timeScale, timeMod, device]);
 
   return (
     <>
       <button onClick={() => setPlaying(!playing)}>{playing ? "STOP" : "PLAY"} 303 EMULATOR FROM WEBGPU</button>
+      <KnobsFlexBox>
+        <KnobParamLabel
+          id={"frequencyScale"}
+          label={"frequencyScale"}
+          knobValue={frequency}
+          step={0.01}
+          min={.2}
+          max={4}
+          onKnobInput={setFrequency}
+        />
+        <KnobParamLabel
+          id={"partials"}
+          label={"partials"}
+          knobValue={partials}
+          step={1}
+          min={1}
+          max={256}
+          onKnobInput={setPartials}
+        />
+        <KnobParamLabel
+          id={"timeScale"}
+          label={"timeScale"}
+          knobValue={timeScale}
+          step={1}
+          min={1}
+          max={24}
+          onKnobInput={setTimeScale}
+        />
+        <KnobParamLabel
+          id={"timeMod"}
+          label={"timeMod"}
+          knobValue={timeMod}
+          step={1}
+          min={1}
+          max={32}
+          onKnobInput={setTimeMod}
+        />
+      </KnobsFlexBox>
     </>
   )
 }
-export const DataDiv = styled.div`
-  width: 1024px;
-`;
 
+const KnobsFlexBox = styled.div`
+  justify-content: space-evenly;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  padding: 10px;
+  border: 2px solid #ff0000;
+`;
 
 export default ThreeOhThree
