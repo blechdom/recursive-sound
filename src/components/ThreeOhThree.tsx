@@ -25,6 +25,11 @@ const ThreeOhThree = () => {
   const [ratio, setRatio] = useState(2);
   const [sampOffset, setSampOffset] = useState(1);
   const [fundamental, setFundamental] = useState(440);
+  const [stereo, setStereo] = useState(0.01);
+  const [nse, setNse] = useState(19871.8972);
+  const [res, setRes] = useState(2.2);
+  const [lfo, setLfo] = useState(1);
+  const [flt, setFlt] = useState(-1.5);
   const {adapter, device} = useDevice()
 
   function handleReset() {
@@ -38,6 +43,11 @@ const ThreeOhThree = () => {
     setRatio(2);
     setSampOffset(1);
     setFundamental(440);
+    setStereo(0.01);
+    setNse(19871.8972);
+    setRes(2.2);
+    setLfo(1);
+    setFlt(-1.5);
   }
 
   if (numChannels !== 2) {
@@ -69,7 +79,7 @@ const ThreeOhThree = () => {
       });
 
       const audioParamBuffer = device.createBuffer({
-        size: Float32Array.BYTES_PER_ELEMENT * 10,
+        size: Float32Array.BYTES_PER_ELEMENT * 15,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
       });
 
@@ -159,10 +169,9 @@ const ThreeOhThree = () => {
         audioSource.start(nextChunkOffset);
 
         nextChunkOffset += audioSource.buffer.duration;
-        await createSongChunk();
+        if (playing) await createSongChunk();
       }
-
-      createSongChunk();
+      if (playing) createSongChunk();
     }
     if (playing) {
      audioCtx.resume().then(() => {
@@ -176,15 +185,14 @@ const ThreeOhThree = () => {
 
   useEffect(() => {
     if (!audioParamBuffer || !device) return;
-    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale, gain, dist, dur, ratio, sampOffset, fundamental]));
-  }, [device, audioParamBuffer, partials, frequency, timeScale, timeMod, gain, dist, dur, ratio, sampOffset, fundamental]);
+    device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([partials, frequency, timeMod, timeScale, gain, dist, dur, ratio, sampOffset, fundamental, stereo, nse, res, lfo, flt]));
+  }, [device, audioParamBuffer, partials, frequency, timeScale, timeMod, gain, dist, dur, ratio, sampOffset, fundamental, stereo, nse, res, lfo, flt]);
 
   return (
     <>
       <button onClick={() => setPlaying(!playing)}>{playing ? "STOP" : "PLAY"} 303 EMULATOR FROM WEBGPU</button>
       <KnobsFlexBox>
         <KnobParamLabel
-          id={"gain"}
           label={"gain"}
           knobValue={gain}
           step={0.01}
@@ -194,7 +202,7 @@ const ThreeOhThree = () => {
         />
         <KnobParamLabel
           id={"fundamental"}
-          label={"fundamental"}
+          label={"fund"}
           knobValue={fundamental}
           step={0.01}
           min={1}
@@ -203,7 +211,7 @@ const ThreeOhThree = () => {
         />
         <KnobParamLabel
           id={"frequencyScale"}
-          label={"frequencyScale"}
+          label={"freqScale"}
           knobValue={frequency}
           step={0.01}
           min={.2}
@@ -247,6 +255,33 @@ const ThreeOhThree = () => {
           onKnobInput={setDist}
         />
         <KnobParamLabel
+          id={"lfo"}
+          label={"lfo"}
+          knobValue={lfo}
+          step={0.01}
+          min={0}
+          max={64}
+          onKnobInput={setLfo}
+        />
+        <KnobParamLabel
+          id={"flt"}
+          label={"flt"}
+          knobValue={flt}
+          step={0.01}
+          min={-64}
+          max={64}
+          onKnobInput={setFlt}
+        />
+        <KnobParamLabel
+          id={"res"}
+          label={"res"}
+          knobValue={res}
+          step={0.01}
+          min={0}
+          max={15}
+          onKnobInput={setRes}
+        />
+        <KnobParamLabel
           id={"dur"}
           label={"dur"}
           knobValue={dur}
@@ -254,15 +289,6 @@ const ThreeOhThree = () => {
           min={0.001}
           max={2}
           onKnobInput={setDur}
-        />
-        <KnobParamLabel
-          id={"timeScale"}
-          label={"timeScale"}
-          knobValue={timeScale}
-          step={0.01}
-          min={0.01}
-          max={24}
-          onKnobInput={setTimeScale}
         />
         <KnobParamLabel
           id={"timeMod"}
@@ -273,6 +299,33 @@ const ThreeOhThree = () => {
           max={32}
           onKnobInput={setTimeMod}
         />
+        <KnobParamLabel
+          id={"nse"}
+          label={"nse"}
+          knobValue={nse}
+          step={0.001}
+          min={0}
+          max={40000}
+          onKnobInput={setNse}
+        />
+        <KnobParamLabel
+          id={"stereo"}
+          label={"stereo"}
+          knobValue={stereo}
+          step={0.001}
+          min={-8}
+          max={8}
+          onKnobInput={setStereo}
+        />
+        <KnobParamLabel
+          id={"timeScale"}
+          label={"timeScale"}
+          knobValue={timeScale}
+          step={0.01}
+          min={0.01}
+          max={48}
+          onKnobInput={setTimeScale}
+        />
       </KnobsFlexBox>
       <br/>
       <button onClick={handleReset}>RESET PARAMS</button>
@@ -281,11 +334,13 @@ const ThreeOhThree = () => {
 }
 
 const KnobsFlexBox = styled.div`
-  justify-content: space-evenly;
+ // justify-content: space-evenly;
   display: flex;
   flex-wrap: wrap;
+  gap: 25px;
   flex-direction: row;
-  padding: 10px;
+  margin: 15px;
+  padding: 15px;
   border: 2px solid #ff0000;
 `;
 

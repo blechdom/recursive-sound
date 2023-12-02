@@ -15,7 +15,12 @@ struct AudioParam {
     dur: f32,
     ratio: f32,
     sampOffset: f32,
-    fundamental: f32
+    fundamental: f32,
+    stereo: f32,
+    nse: f32,
+    res: f32,
+    lfo: f32,
+    flt: f32,
 }
 
 @group(0) @binding(0) var<uniform> time_info: TimeInfo;
@@ -46,11 +51,11 @@ fn _filter(h: f32, cut: f32, res: f32) -> f32 {
 	let cutted: f32 = cut - 20.0;
 	let df: f32 = max(h - cutted, 0.0);
 	let df2: f32 = abs(h - cutted);
-	return exp(-0.005 * df * df) * 0.5 + exp(df2 * df2 * -0.1) * 2.2;
+	return exp(-0.005 * df * df) * 0.5 + exp(df2 * df2 * -0.1) * res;
 }
 
 fn nse(x: f32) -> f32 {
-	return fract(sin(x * 110.082) * 19871.8972);
+	return fract(sin(x * 110.082) * audio_param.nse);
 }
 
 fn ntof(n: f32, fundamental: f32) -> f32 {
@@ -65,9 +70,9 @@ fn synth(tseq: f32, t: f32, audio_param: AudioParam) -> vec2<f32> {
     let seqn: f32 = nse(floor(tseq));
     let n: f32 = 20.0 + floor(seqn * audio_param.frequency);
     let f: f32 = ntof(n, audio_param.fundamental);
-    let sqr: f32 = smoothstep(0.0, 0.01, abs((t*audio_param.timeScale)%(audio_param.timeMod * 4.0) - 20.0) - 20.0);
+    let sqr: f32 = smoothstep(0.0, 0.01, abs((t*audio_param.timeScale)%audio_param.timeMod - 20.0) - 20.0);
     let base: f32 = f;
-    let flt: f32 = exp(tnote * -1.5) * 50.0 + pow(cos(t * 1.0) * 0.5 + 0.5, 4.0) * 80.0 - 0.0;
+    let flt: f32 = exp(tnote * audio_param.flt) * 50.0 + pow(cos(t * audio_param.lfo) * 0.5 + 0.5, 4.0) * 80.0;
 
     for (var i = 0u; i < u32(audio_param.partials); i += 1) {
         var h: f32 = f32(i + u32(audio_param.sampOffset));
@@ -75,10 +80,10 @@ fn synth(tseq: f32, t: f32, audio_param: AudioParam) -> vec2<f32> {
 
         inten = mix(inten, inten * (h%audio_param.ratio), sqr);
         inten *= exp(-1.0 * max(audio_param.ratio - h, 0.0));
-        inten *= _filter(h, flt, 4.0);
+        inten *= _filter(h, flt, audio_param.res);
 
-        var vx = v.x + (inten * sin((PI2 + 0.01) * (t * base * h)));
-        var vy = v.y + (inten * sin(PI2 * (t * base * h)));
+        var vx = v.x + (inten * sin((PI2 + (audio_param.stereo / 2)) * (t * base * h)));
+        var vy = v.y + (inten * sin((PI2 - (audio_param.stereo / 2)) * (t * base * h)));
         v = vec2(vx, vy);
     }
 
