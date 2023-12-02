@@ -191,7 +191,7 @@ const ThreeOhThree = () => {
   return (
     <>
       <h3>This synth requires <a href="chrome://flags/#enable-webgpu-developer-features">chrome://flags/#enable-webgpu-developer-features</a> flag to be enabled</h3>
-      You may need to copy/paste the URL into the searchbar and restart chrome, the return to this page.<br /><br />
+      You may need to copy/paste the URL into the searchbar and restart chrome, the return to this page. If you lose control, refresh the page.<br /><br />
       <button onClick={() => setPlaying(!playing)}><h2>{playing ? "STOP" : "PLAY"} 303 EMULATOR FROM WEBGPU</h2></button>
       <KnobsFlexBox>
         <KnobParamLabel
