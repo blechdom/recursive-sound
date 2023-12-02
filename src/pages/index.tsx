@@ -15,7 +15,7 @@ export default function Home() {
         <li><Link href={"./conwayGameAudio"}>Conway Game Audio</Link></li>
         <li><Link href={"./threeOhThree"}>303 acid jam ported from shadertoy sound</Link></li>
       </ul>
-      <h2>Recursive Sounds, WebAudio Experiments, and other Works-In-Progress...</h2>
+      <h2>Recursive Sounds, WebGPU Audio, WebAudio Experiments, and other Works-In-Progress...</h2>
       <ul>
         <li><Link href={"./recursiveFM"}>Recursive FM</Link></li>
         <li><Link href={"./recursivePM"}>Recursive PM</Link></li>

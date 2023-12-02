@@ -9,7 +9,7 @@ const KnobParamLabel = dynamic(() => import("el-vis-audio").then((mod) => mod.Kn
 
 const chunkDurationSeconds = 0.15;
 const numChannels = 2; // currently only two channels allowed (shader uses vec2)
-const workgroupSize = 256;
+const workgroupSize = 16;
 const maxBufferedChunks = 1;
 
 const ThreeOhThree = () => {
@@ -190,7 +190,9 @@ const ThreeOhThree = () => {
 
   return (
     <>
-      <button onClick={() => setPlaying(!playing)}>{playing ? "STOP" : "PLAY"} 303 EMULATOR FROM WEBGPU</button>
+      <h3>This synth requires <a href="chrome://flags/#enable-webgpu-developer-features">chrome://flags/#enable-webgpu-developer-features</a> flag to be enabled</h3>
+      You may need to copy/paste the URL into the searchbar and restart chrome, the return to this page.<br /><br />
+      <button onClick={() => setPlaying(!playing)}><h2>{playing ? "STOP" : "PLAY"} 303 EMULATOR FROM WEBGPU</h2></button>
       <KnobsFlexBox>
         <KnobParamLabel
           label={"gain"}
