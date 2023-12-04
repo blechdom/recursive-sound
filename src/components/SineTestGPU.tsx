@@ -1,34 +1,72 @@
 import useDevice from "@/hooks/useDevice";
-import {useCallback, useEffect, useMemo, useState} from "react";
-import compute from "@/shaders/shepard/compute.wgsl";
+import {useCallback, useEffect, useMemo, useReducer, useState} from "react";
+import compute from "@/shaders/sineTest/compute.wgsl";
 
 const numChannels = 2; //(shader uses vec2: x = left, y = right)
 
 const SineTestGPU = () => {
   const [playing, setPlaying] = useState(false);
-  const [chunkDurationInSeconds, setChunkDurationInSeconds] = useState(2);
-  const [maxBufferedChunks, setMaxBufferedChunks] = useState(8);
-  const [workgroupSize, setWorkgroupSize] = useState(256);
+  const [chunkDurationInSeconds, setChunkDurationInSeconds] = useState(.05);
+  const [maxBufferedChunks, setMaxBufferedChunks] = useState(4);
+  const [workgroupSize, setWorkgroupSize] = useState({ x: 256, y: 1, z: 1 });
   const [sampleRate, setSampleRate] = useState(44100);
   const [startTime, setStartTime] = useState(0.0);
-  const [nextChunkOffset, setNextChunkOffset] = useState(0.0);
-  const {adapter, device} = useDevice();
+  const [nextChunkOffset, setNextChunkOffset] = useState(-1);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | undefined>(undefined);
+  const {device} = useDevice();
 
-  const audioContext: AudioContext | undefined = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      return new AudioContext({sampleRate});
+  useEffect(() => {
+    if (playing) {
+      startMakingSound();
+    } else {
+      stopMakingSound();
     }
-  }, [sampleRate]);
+
+    async function startMakingSound() {
+      if (typeof window !== 'undefined') {
+        setAudioContext(await new AudioContext({sampleRate}));
+        setStartTime(performance.now() / 1000.0);
+        setNextChunkOffset(0);
+      }
+    }
+
+    async function stopMakingSound() {
+      if (audioContext) await audioContext.suspend();
+      if(audioContext) await audioContext.close();
+      if (timeoutId) clearTimeout(timeoutId);
+      setAudioContext(undefined);
+      setTimeoutId(null);
+    }
+
+  }, [playing, sampleRate]);
 
   const chunkNumSamplesPerChannel: number | undefined = useMemo(() => {
     if (!audioContext || !chunkDurationInSeconds) return;
     return audioContext.sampleRate * chunkDurationInSeconds;
   }, [audioContext, chunkDurationInSeconds]);
 
-  const chunkNumSamples: number | undefined = useMemo(() => {
-    if (!chunkNumSamplesPerChannel) return;
-    return numChannels * chunkNumSamplesPerChannel;
-  }, [chunkNumSamplesPerChannel]);
+
+  const { chunkNumSamples, audioBuffer }: { chunkNumSamples: number | undefined; audioBuffer: AudioBuffer | undefined } = useMemo(() => {
+    let buffer; let chunkSamps;
+    if (audioContext && chunkNumSamplesPerChannel) {
+      chunkSamps = numChannels * chunkNumSamplesPerChannel;
+      buffer = audioContext.createBuffer(
+        numChannels,
+        chunkNumSamplesPerChannel,
+        audioContext.sampleRate
+      );
+    }
+    return {
+      chunkNumSamples: chunkSamps,
+      audioBuffer: buffer
+    };
+  }, [audioContext, chunkNumSamplesPerChannel]);
+
+  const channels: Float32Array[] = useMemo(() => {
+    if (!audioBuffer) return [];
+    return [...Array(numChannels)].map((_, i) => audioBuffer.getChannelData(i));
+  }, [audioBuffer]);
 
   const chunkBufferSize: number | undefined = useMemo(() => {
     if (!chunkNumSamples) return;
@@ -72,7 +110,9 @@ const SineTestGPU = () => {
         entryPoint: 'synthesize',
         constants: {
           SAMPLING_RATE: audioContext.sampleRate,
-          WORKGROUP_SIZE: workgroupSize,
+          WORKGROUP_SIZE_X: workgroupSize.x,
+          WORKGROUP_SIZE_Y: workgroupSize.y,
+          WORKGROUP_SIZE_Z: workgroupSize.z,
         }
       }
     });
@@ -88,97 +128,65 @@ const SineTestGPU = () => {
   }, [device, audioContext, workgroupSize, timeInfoBuffer, chunkBuffer]);
 
   useEffect(() => {
-    if (!audioContext) return;
-    if (playing) {
-      audioContext.resume().then(() => {
-        setStartTime(performance.now() / 1000.0);
-        setNextChunkOffset(0.0);
-      })
-    } else {
-      audioContext.suspend();
-    }
-
-  }, [audioContext, device, adapter, playing, chunkBuffer, chunkMapBuffer, pipeline, timeInfoBuffer, bindGroup, chunkNumSamplesPerChannel, workgroupSize, chunkBufferSize, chunkNumSamples]);
-
-  useEffect(() => {
-    if (!audioContext) return;
-    let startTime = performance.now() / 1000.0;
-    let nextChunkOffset = 0.0;
-
-      async function createSongChunk() {
-        if (!audioContext || !playing || !chunkBuffer || !chunkMapBuffer || !timeInfoBuffer || !pipeline || !bindGroup || !chunkNumSamplesPerChannel || !chunkNumSamples) return;
-
-        const bufferedSeconds = (startTime + nextChunkOffset) - (performance.now() / 1000.0);
-        const numBufferedChunks = Math.floor(bufferedSeconds / chunkDurationInSeconds);
-        if (numBufferedChunks > maxBufferedChunks) {
-          const timeout = chunkDurationInSeconds * 0.9;
-          setTimeout(createSongChunk, timeout * 1000.0);
-          return;
-        }
-
-        device.queue.writeBuffer(timeInfoBuffer, 0, new Float32Array([nextChunkOffset]));
-
-        const commandEncoder = device.createCommandEncoder();
-
-        const pass = commandEncoder.beginComputePass();
-        pass.setPipeline(pipeline);
-        pass.setBindGroup(0, bindGroup);
-        pass.dispatchWorkgroups(
-          Math.ceil(chunkNumSamplesPerChannel / workgroupSize)
-        );
-        pass.end();
-
-        commandEncoder.copyBufferToBuffer(chunkBuffer, 0, chunkMapBuffer, 0, chunkBufferSize);
-
-        device.queue.submit([commandEncoder.finish()]);
-
-        await chunkMapBuffer.mapAsync(GPUMapMode.READ, 0, chunkBufferSize);
-        console.log("is this where the sync is happening?");
-
-        const chunkData = new Float32Array(chunkNumSamples);
-        chunkData.set(new Float32Array(chunkMapBuffer.getMappedRange()));
-        chunkMapBuffer.unmap();
-
-        const audioBuffer = audioContext.createBuffer(
-          numChannels,
-          chunkNumSamplesPerChannel,
-          audioContext.sampleRate
-        );
-
-        const channels = [];
-        for (let i = 0; i < numChannels; ++i) {
-          channels.push(audioBuffer.getChannelData(i));
-        }
-
-        for (let i = 0; i < audioBuffer.length; ++i) {
-          for (const [offset, channel] of channels.entries()) {
-            channel[i] = chunkData[i * numChannels + offset];
-          }
-        }
-
-        const audioSource = audioContext.createBufferSource();
-        audioSource.buffer = audioBuffer;
-        audioSource.connect(audioContext.destination);
-
-        audioSource.start(nextChunkOffset);
-
-        nextChunkOffset += audioSource.buffer.duration;
-        console.log("nextChunkOffset", nextChunkOffset);
-        console.log('playing', playing);
-        if (playing) await createSongChunk();
+    if(nextChunkOffset >= 0.0) {
+      const chunkTime = nextChunkOffset;
+      const bufferedSeconds = (startTime + nextChunkOffset) - (performance.now() / 1000.0);
+      const numBufferedChunks = Math.floor(bufferedSeconds / chunkDurationInSeconds);
+      if (numBufferedChunks > maxBufferedChunks) {
+        setTimeoutId(setTimeout(async function () {
+          await createSoundChunk(chunkTime)
+        }, chunkDurationInSeconds * 1000.0));
+        return;
       }
-
-    if (playing) {
-     audioContext.resume().then(() => {
-       startTime = performance.now() / 1000.0;
-       nextChunkOffset = 0.0;
-       createSongChunk();
-     })
-    } else {
-      audioContext.suspend();
+      createSoundChunk(chunkTime);
     }
+  }, [nextChunkOffset])
 
-  }, [audioContext, device, adapter, playing, chunkBuffer, chunkMapBuffer, pipeline, timeInfoBuffer, bindGroup, chunkNumSamplesPerChannel, workgroupSize, chunkBufferSize, chunkNumSamples]);
+  const createSoundChunk = useCallback(async(chunkTime: number) => {
+    if (!audioContext || audioContext.state === "closed" || !chunkBuffer || !chunkMapBuffer || !timeInfoBuffer || !pipeline || !bindGroup || !chunkNumSamplesPerChannel || !chunkNumSamples) return;
+    device.queue.writeBuffer(timeInfoBuffer, 0, new Float32Array([chunkTime]));
+
+    const commandEncoder = device.createCommandEncoder();
+
+    const pass = commandEncoder.beginComputePass();
+    pass.setPipeline(pipeline);
+    pass.setBindGroup(0, bindGroup);
+    pass.dispatchWorkgroups(
+      Math.ceil(chunkNumSamplesPerChannel / workgroupSize.x)
+    );
+    pass.end();
+
+    commandEncoder.copyBufferToBuffer(chunkBuffer, 0, chunkMapBuffer, 0, chunkBufferSize);
+
+    device.queue.submit([commandEncoder.finish()]);
+
+    await chunkMapBuffer.mapAsync(GPUMapMode.READ, 0, chunkBufferSize);
+
+    const chunkData = new Float32Array(chunkNumSamples);
+    chunkData.set(new Float32Array(chunkMapBuffer.getMappedRange()));
+    chunkMapBuffer.unmap();
+
+    playChunk(chunkTime, chunkData);
+  }, [audioContext, device, chunkBuffer, chunkBufferSize, chunkMapBuffer, pipeline, timeInfoBuffer, bindGroup, chunkNumSamplesPerChannel, workgroupSize, chunkNumSamples]);
+
+  function playChunk(chunkTime: number, chunkData: Float32Array) {
+    if (!audioBuffer || audioContext?.state === "closed" || !chunkData || !audioContext) return;
+    for (let i = 0; i < audioBuffer.length; ++i) {
+      for (const [offset, channel] of channels.entries()) {
+        channel[i] = chunkData[i * numChannels + offset];
+      }
+    }
+    let audioSource = audioContext.createBufferSource();
+    audioSource.buffer = audioBuffer;
+
+    setNextChunkOffset(chunkTime + audioSource.buffer.duration);
+    // if(chunkTime !== 0.0) { // start playing on 2nd chunk to avoid 2nd chunk glitch...
+    audioSource.connect(audioContext.destination);
+    audioSource.start(chunkTime);
+    audioSource.onended = () => {
+      audioSource.disconnect();
+    }
+  }
 
   return (
     <>
@@ -191,3 +199,55 @@ const SineTestGPU = () => {
 }
 
 export default SineTestGPU;
+
+
+
+/*
+
+ //Class to calculate amount of buffer for constant feeding rate while playing
+ //On every tick() it calculates how much time was passed, and how much frames
+ //it should read to compensate.
+
+ //A second with 48000Hz sample rate contains 48k samples per second
+
+class PlaybackBuffer {
+  constructor(sampleRate, channels, bufferSize) {
+    this.fraction = RENDER_QUANTUM * channels;
+    if (bufferSize % this.fraction !== 0) {
+      throw new Error("Buffer size should be even to the fraction size: " + bufferSize);
+    }
+    this.bufferSize = bufferSize * channels;
+    this.samplesPerMs = sampleRate * channels / 1000;
+  }
+
+  start() {
+    this.lastTick = performance.now();
+    this.remainder = this.bufferSize;
+    return this.tick();
+  }
+
+  tick() {
+    const now = performance.now();
+    const samplesToFeed = (now - this.lastTick) * this.samplesPerMs + this.remainder;
+    const samplesToRead = Math.round(samplesToFeed / this.fraction) * this.fraction;
+    this.remainder = samplesToFeed - samplesToRead;
+    this.lastTick = now;
+
+    return samplesToRead;
+  }
+}
+
+this.playback = new PlaybackBuffer(this.context.sampleRate, channels, this.bufferSize);
+this._readAndFeed(this.playback.start());
+this.interval = setInterval(() => {
+  this._readAndFeed(this.playback.tick());
+}, Math.floor(RENDER_QUANTUM / this.context.sampleRate / 1000));
+
+function _readAndFeed(amount) {
+  if (!amount) return;
+
+  let buffer = new Float32Array(amount);
+  fillBufferInSomeWay(buffer);
+  this.node.port.postMessage({message: 'data', data: buffer});
+}
+ */

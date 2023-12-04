@@ -417,7 +417,6 @@ const ConwayGameAudio = () => {
 
   async function createSongChunk() {
     if (!audioContext || !audioBindGroup || !audioComputePipeline || !timeInfoBuffer || !chunkBuffer || !chunkMapBuffer) return;
-    console.log("audioContext.state", audioContext.state);
     const chunkNumSamplesPerChannel = audioContext.sampleRate * chunkDurationSeconds;
     const chunkNumSamples = numChannels * chunkNumSamplesPerChannel;
     const chunkBufferSize = Float32Array.BYTES_PER_ELEMENT * chunkNumSamples;

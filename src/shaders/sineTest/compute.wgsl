@@ -1,4 +1,6 @@
-override WORKGROUP_SIZE: u32 = 256;
+override WORKGROUP_SIZE_X: u32 = 256;
+override WORKGROUP_SIZE_Y: u32 = 1;
+override WORKGROUP_SIZE_Z: u32 = 1;
 override SAMPLING_RATE: f32 = 44100.0;
 const PI2: f32 = 6.283185307179586476925286766559;
 
@@ -10,7 +12,7 @@ struct TimeInfo {
 @group(0) @binding(1) var<storage, read_write> sound_chunk: array<vec2<f32>>; // 2 channel pcm data
 
 @compute
-@workgroup_size(WORKGROUP_SIZE)
+@workgroup_size(WORKGROUP_SIZE_X, WORKGROUP_SIZE_Y, WORKGROUP_SIZE_Z)
 fn synthesize(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let sampleVec = global_id.x;
 
