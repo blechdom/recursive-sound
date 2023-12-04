@@ -9,7 +9,7 @@ const KnobParamLabel = dynamic(() => import("el-vis-audio").then((mod) => mod.Kn
 
 const chunkDurationSeconds = 0.15;
 const numChannels = 2; // currently only two channels allowed (shader uses vec2)
-const workgroupSize = 16;
+const workgroupSize = 256;
 const maxBufferedChunks = 1;
 
 const ThreeOhThree = () => {
