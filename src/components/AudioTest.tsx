@@ -7,7 +7,7 @@ import styled from "styled-components";
 const AudioTest = () => {
   const [playing, setPlaying] = useState(false);
   const {adapter, device, gpu} = useDevice()
-  //const audioShaderModuleDescriptor = {code: compute};
+
   useEffect(() => {
     if (!audioContext || !adapter || !device) return;
     const audioCtx = audioContext;
@@ -22,12 +22,6 @@ const AudioTest = () => {
         throw new Error('Currently the number of channels has to be 2, sorry :/');
       }
 
-      // CREATE AUDIO CONTEXT
-
-      // SET UP WEBGPU + BUFFERS + RESOURCES
-      //const adapter = await navigator.gpu.requestAdapter();
-      //const device = await adapter?.requestDevice();
-
       const chunkNumSamplesPerChannel = audioCtx.sampleRate * chunkDurationSeconds;
       const chunkNumSamples = numChannels * chunkNumSamplesPerChannel;
       const chunkBufferSize = Float32Array.BYTES_PER_ELEMENT * chunkNumSamples;
@@ -36,10 +30,6 @@ const AudioTest = () => {
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       });
 
-      // We did not cover this in the workshop: storage & uniform buffers can't be read back to the CPU directly.
-      // Instead, we need to copy the data to an extra buffer with the MAP_READ & COPY_DST usages.
-      // To get the data to the CPU, we need to map the buffer to CPU memory and then copy the mapped memory to a JavaScript ArrayBuffer.
-      // Note that a mapped buffer must not be used in a command encoder.
       const chunkMapBuffer = device.createBuffer({
         size: chunkBufferSize,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
@@ -74,10 +64,6 @@ const AudioTest = () => {
         ]
       });
 
-
-      // CHUNK CREATION
-
-      // state tracking
       const startTime = performance.now() / 1000.0;
       let nextChunkOffset = 0.0;
 

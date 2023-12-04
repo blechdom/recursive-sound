@@ -26,7 +26,6 @@ const gameDataInit: GameData = {
 const chunkDurationSeconds = 1;
 const numChannels = 2; // only two channels allowed (shader uses vec2)
 const audioWorkgroupSize = 256;
-const maxBufferedChunks = 1; // was 5
 
 const squareVertices = new Uint32Array([0, 0, 0, 1, 1, 0, 1, 1]);
 
@@ -423,20 +422,7 @@ const ConwayGameAudio = () => {
     const chunkNumSamples = numChannels * chunkNumSamplesPerChannel;
     const chunkBufferSize = Float32Array.BYTES_PER_ELEMENT * chunkNumSamples;
     const nextChunkOffset = 0;
-    const startTime = performance.now() / 1000.0;
 
-    // if we've already scheduled `maxBufferedChunks` of sound data for playback, reschedule sound data creation for later
-    const bufferedSeconds = (startTime + nextChunkOffset) - (performance.now() / 1000.0);
-    const numBufferedChunks = Math.floor(bufferedSeconds / chunkDurationSeconds);
-    if (numBufferedChunks > maxBufferedChunks) {
-      const timeout = chunkDurationSeconds * 0.9;
-      // setTimeout(createSongChunk, timeout * 1000.0);
-      console.log(`buffered chunks ${numBufferedChunks} (${bufferedSeconds} seconds), next chunk creation starts in ${timeout} seconds`);
-      return;
-    }
-
-    // update uniform buffer: set the new chunk's offset in seconds from t = 0
-   // console.log('writing nextChunkOffset', nextChunkOffset);
     device.queue.writeBuffer(timeInfoBuffer, 0, new Float32Array([nextChunkOffset]));
     device.queue.writeBuffer(audioParamBuffer, 0, new Float32Array([Math.random() * 400 + 200]));
     const commandEncoder = device.createCommandEncoder();
@@ -459,7 +445,6 @@ const ConwayGameAudio = () => {
     chunkData.set(new Float32Array(chunkMapBuffer.getMappedRange()));
     chunkMapBuffer.unmap();
 
-    // copy chunk data to audio buffer
     const audioBuffer = audioContext.createBuffer(
       numChannels,
       chunkNumSamplesPerChannel,
