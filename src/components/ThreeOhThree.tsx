@@ -30,7 +30,7 @@ const ThreeOhThree = () => {
   const [res, setRes] = useState(2.2);
   const [lfo, setLfo] = useState(1);
   const [flt, setFlt] = useState(-1.5);
-  const {adapter, device} = useDevice()
+  const {device} = useDevice()
 
   function handleReset() {
     setPartials(256);
@@ -55,7 +55,7 @@ const ThreeOhThree = () => {
   }
 
   useEffect(() => {
-    if (!audioContext || !adapter || !device) return;
+    if (!audioContext || !device) return;
     const audioCtx = audioContext;
 
     async function playSound() {
@@ -181,7 +181,7 @@ const ThreeOhThree = () => {
       audioCtx.suspend();
     }
 
-  }, [audioContext, device, adapter, playing])
+  }, [audioContext, device, playing])
 
   useEffect(() => {
     if (!audioParamBuffer || !device) return;

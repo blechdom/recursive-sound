@@ -1,10 +1,11 @@
 import useDevice from "@/hooks/useDevice";
-import {useCallback, useEffect, useMemo, useReducer, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import compute from "@/shaders/sineTest/compute.wgsl";
 
 const numChannels = 2; //(shader uses vec2: x = left, y = right)
 
 const SineTestGPU = () => {
+  const [audioContext, setAudioContext] = useState<AudioContext | undefined>(undefined);
   const [playing, setPlaying] = useState(false);
   const [chunkDurationInSeconds, setChunkDurationInSeconds] = useState(.05);
   const [maxBufferedChunks, setMaxBufferedChunks] = useState(4);
@@ -13,7 +14,6 @@ const SineTestGPU = () => {
   const [startTime, setStartTime] = useState(0.0);
   const [nextChunkOffset, setNextChunkOffset] = useState(-1);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [audioContext, setAudioContext] = useState<AudioContext | undefined>(undefined);
   const {device} = useDevice();
 
   useEffect(() => {
@@ -33,12 +33,11 @@ const SineTestGPU = () => {
 
     async function stopMakingSound() {
       if (audioContext) await audioContext.suspend();
-      if(audioContext) await audioContext.close();
+      if (audioContext) await audioContext.close();
       if (timeoutId) clearTimeout(timeoutId);
-      setAudioContext(undefined);
       setTimeoutId(null);
+      setAudioContext(undefined);
     }
-
   }, [playing, sampleRate]);
 
   const chunkNumSamplesPerChannel: number | undefined = useMemo(() => {
@@ -143,7 +142,7 @@ const SineTestGPU = () => {
   }, [nextChunkOffset])
 
   const createSoundChunk = useCallback(async(chunkTime: number) => {
-    if (!audioContext || audioContext.state === "closed" || !chunkBuffer || !chunkMapBuffer || !timeInfoBuffer || !pipeline || !bindGroup || !chunkNumSamplesPerChannel || !chunkNumSamples) return;
+    if (!audioContext || audioContext.state === "closed" || !chunkBuffer || !chunkMapBuffer || !timeInfoBuffer || !pipeline || !bindGroup || !chunkNumSamplesPerChannel || !chunkNumSamples || !chunkBufferSize) return;
     device.queue.writeBuffer(timeInfoBuffer, 0, new Float32Array([chunkTime]));
 
     const commandEncoder = device.createCommandEncoder();
@@ -201,53 +200,3 @@ const SineTestGPU = () => {
 export default SineTestGPU;
 
 
-
-/*
-
- //Class to calculate amount of buffer for constant feeding rate while playing
- //On every tick() it calculates how much time was passed, and how much frames
- //it should read to compensate.
-
- //A second with 48000Hz sample rate contains 48k samples per second
-
-class PlaybackBuffer {
-  constructor(sampleRate, channels, bufferSize) {
-    this.fraction = RENDER_QUANTUM * channels;
-    if (bufferSize % this.fraction !== 0) {
-      throw new Error("Buffer size should be even to the fraction size: " + bufferSize);
-    }
-    this.bufferSize = bufferSize * channels;
-    this.samplesPerMs = sampleRate * channels / 1000;
-  }
-
-  start() {
-    this.lastTick = performance.now();
-    this.remainder = this.bufferSize;
-    return this.tick();
-  }
-
-  tick() {
-    const now = performance.now();
-    const samplesToFeed = (now - this.lastTick) * this.samplesPerMs + this.remainder;
-    const samplesToRead = Math.round(samplesToFeed / this.fraction) * this.fraction;
-    this.remainder = samplesToFeed - samplesToRead;
-    this.lastTick = now;
-
-    return samplesToRead;
-  }
-}
-
-this.playback = new PlaybackBuffer(this.context.sampleRate, channels, this.bufferSize);
-this._readAndFeed(this.playback.start());
-this.interval = setInterval(() => {
-  this._readAndFeed(this.playback.tick());
-}, Math.floor(RENDER_QUANTUM / this.context.sampleRate / 1000));
-
-function _readAndFeed(amount) {
-  if (!amount) return;
-
-  let buffer = new Float32Array(amount);
-  fillBufferInSomeWay(buffer);
-  this.node.port.postMessage({message: 'data', data: buffer});
-}
- */
